@@ -1,0 +1,9 @@
+name: narrative-nlp
+channels:
+ - conda-forge
+dependencies:
+  - python=3.7
+  - jupyter
+  - nltk
+  - spacy
+  - black
