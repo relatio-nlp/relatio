@@ -6,6 +6,6 @@ Clone the project and make sure that you have [conda](https://docs.conda.io/proj
 
 ```bash
 conda env create -f narrative-nlp/environment.yml
-conda activate narrative-nlp
+conda activate narrative-nlp-dev
 python -m spacy download en_core_web_sm
 ```
