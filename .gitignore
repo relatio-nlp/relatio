@@ -3,3 +3,5 @@
 
 # Ignore .mypy_cache directory
 *.mypy_cache
+
+**/.vscode/
