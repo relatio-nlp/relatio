@@ -32,16 +32,16 @@ def filter_sentences(sentences: List[str], max_sentence_length: int = -1) -> Lis
     return sentences
 
 
-def tokenize_into_sentences(article: str) -> List[str]:
+def tokenize_into_sentences(document: str) -> List[str]:
     """
-    Split an article in sentences.
+    Split a document in sentences.
 
     Args:
-        article: The article
+        document: The document
 
     Returns:
         List of sentences
 
     """
-    sentences = sent_tokenize(article)
+    sentences = sent_tokenize(document)
     return sentences
