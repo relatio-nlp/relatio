@@ -56,7 +56,7 @@ def run_word2vec(
     sentences: List[str],
     model: Word2Vec,
     pretrained_path: str,
-    path: Union[None, str] = None,
+    save_path: Union[None, str] = None,
 ) -> Union[None, Word2Vec]:
     model.build_vocab(sentences)
     total_examples = model.corpus_count
@@ -65,8 +65,8 @@ def run_word2vec(
     model.intersect_word2vec_format(pretrained_path, binary=False, lockf=1.0)
     model.train(sentences, total_examples=total_examples, epochs=model.iter)
 
-    if path is not None:
-        model.save(path)
+    if save_path is not None:
+        model.save(save_path)
         return None
     else:
         return model
