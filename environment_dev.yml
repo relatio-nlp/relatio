@@ -6,10 +6,8 @@ dependencies:
   - python=3.7
   - jupyter
   - nltk
+  - gensim
+  - scikit-learn
   - spacy # not used so far
   - pytest
-  - bandit
-  - flake8
-  - mypy
   - black
-  - pylama
