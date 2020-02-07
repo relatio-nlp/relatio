@@ -58,6 +58,7 @@ def run_word2vec(
     pretrained_path: str,
     save_path: Union[None, str] = None,
 ) -> Union[None, Word2Vec]:
+    sentences = [sent.split() for sent in sentences]
     model.build_vocab(sentences)
     total_examples = model.corpus_count
     pretrained_model = KeyedVectors.load_word2vec_format(pretrained_path, binary=False)
