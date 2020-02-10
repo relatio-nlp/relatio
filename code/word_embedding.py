@@ -8,7 +8,7 @@ def run_word2vec(
     model: Word2Vec,
     pretrained_path: str,
     save_path: Union[None, str] = None,
-) -> Union[None, Word2Vec]:
+) -> Word2Vec:
     w2v_sentences = [sent.split() for sent in sentences]
     model.build_vocab(w2v_sentences)
     total_examples = model.corpus_count
@@ -19,9 +19,8 @@ def run_word2vec(
 
     if save_path is not None:
         model.save(save_path)
-        return None
-    else:
-        return model
+
+    return model
 
 
 def phrase_embeddings(model: Union[str, Word2Vec]):
