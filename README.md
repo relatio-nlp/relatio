@@ -14,8 +14,7 @@ Make sure that you have [conda](https://docs.conda.io/projects/conda/en/latest/)
 ```bash
 conda env create -f narrative-nlp/environment.yml
 conda activate narrative-nlp-dev
-python -m spacy download en_core_web_sm
-python -c 'import nltk; nltk.download("punkt")'
+bash ./narrative-nlp/postBuild
 ```
 ### Via Containers - repo2docker (technology used in in https://mybinder.org/)
 Make sure you have [repo2docker](https://repo2docker.readthedocs.io/en/latest/install.html) - Docker is needed. In case you want to mount a volume just use `--volume`. It might take up to 10 minutes to build the container
