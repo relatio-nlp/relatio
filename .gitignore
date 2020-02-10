@@ -3,7 +3,7 @@
 
 # Ignore .mypy_cache directory
 *.mypy_cache
-
+Notebooks/
 *.pytest_cache
 
 *__pycache__/
