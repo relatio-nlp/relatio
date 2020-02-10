@@ -5,7 +5,6 @@ channels:
 dependencies:
   - python=3.7
   - jupyter
-  - jupyterlab
   - nbconvert
   - nltk
   - cython
@@ -13,6 +12,7 @@ dependencies:
   - scikit-learn
   - pytest
   - black
+  - pytorch # pytorch is needed by allennlp and from pip not working on macOS
   - pip
   - pip:
       - allennlp

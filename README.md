@@ -15,14 +15,16 @@ Make sure that you have [conda](https://docs.conda.io/projects/conda/en/latest/)
 conda env create -f narrative-nlp/environment.yml
 conda activate narrative-nlp-dev
 bash ./narrative-nlp/postBuild
+jupyter notebook
 ```
-### Via Containers - repo2docker (technology used in in https://mybinder.org/)
+### Via Docker - repo2docker (technology used in https://mybinder.org/)
 Make sure you have [repo2docker](https://repo2docker.readthedocs.io/en/latest/install.html) - Docker is needed. In case you want to mount a volume just use `--volume`. It might take up to 10 minutes to build the container
 ```bash
 jupyter-repo2docker --volume ./narrative-nlp/Notebooks:Notebooks narrative-nlp/
 ```
 
 ## Usage
+See [Example.md](./Notebooks/Example.md). 
 In your python script or Jupyter Notebook add to the path `narrative-nlp/code` and use any module as desired
 ```python
 import sys
