@@ -4,6 +4,7 @@ from typing import List
 
 from nltk.tokenize import sent_tokenize
 from nltk.stem import WordNetLemmatizer, SnowballStemmer
+from nltk.corpus import stopwords
 
 
 def tokenize_into_sentences(document: str) -> List[str]:
@@ -55,6 +56,7 @@ def preprocess(
     remove_punctuation: bool = True,
     remove_digits: bool = True,
     remove_chars: str = "",
+    remove_stop_words: bool = True,
     lowercase: bool = True,
     strip: bool = True,
     remove_whitespaces: bool = True,
@@ -69,27 +71,30 @@ def preprocess(
         remove_punctuation: whether to remove string.punctuation
         remove_digits: whether to remove string.digits
         remove_chars: remove the given characters
+        remove_stop_words: remove stopwords.words("english")
         lowercase: whether to lower the case
         strip: whether to strip
         remove_whitespaces: whether to remove superfluous whitespaceing by " ".join(str.split(())
         lemmatize: whether to lemmatize using nltk.WordNetLemmatizer
-        stem: whether to stem using nltk.SnowballStemmer("english", ignore_stopwords=True)
+        stem: whether to stem using nltk.SnowballStemmer("english")
     Returns:
         Processed list of sentences
 
     Examples:
         >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'])
-        ['return the factorial of n an exact integer']
+        ['return factorial n exact integer']
         >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'], lemmatize=True)
-        ['return the factorial of n an exact integer']
+        ['return factorial n exact integer']
         >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'], stem=True)
-        ['return the factori of n an exact integ']
-        
+        ['return factori n exact integ']
         >>> preprocess(['A1b c\\n\\nde \\t fg\\rkl\\r\\n m+n'])
         ['ab c de fg kl mn']
     """
     if lemmatize is True and stem is True:
         raise ValueError("lemmatize and stemming cannot be both True")
+    if remove_stop_words is True and lowercase is False:
+        raise ValueError("remove stop words make sense only for lowercase")
+
     # remove chars
     if remove_punctuation is True:
         remove_chars += string.punctuation
@@ -115,11 +120,19 @@ def preprocess(
         ]
 
     if stem:
-        stemmer = SnowballStemmer("english", ignore_stopwords=True)
+        stemmer = SnowballStemmer("english")
         f_stem = stemmer.stem
 
         sentences = [
             " ".join([f_stem(word) for word in sent.split()]) for sent in sentences
         ]
+    if remove_stop_words:
+        stop_words = stopwords.words("english")
+        sentences = [
+            " ".join([word for word in sent.split() if word not in stop_words])
+            for sent in sentences
+        ]
+    # TODO ignore stopwords
+    # TODO input singledispatch
 
     return sentences
