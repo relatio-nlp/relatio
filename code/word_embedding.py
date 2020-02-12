@@ -1,7 +1,6 @@
 from typing import List, Union, Dict
 
 import numpy as np
-from sklearn import preprocessing
 
 from gensim.models import KeyedVectors, Word2Vec
 
@@ -30,7 +29,7 @@ def sif_vectors_for_roles(
     model: Union[str, Word2Vec],
     roles: List[List[Dict[str, List]]],
     alpha: float = 0.001,
-) -> Dict[str, float]:
+) -> List[List[Dict[str, np.ndarray]]]:
     if isinstance(model, str):
         model = Word2Vec.load(model)
     elif isinstance(model, str):
@@ -50,6 +49,8 @@ def sif_vectors_for_roles(
         sif_dict[word] = alpha / (alpha + count)
 
     def get_sif_vector(token_list: List[str]):
+        nonlocal sif_dict
+        nonlocal model
         sif_vec = np.mean(
             [sif_dict[one_token] * model.wv[one_token] for one_token in token_list],
             axis=0,
