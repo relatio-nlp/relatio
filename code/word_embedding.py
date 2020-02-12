@@ -1,4 +1,7 @@
-from typing import List, Union
+from typing import List, Union, Dict
+
+import numpy as np
+from sklearn import preprocessing
 
 from gensim.models import KeyedVectors, Word2Vec
 
@@ -23,8 +26,11 @@ def run_word2vec(
     return model
 
 
-def phrase_embeddings(model: Union[str, Word2Vec]):
-    # TODO
+def sif_vectors_for_roles(
+    model: Union[str, Word2Vec],
+    roles: List[List[Dict[str, List]]],
+    alpha: float = 0.001,
+) -> Dict[str, float]:
     if isinstance(model, str):
         model = Word2Vec.load(model)
     elif isinstance(model, str):
@@ -41,5 +47,25 @@ def phrase_embeddings(model: Union[str, Word2Vec]):
     # a word to compute its sif-weight (saved in sif_dict)
     sif_dict = {}
     for word, count in word_count_dict.items():
-        sif_dict[word] = 0.001 / (0.001 + count)
-    # pk.dump(sif_dict, open('sif_dict.p', 'wb'))
+        sif_dict[word] = alpha / (alpha + count)
+
+    def get_sif_vector(token_list: List[str]):
+        sif_vec = np.mean(
+            [sif_dict[one_token] * model.wv[one_token] for one_token in token_list],
+            axis=0,
+        )
+        return sif_vec
+
+    senteces_role_vector = []
+    for sent in roles:
+        sentence_role_vector_list = []
+        for d in sent:
+            vector_dict = {}
+            for role, tokens in d.items():
+                if role != "B-ARGM-NEG":
+                    sif_vec_tokens = get_sif_vector(tokens)
+                    vector_dict[role] = sif_vec_tokens
+            sentence_role_vector_list.append(vector_dict)
+        senteces_role_vector.append(sentence_role_vector_list)
+
+    return senteces_role_vector
