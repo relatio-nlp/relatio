@@ -3,6 +3,7 @@ import string
 from typing import List
 
 from nltk.tokenize import sent_tokenize
+from nltk.stem import WordNetLemmatizer, SnowballStemmer
 
 
 def tokenize_into_sentences(document: str) -> List[str]:
@@ -57,6 +58,8 @@ def preprocess(
     lowercase: bool = True,
     strip: bool = True,
     remove_whitespaces: bool = True,
+    lemmatize: bool = False,
+    stem: bool = False,
 ) -> List[str]:
     """
     Preprocess a list of sentences for word embedding.
@@ -69,15 +72,24 @@ def preprocess(
         lowercase: whether to lower the case
         strip: whether to strip
         remove_whitespaces: whether to remove superfluous whitespaceing by " ".join(str.split(())
+        lemmatize: whether to lemmatize using nltk.WordNetLemmatizer
+        stem: whether to stem using nltk.SnowballStemmer("english", ignore_stopwords=True)
     Returns:
         Processed list of sentences
 
     Examples:
         >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'])
         ['return the factorial of n an exact integer']
+        >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'], lemmatize=True)
+        ['return the factorial of n an exact integer']
+        >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'], stem=True)
+        ['return the factori of n an exact integ']
+        
         >>> preprocess(['A1b c\\n\\nde \\t fg\\rkl\\r\\n m+n'])
         ['ab c de fg kl mn']
     """
+    if lemmatize is True and stem is True:
+        raise ValueError("lemmatize and stemming cannot be both True")
     # remove chars
     if remove_punctuation is True:
         remove_chars += string.punctuation
@@ -93,4 +105,21 @@ def preprocess(
         sentences = [sent.strip() for sent in sentences]
     if remove_whitespaces:
         sentences = [" ".join(sent.split()) for sent in sentences]
+
+    if lemmatize:
+        wnl = WordNetLemmatizer()
+        f_lemmatize = wnl.lemmatize
+
+        sentences = [
+            " ".join([f_lemmatize(word) for word in sent.split()]) for sent in sentences
+        ]
+
+    if stem:
+        stemmer = SnowballStemmer("english", ignore_stopwords=True)
+        f_stem = stemmer.stem
+
+        sentences = [
+            " ".join([f_stem(word) for word in sent.split()]) for sent in sentences
+        ]
+
     return sentences
