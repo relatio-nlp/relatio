@@ -6,8 +6,8 @@ dependencies:
   - python=3.7
   - jupyter
   - nbconvert
+  - pandas
   - nltk
-  - cython
   - gensim
   - scikit-learn
   - pytest
@@ -16,3 +16,4 @@ dependencies:
   - pip
   - pip:
       - allennlp
+      - tensorflow-hub

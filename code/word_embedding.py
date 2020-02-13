@@ -1,6 +1,7 @@
 from typing import List, Union, Dict
 
 import numpy as np
+import tensorflow_hub as hub
 
 from gensim.models import KeyedVectors, Word2Vec
 
@@ -25,7 +26,8 @@ def run_word2vec(
     return model
 
 
-def sif_vectors_for_roles(
+def compute_sif_vectors(
+    # TODO Refactor (weights, etc)
     model: Union[str, Word2Vec],
     roles: List[List[Dict[str, List]]],
     alpha: float = 0.001,
@@ -37,6 +39,7 @@ def sif_vectors_for_roles(
     else:
         raise TypeError("model is either the a string or an Word2Vec object")
 
+    # TODO : Load just the  KeyedVectors
     # Create a word count dictionary based on the trained model
     word_count_dict = {}
     for word, vocab_obj in model.wv.vocab.items():
@@ -69,4 +72,26 @@ def sif_vectors_for_roles(
             sentence_role_vector_list.append(vector_dict)
         senteces_role_vector.append(sentence_role_vector_list)
 
+    return senteces_role_vector
+
+
+def compute_USE_vectors(
+    USE_path: str, roles: List[List[Dict[str, List]]]
+) -> List[List[Dict[str, np.ndarray]]]:
+    embed = hub.load(USE_path)
+
+    def encode_roles_USE(statement: Dict[str, List]) -> Dict[str, np.ndarray]:
+        nonlocal embed
+        vector_dict = {}
+        for role, content in statement.items():
+            if role != "B-ARGM-NEG":
+                vector_dict[role] = (embed([" ".join(content)]))[0].numpy()
+        return vector_dict
+
+    senteces_role_vector = []
+    for sent in roles:
+        sentence_role_vector_list = []
+        for d in sent:
+            sentence_role_vector_list.append(encode_roles_USE(d))
+        senteces_role_vector.append(sentence_role_vector_list)
     return senteces_role_vector
