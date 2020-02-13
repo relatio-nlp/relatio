@@ -1,3 +1,4 @@
+from copy import deepcopy
 import json
 from typing import List, Union, Dict, Any
 
@@ -30,6 +31,7 @@ def extract_roles(
 
 
 def extract_role_per_sentence(sentence_dict, modals=True):
+    # TODO Refactor
     word_list = sentence_dict["words"]
     sentence_role_list = []
     for statement_dict in sentence_dict["verbs"]:
@@ -75,15 +77,16 @@ def extract_role_per_sentence(sentence_dict, modals=True):
 
 
 def postprocess_roles(roles: List[List[Dict[str, List]]]):
+    roles_copy = deepcopy(roles)
     for i, sent in enumerate(roles):
         for j, statement in enumerate(sent):
             for role, tokens in roles[i][j].items():
                 if isinstance(tokens, list):
-                    roles[i][j][role] = [
+                    roles_copy[i][j][role] = [
                         preprocess([" ".join(tokens)], lemmatize=True)[0].split()
                     ][0]
                 elif isinstance(tokens, bool):
                     pass
                 else:
                     raise ValueError(f"{tokens}")
-    return roles
+    return roles_copy
