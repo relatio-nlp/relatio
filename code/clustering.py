@@ -1,10 +1,10 @@
-import itertools
 import random
-from typing import List, Dict
+from typing import List, Dict, Union, Any
 
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
+from gensim.models import KeyedVectors, Word2Vec
 
 
 def assign_cluster(centroids, points):
@@ -26,12 +26,12 @@ def assign_cluster(centroids, points):
 def compute_kmeans_clusters(
     vectors: List[List[Dict[str, np.ndarray]]],
     size_sample: float,
-    num_clusters: int,
+    roles_num_clusters: Dict["str", int],
     roles: List[str] = ["ARGO", "B-V"],
     seed: int = 1234,
 ):
     if size_sample < 0 or size_sample > 1:
-        raise ValueError("size_sample should be beteen 0 and 1")
+        raise ValueError("size_sample should be between 0 and 1")
 
     kmeans_dict = {}
     for role in roles:
@@ -54,7 +54,9 @@ def compute_kmeans_clusters(
 
         A = pd.DataFrame.from_dict(sample, orient="index")
 
-        kmeans_output_dict["kmeans"] = KMeans(n_clusters=num_clusters).fit(A)
+        kmeans_output_dict["kmeans"] = KMeans(n_clusters=roles_num_clusters[role]).fit(
+            A
+        )
         kmeans_output_dict["centroids"] = kmeans_output_dict[
             "kmeans"
         ].cluster_centers_.astype(np.float32)
@@ -77,4 +79,30 @@ def compute_kmeans_clusters(
             sentence_list = [{}]
         lst.append(sentence_list)
 
-    return lst
+    return kmeans_dict, lst
+
+
+def compute_cluster_labels(
+    model: Union[str, Word2Vec], kmeans_dict: Dict[str, Dict[str, Any]], topn: int = 1
+):
+    if isinstance(model, str):
+        model = Word2Vec.load(model)
+    elif isinstance(model, str):
+        pass
+    else:
+        raise TypeError("model is either the a string or an Word2Vec object")
+    res = {}
+    for role, kmeans_output_dict in kmeans_dict.items():
+        kmeans = kmeans_output_dict["kmeans"]
+        centroids = kmeans_output_dict["centroids"]
+        labels = {}
+        num_clusters = len(set(kmeans.labels_))
+        for num_cluster in range(num_clusters):
+            top_closest_words = model.wv.most_similar(
+                positive=[centroids[num_cluster]], topn=topn
+            )
+            top_closest_words = [word[0] for word in top_closest_words]
+            top_closest_words = ", ".join(top_closest_words)
+            labels[num_cluster] = top_closest_words
+        res[role] = labels
+    return res
