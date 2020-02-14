@@ -5,13 +5,22 @@ channels:
 dependencies:
   - python=3.7
   - jupyter
+  - cytoolz
   - nbconvert
   - pandas
   - nltk
   - gensim
   - scikit-learn
-  - pytest
   - black
+  - line_profiler
+  - memory_profiler
+  - psutil
+  - pytest
+  - mypy
+  - bandit
+  - pylint
+  - flake8
+  - pydocstyle
   - pytorch # pytorch is needed by allennlp and from pip not working on macOS
   - pip
   - pip:
