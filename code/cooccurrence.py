@@ -19,8 +19,8 @@ def vectors_as_tuples(vectors: List[List[Dict[str, Any]]], used_roles: UsedRoles
     df_ = df_.dropna()
     # SET ALL TO INTEGER!!!
     tuples = list(df_.itertuples(index=False, name=None))
-    # Group verb and negation into one tuple
-    if "B-ARGM-NEG" or "B-ARGM-NEG" in subset:
+    # Group verb and negation or modals into one tuple
+    if "B-ARGM-MOD" in subset or "B-ARGM-NEG" in subset:
         BV_index = subset.index("B-V")
         tuples = [tup[:BV_index] + (tup[BV_index:],) for tup in tuples]
     return tuples
