@@ -153,6 +153,9 @@ class UsedRoles:
     {'ARGO': True, 'ARG1': True, 'ARG2': True, 'B-V': True, 'B-ARGM-MOD': True, 'B-ARGM-NEG': True}
     """
 
+    # The order of roles is critical in other modules.
+    # In cooccurrence the B-V is grouped with B-... and all roles before B-V
+    # should be clustered in word embedding
     _roles = {
         "ARGO": True,
         "ARG1": True,
@@ -206,9 +209,8 @@ class UsedRoles:
     def values(self):
         return self._roles.values()
 
-    def update(self, roles: Dict[str, bool] = None):
+    def update(self, roles: Dict[str, bool]):
         for key, value in roles.items():
             self._check_key(key)
             self._check_value(key, value)
             self._roles[key] = value
-
