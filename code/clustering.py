@@ -1,10 +1,10 @@
 import random
 from typing import List, Dict, Union, Any
 
+from gensim.models import Word2Vec
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
-from gensim.models import KeyedVectors, Word2Vec
 
 
 def assign_cluster(centroids, points):

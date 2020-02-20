@@ -25,4 +25,5 @@ dependencies:
   - pip
   - pip:
       - allennlp
+      - tensorflow
       - tensorflow-hub

@@ -1,10 +1,10 @@
 import re
 import string
-from typing import List
+from typing import List, Optional, Dict
 
-from nltk.tokenize import sent_tokenize
-from nltk.stem import WordNetLemmatizer, SnowballStemmer
 from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer, SnowballStemmer
+from nltk.tokenize import sent_tokenize
 
 
 def tokenize_into_sentences(document: str) -> List[str]:
@@ -136,3 +136,76 @@ def preprocess(
     # TODO input singledispatch
 
     return sentences
+
+
+class UsedRoles:
+    """
+    A dict like class for used roles.
+    
+    The class has predefined keys and one cannot delete nor add new keys.
+    
+    Example:
+    >>> used_roles = UsedRoles(); used_roles
+    {'ARGO': True, 'ARG1': True, 'ARG2': False, 'B-V': True, 'B-ARGM-MOD': True, 'B-ARGM-NEG': True}
+    >>> used_roles = UsedRoles(); used_roles["ARG2"]
+    False
+    >>> used_roles = UsedRoles(); used_roles["ARG2"] = True; used_roles
+    {'ARGO': True, 'ARG1': True, 'ARG2': True, 'B-V': True, 'B-ARGM-MOD': True, 'B-ARGM-NEG': True}
+    """
+
+    _roles = {
+        "ARGO": True,
+        "ARG1": True,
+        "ARG2": False,
+        "B-V": True,
+        "B-ARGM-MOD": True,
+        "B-ARGM-NEG": True,
+    }
+
+    def __init(self, roles: Optional[Dict[str, bool]] = None):
+        if not roles:
+            self.update(roles)
+
+    def _check_key(self, key):
+        if key not in self._roles.keys():
+            raise ValueError(
+                f"role_name {key} not in allowed set {self._roles.keys()}."
+            )
+
+    def _check_value(self, key, value):
+        if not isinstance(value, bool):
+            raise ValueError(
+                f"role[{key}]={value} where type({value})={type(value)} but only boolean values allowed."
+            )
+
+    def __repr__(self):
+        return self._roles.__repr__()
+
+    def __setitem__(self, role_name: str, value: bool):
+        role = {role_name: value}
+        self.update(role)
+
+    def __getitem__(self, role_name):
+        return self._roles[role_name]
+
+    def __len__(self):
+        return len(self._roles)
+
+    def __iter__(self):
+        return iter(self._roles)
+
+    def items(self):
+        return self._roles.items()
+
+    def keys(self):
+        return self._roles.keys()
+
+    def values(self):
+        return self._roles.values()
+
+    def update(self, roles: Dict[str, bool] = None):
+        for key, value in roles.items():
+            self._check_key(key)
+            self._check_value(key, value)
+            self._roles[key] = value
+
