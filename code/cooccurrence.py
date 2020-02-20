@@ -20,7 +20,7 @@ def vectors_as_tuples(vectors: List[List[Dict[str, Any]]], used_roles: UsedRoles
 
     # Set to integer
     BV_index = subset.index("B-V")
-    df.iloc[:, :BV_index] = df.iloc[:, 0:BV_index].astype("Int64")
+    df.iloc[:, :BV_index] = df.iloc[:, :BV_index].astype("Int64")
 
     tuples = list(df.itertuples(index=False, name=None))
     # Group verb and negation or modals into one tuple
