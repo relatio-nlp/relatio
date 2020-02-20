@@ -39,7 +39,7 @@ def unique_counts(tuples: List[Tuple[Any]]) -> Dict[Tuple[Any], int]:
     {}
     >>> unique_counts([(),()])
     {(): 2}
-    >>> unique_counts(((1,None),(1,None),(1,2)))
+    >>> unique_counts([(1,None),(1,None),(1,2)])
     {(1, None): 2, (1, 2): 1}
     """
     res = dict(Counter(tuples))
