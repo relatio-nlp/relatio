@@ -162,8 +162,8 @@ class UsedRoles:
         "B-ARGM-NEG": True,
     }
 
-    def __init(self, roles: Optional[Dict[str, bool]] = None):
-        if not roles:
+    def __init__(self, roles: Optional[Dict[str, bool]] = None):
+        if roles is not None:
             self.update(roles)
 
     def _check_key(self, key):
@@ -179,7 +179,10 @@ class UsedRoles:
             )
 
     def __repr__(self):
-        return self._roles.__repr__()
+        return repr(self._roles)
+
+    def __str__(self):
+        return str(self._roles)
 
     def __setitem__(self, role_name: str, value: bool):
         role = {role_name: value}

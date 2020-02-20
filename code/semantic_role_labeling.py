@@ -6,15 +6,6 @@ from allennlp.predictors.predictor import Predictor
 
 from utils import preprocess
 
-USED_ROLES = {
-    "ARGO": True,
-    "ARG1": True,
-    "ARG2": False,
-    "B-V": True,
-    "B-ARGM-MOD": False,
-    "B-ARGM-NEG": False,
-}
-
 
 def run_srl(
     sentences: List[str], predictor_path: str, save_path: Union[None, str] = None

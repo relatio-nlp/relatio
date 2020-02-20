@@ -1,6 +1,6 @@
 from collections import Counter
 import itertools
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -8,9 +8,7 @@ import pandas as pd
 from utils import UsedRoles
 
 
-def vectors_as_tuples(
-    vectors: List[List[Dict[str, np.ndarray]]], used_roles: UsedRoles
-):
+def vectors_as_tuples(vectors: List[List[Dict[str, Any]]], used_roles: UsedRoles):
     # Chain list of lists to get only list of dicts
     list_of_all_dicts = list(itertools.chain.from_iterable(vectors))
 
@@ -66,9 +64,16 @@ def unique_tuple_values_counts(input: List[Tuple[Any]]) -> List[Dict[Any, int]]:
 
 
 def compute_pmi(
-    vectors: List[List[Dict[str, np.ndarray]]], used_roles: UsedRoles
+    vectors_or_tuples: List[Union[List[Dict[str, Any]], Tuple[Any]]],
+    used_roles: Optional[UsedRoles] = None,
 ) -> Dict[Tuple[Any], float]:
-    tuples = vectors_as_tuples(vectors, used_roles)
+    if not vectors_or_tuples:
+        return {}
+    if isinstance(vectors_or_tuples[0], list):
+        assert isinstance(used_roles, UsedRoles)
+        tuples = vectors_as_tuples(vectors_or_tuples, used_roles)
+    else:
+        tuples = vectors_or_tuples
     counts_narratives = unique_counts(tuples)
     counts_individual = unique_tuple_values_counts(tuples)
 
