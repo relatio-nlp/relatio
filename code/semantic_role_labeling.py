@@ -1,6 +1,6 @@
 from copy import deepcopy
 import json
-from typing import List, Union, Dict, Any
+from typing import List, Union, Dict, Any, Tuple
 
 from allennlp.predictors.predictor import Predictor
 
@@ -22,16 +22,22 @@ def run_srl(
 
 
 def extract_roles(
-    srl: List[Dict[str, Any]], modals=True, negation=False
-) -> List[List[Dict[str, List]]]:
-    sentences_role_list = []
-    for sentence_dict in srl:
-        sentences_role_list.append(extract_role_per_sentence(sentence_dict, modals))
-    return sentences_role_list
+    srl: List[Dict[str, Any]], modals=True
+) -> Tuple[List[Dict[str, List]], List[int]]:
+    # TODO use UsedRoles instead of modals
+    statements_role_list: List[Dict[str, List]] = []
+    sentence_index: List[int] = []
+    for i, sentence_dict in enumerate(srl):
+        role_per_sentence = extract_role_per_sentence(sentence_dict, modals)
+        sentence_index.extend([i] * len(role_per_sentence))
+        statements_role_list.extend(role_per_sentence)
+    return statements_role_list, sentence_index
 
 
 def extract_role_per_sentence(sentence_dict, modals=True):
     # TODO Refactor
+    # TODO use UsedRoles instead of modals
+
     word_list = sentence_dict["words"]
     sentence_role_list = []
     for statement_dict in sentence_dict["verbs"]:
@@ -76,17 +82,18 @@ def extract_role_per_sentence(sentence_dict, modals=True):
     return sentence_role_list
 
 
-def postprocess_roles(roles: List[List[Dict[str, List]]]):
-    roles_copy = deepcopy(roles)
-    for i, sent in enumerate(roles):
-        for j, statement in enumerate(sent):
-            for role, tokens in roles[i][j].items():
-                if isinstance(tokens, list):
-                    roles_copy[i][j][role] = [
-                        preprocess([" ".join(tokens)], lemmatize=True)[0].split()
-                    ][0]
-                elif isinstance(tokens, bool):
-                    pass
+def postprocess_roles(statements: List[Dict[str, List]]) -> List[Dict[str, List]]:
+    roles_copy = deepcopy(statements)
+    for i, statement in enumerate(statements):
+        for role, tokens in statements[i].items():
+            if isinstance(tokens, list):
+                res = [preprocess([" ".join(tokens)], lemmatize=True)[0].split()][0]
+                if res:
+                    roles_copy[i][role] = res
                 else:
-                    raise ValueError(f"{tokens}")
+                    del roles_copy[i][role]
+            elif isinstance(tokens, bool):
+                pass
+            else:
+                raise ValueError(f"{tokens}")
     return roles_copy
