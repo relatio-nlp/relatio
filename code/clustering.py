@@ -24,9 +24,10 @@ def assign_cluster(centroids, points):
 
 
 def compute_kmeans_clusters(
-    vectors: List[List[Dict[str, np.ndarray]]],
-    size_sample: float,
-    roles_num_clusters: Dict["str", int],
+    clustering,
+    vectors: List[Dict[str, np.ndarray]],
+    sample_size: float,
+    role_n_clusters: Dict["str", int],
     roles: List[str] = ["ARGO", "B-V"],
     seed: int = 1234,
 ):

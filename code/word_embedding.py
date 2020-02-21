@@ -1,9 +1,11 @@
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Any, Optional, Callable, Tuple
 
 import numpy as np
 import tensorflow_hub as hub
 
 from gensim.models import KeyedVectors, Word2Vec
+
+from utils import UsedRoles
 
 
 def run_word2vec(
@@ -26,72 +28,66 @@ def run_word2vec(
     return model
 
 
-def compute_sif_vectors(
+def encode_role_sif(
+    model: Word2Vec, tokens: List[str], sif_dict: Dict[str, int]
+) -> np.ndarray:
+    return np.mean([sif_dict[token] * model.wv[token] for token in tokens], axis=0)
+
+
+def encode_role_USE(embed: Any, tokens: List[str]) -> np.ndarray:
+    return (embed([" ".join(tokens)]))[0].numpy()
+
+
+def compute_embedding(
     # TODO Refactor (weights, etc)
-    model: Union[str, Word2Vec],
-    roles: List[List[Dict[str, List]]],
-    alpha: float = 0.001,
-) -> List[List[Dict[str, np.ndarray]]]:
-    if isinstance(model, str):
-        model = Word2Vec.load(model)
-    elif isinstance(model, str):
-        pass
-    else:
-        raise TypeError("model is either the a string or an Word2Vec object")
+    model: Union[Callable, Word2Vec],
+    statements: List[Dict[str, List]],
+    used_roles: UsedRoles,
+    alpha: Optional[float] = 0.001,
+) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray], Dict[str, int]]:
+    if isinstance(model, Word2Vec):
+        # TODO : Load just the  KeyedVectors
+        # Create a word count dictionary based on the trained model
+        word_count_dict = {}
+        for word, vocab_obj in model.wv.vocab.items():
+            word_count_dict[word] = vocab_obj.count
 
-    # TODO : Load just the  KeyedVectors
-    # Create a word count dictionary based on the trained model
-    word_count_dict = {}
-    for word, vocab_obj in model.wv.vocab.items():
-        word_count_dict[word] = vocab_obj.count
+        # Create a dictionary that maps from a word to its frequency and then use the frequency of
+        # a word to compute its sif-weight (saved in sif_dict)
+        sif_dict = {}
+        for word, count in word_count_dict.items():
+            sif_dict[word] = alpha / (alpha + count)
+        compute_role_embedding = encode_role_sif
+        kwargs = {"sif_dict": sif_dict}
+    elif callable(model):
+        compute_role_embedding = encode_role_USE
+        kwargs = {}
 
-    # Create a dictionary that maps from a word to its frequency and then use the frequency of
-    # a word to compute its sif-weight (saved in sif_dict)
-    sif_dict = {}
-    for word, count in word_count_dict.items():
-        sif_dict[word] = alpha / (alpha + count)
+    role_names = []
+    for el in used_roles.keys():
+        if used_roles[el] and (el not in ["B-ARGM-NEG", "B-ARGM-MOD"]):
+            role_names.append(el)
+    statements_index = {el: [] for el in role_names}
+    roles_vectors = {el: [] for el in role_names}
+    not_found_index = {el: [] for el in role_names}
 
-    def get_sif_vector(token_list: List[str]):
-        nonlocal sif_dict
-        nonlocal model
-        sif_vec = np.mean(
-            [sif_dict[one_token] * model.wv[one_token] for one_token in token_list],
-            axis=0,
-        )
-        return sif_vec
+    for i, statement in enumerate(statements):
+        for role_name, tokens in statement.items():
+            if (role_name in role_names) and (
+                role_name not in ["B-ARGM-NEG", "B-ARGM-MOD"]
+            ):
+                _bool = True
+                if isinstance(model, Word2Vec):
+                    if any(token not in sif_dict for token in tokens):
+                        not_found_index[role_name].append(i)
+                        _bool = False
+                if _bool:
+                    statements_index[role_name].append(i)
+                    roles_vectors[role_name].append(
+                        compute_role_embedding(model, tokens, **kwargs)
+                    )
 
-    senteces_role_vector = []
-    for sent in roles:
-        sentence_role_vector_list = []
-        for d in sent:
-            vector_dict = {}
-            for role, tokens in d.items():
-                if role != "B-ARGM-NEG":
-                    sif_vec_tokens = get_sif_vector(tokens)
-                    vector_dict[role] = sif_vec_tokens
-            sentence_role_vector_list.append(vector_dict)
-        senteces_role_vector.append(sentence_role_vector_list)
-
-    return senteces_role_vector
-
-
-def compute_USE_vectors(
-    USE_path: str, roles: List[List[Dict[str, List]]]
-) -> List[List[Dict[str, np.ndarray]]]:
-    embed = hub.load(USE_path)
-
-    def encode_roles_USE(statement: Dict[str, List]) -> Dict[str, np.ndarray]:
-        nonlocal embed
-        vector_dict = {}
-        for role, content in statement.items():
-            if role != "B-ARGM-NEG":
-                vector_dict[role] = (embed([" ".join(content)]))[0].numpy()
-        return vector_dict
-
-    senteces_role_vector = []
-    for sent in roles:
-        sentence_role_vector_list = []
-        for d in sent:
-            sentence_role_vector_list.append(encode_roles_USE(d))
-        senteces_role_vector.append(sentence_role_vector_list)
-    return senteces_role_vector
+    for role_name in role_names:
+        roles_vectors[role_name] = np.asarray(roles_vectors[role_name])
+        statements_index[role_name] = np.asarray(statements_index[role_name])
+    return roles_vectors, statements_index, not_found_index
