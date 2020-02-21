@@ -56,7 +56,7 @@ def preprocess(
     remove_punctuation: bool = True,
     remove_digits: bool = True,
     remove_chars: str = "",
-    remove_stop_words: bool = True,
+    remove_stop_words: bool = False,
     lowercase: bool = True,
     strip: bool = True,
     remove_whitespaces: bool = True,
