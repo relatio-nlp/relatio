@@ -69,25 +69,26 @@ def compute_embedding(
             role_names.append(el)
     statements_index = {el: [] for el in role_names}
     roles_vectors = {el: [] for el in role_names}
-    not_found_index = {el: [] for el in role_names}
+    not_found_or_empty_index = {el: [] for el in role_names}
 
     for i, statement in enumerate(statements):
         for role_name, tokens in statement.items():
             if (role_name in role_names) and (
                 role_name not in ["B-ARGM-NEG", "B-ARGM-MOD"]
             ):
-                _bool = True
                 if isinstance(model, Word2Vec):
+                    if not tokens:
+                        not_found_or_empty_index[role_name].append(i)
+                        continue
                     if any(token not in sif_dict for token in tokens):
-                        not_found_index[role_name].append(i)
-                        _bool = False
-                if _bool:
-                    statements_index[role_name].append(i)
-                    roles_vectors[role_name].append(
-                        compute_role_embedding(model, tokens, **kwargs)
-                    )
+                        not_found_or_empty_index[role_name].append(i)
+                        continue
+                statements_index[role_name].append(i)
+                roles_vectors[role_name].append(
+                    compute_role_embedding(model, tokens, **kwargs)
+                )
 
     for role_name in role_names:
         roles_vectors[role_name] = np.asarray(roles_vectors[role_name])
         statements_index[role_name] = np.asarray(statements_index[role_name])
-    return roles_vectors, statements_index, not_found_index
+    return roles_vectors, statements_index, not_found_or_empty_index

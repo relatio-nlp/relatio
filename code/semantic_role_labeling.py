@@ -88,10 +88,7 @@ def postprocess_roles(statements: List[Dict[str, List]]) -> List[Dict[str, List]
         for role, tokens in statements[i].items():
             if isinstance(tokens, list):
                 res = [preprocess([" ".join(tokens)], lemmatize=True)[0].split()][0]
-                if res:
-                    roles_copy[i][role] = res
-                else:
-                    del roles_copy[i][role]
+                roles_copy[i][role] = res
             elif isinstance(tokens, bool):
                 pass
             else:
