@@ -6,6 +6,7 @@ import tensorflow_hub as hub
 from gensim.models import KeyedVectors, Word2Vec
 
 from utils import UsedRoles
+from numpy.linalg import norm
 
 
 def run_word2vec(
@@ -31,7 +32,9 @@ def run_word2vec(
 def encode_role_sif(
     model: Word2Vec, tokens: List[str], sif_dict: Dict[str, int]
 ) -> np.ndarray:
-    return np.mean([sif_dict[token] * model.wv[token] for token in tokens], axis=0)
+    res = np.mean([sif_dict[token] * model.wv[token] for token in tokens], axis=0)
+    res = res / norm(res)  # normalise
+    return res
 
 
 def encode_role_USE(embed: Any, tokens: List[str]) -> np.ndarray:
@@ -63,19 +66,15 @@ def compute_embedding(
         compute_role_embedding = encode_role_USE
         kwargs = {}
 
-    role_names = []
-    for el in used_roles.keys():
-        if used_roles[el] and (el not in ["B-ARGM-NEG", "B-ARGM-MOD"]):
-            role_names.append(el)
-    statements_index = {el: [] for el in role_names}
-    roles_vectors = {el: [] for el in role_names}
-    not_found_or_empty_index = {el: [] for el in role_names}
+    embed_roles = used_roles.embeddable
+    not_embed_roles = used_roles.not_embeddable
+    statements_index = {el: [] for el in embed_roles}
+    roles_vectors = {el: [] for el in embed_roles}
+    not_found_or_empty_index = {el: [] for el in embed_roles}
 
     for i, statement in enumerate(statements):
         for role_name, tokens in statement.items():
-            if (role_name in role_names) and (
-                role_name not in ["B-ARGM-NEG", "B-ARGM-MOD"]
-            ):
+            if (role_name in embed_roles) and (role_name not in not_embed_roles):
                 if isinstance(model, Word2Vec):
                     if not tokens:
                         not_found_or_empty_index[role_name].append(i)
@@ -88,7 +87,7 @@ def compute_embedding(
                     compute_role_embedding(model, tokens, **kwargs)
                 )
 
-    for role_name in role_names:
+    for role_name in embed_roles:
         roles_vectors[role_name] = np.asarray(roles_vectors[role_name])
         statements_index[role_name] = np.asarray(statements_index[role_name])
     return roles_vectors, statements_index, not_found_or_empty_index

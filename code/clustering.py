@@ -5,6 +5,57 @@ from gensim.models import Word2Vec
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
+from sklearn.base import clone
+from sklearn.model_selection import train_test_split
+
+from utils import UsedRoles
+
+
+class Clustering:
+    def __init__(
+        self,
+        cluster,
+        n_clusters,
+        vectors,
+        used_roles: UsedRoles,
+        sample_size=1,
+        seed=123,
+    ):
+        self._used_roles = used_roles
+        self._embed_roles = used_roles.embeddable
+        if not isinstance(cluster, dict):
+            self._cluster = {el: clone(cluster) for el in self._embed_roles}
+        else:
+            self.cluster = cluster
+        if not isinstance(n_clusters, dict):
+            self._n_clusters = {el: n_clusters for el in self._embed_roles}
+        else:
+            self._n_clusters = n_clusters
+
+        if not isinstance(sample_size, dict):
+            self._sample_size = {el: sample_size for el in self._embed_roles}
+        else:
+            self._sample_size = sample_size
+
+        self._X = {}
+        for el in self._used_roles:
+            self._cluster[el].n_clusters = self._n_clusters[el]
+            if self._sample_size[el] == 1:
+                self._X[el] = vectors[el]
+            else:
+                size_v = vectors[el].shape[0]
+                idx = np.random.randint(size_v, int(size_v * self._sample_size[el]))
+                self._X[el] = vectors[el][idx]
+
+    def fit(self):
+        for el in self._used_roles:
+            self._cluster[el] = self._cluster[el].fit(self._X[el])
+
+    def predict(self, X):
+        res = {}
+        for el in self._used_roles:
+            res[el] = self._cluster[el].predict(X[el])
+        return res
 
 
 def assign_cluster(centroids, points):
