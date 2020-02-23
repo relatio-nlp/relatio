@@ -13,7 +13,7 @@ class USE:
     def __init__(self, path: str):
         self._embed = hub.load(path)
 
-    def __call__(self, text: str):
+    def __call__(self, text: List[str]) -> np.ndarray:
         return self._embed(text).numpy()
 
 
@@ -38,10 +38,11 @@ def run_word2vec(
 
 
 def encode_role_sif(
-    model: Word2Vec, tokens: List[str], sif_dict: Dict[str, int]
+    model: Word2Vec, tokens: List[str], sif_dict: Dict[str, int], normalize: bool = True
 ) -> np.ndarray:
     res = np.mean([sif_dict[token] * model.wv[token] for token in tokens], axis=0)
-    res = res / norm(res)  # normalise
+    if normalize:
+        res = res / norm(res)  # normalise
     return res
 
 
@@ -55,7 +56,9 @@ def compute_embedding(
     statements: List[Dict[str, List]],
     used_roles: UsedRoles,
     alpha: Optional[float] = 0.001,
+    normalize: bool = True,
 ) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray], Dict[str, int]]:
+    # normalize is applied only to Word2Vec
     if isinstance(model, Word2Vec):
         # TODO : Load just the  KeyedVectors
         # Create a word count dictionary based on the trained model
@@ -69,7 +72,7 @@ def compute_embedding(
         for word, count in word_count_dict.items():
             sif_dict[word] = alpha / (alpha + count)
         compute_role_embedding = encode_role_sif
-        kwargs = {"sif_dict": sif_dict}
+        kwargs = {"sif_dict": sif_dict, "normalize": normalize}
     elif isinstance(model, USE):
         compute_role_embedding = encode_role_USE
         kwargs = {}
