@@ -9,6 +9,14 @@ from utils import UsedRoles
 from numpy.linalg import norm
 
 
+class USE:
+    def __init__(self, path: str):
+        self._embed = hub.load(path)
+
+    def __call__(self, text: str):
+        return self._embed(text).numpy()
+
+
 def run_word2vec(
     sentences: List[str],
     model: Word2Vec,
@@ -37,13 +45,13 @@ def encode_role_sif(
     return res
 
 
-def encode_role_USE(embed: Any, tokens: List[str]) -> np.ndarray:
-    return (embed([" ".join(tokens)]))[0].numpy()
+def encode_role_USE(use: USE, tokens: List[str]) -> np.ndarray:
+    return (use([" ".join(tokens)]))[0]
 
 
 def compute_embedding(
     # TODO Refactor (weights, etc)
-    model: Union[Callable, Word2Vec],
+    model: Union[USE, Word2Vec],
     statements: List[Dict[str, List]],
     used_roles: UsedRoles,
     alpha: Optional[float] = 0.001,
@@ -62,9 +70,11 @@ def compute_embedding(
             sif_dict[word] = alpha / (alpha + count)
         compute_role_embedding = encode_role_sif
         kwargs = {"sif_dict": sif_dict}
-    elif callable(model):
+    elif isinstance(model, USE):
         compute_role_embedding = encode_role_USE
         kwargs = {}
+    else:
+        raise TypeError("Union[USE, Word2Vec]")
 
     embed_roles = used_roles.embeddable
     not_embed_roles = used_roles.not_embeddable
