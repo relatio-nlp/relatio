@@ -96,6 +96,10 @@ def compute_embedding(
                 roles_vectors[role_name].append(model(tokens))
 
     for role_name in embed_roles:
-        roles_vectors[role_name] = np.asarray(roles_vectors[role_name])
-        statements_index[role_name] = np.asarray(statements_index[role_name])
+        roles_vectors[role_name] = np.asarray(
+            roles_vectors[role_name], dtype=np.float64
+        )
+        for el in [statements_index, not_found_or_empty_index]:
+            el[role_name] = np.asarray(el[role_name], dtype=np.uint32)
+
     return roles_vectors, statements_index, not_found_or_empty_index

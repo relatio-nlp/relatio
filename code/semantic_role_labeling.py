@@ -2,6 +2,7 @@ from copy import deepcopy
 from typing import List, Dict, Any, Tuple
 
 from allennlp.predictors.predictor import Predictor
+import numpy as np
 
 from utils import preprocess
 
@@ -26,7 +27,8 @@ def extract_roles(
         role_per_sentence = extract_role_per_sentence(sentence_dict, modals)
         sentence_index.extend([i] * len(role_per_sentence))
         statements_role_list.extend(role_per_sentence)
-    return statements_role_list, sentence_index
+
+    return statements_role_list, np.asarray(sentence_index, dtype=np.uint32)
 
 
 def extract_role_per_sentence(sentence_dict, modals=True):
