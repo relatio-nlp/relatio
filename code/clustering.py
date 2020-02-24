@@ -1,5 +1,5 @@
 import random
-from typing import List, Dict, Union, Any
+from typing import List, Dict, Union, Any, Optional
 
 from gensim.models import Word2Vec
 import numpy as np
@@ -12,16 +12,7 @@ from utils import UsedRoles
 
 
 class Clustering:
-    def __init__(
-        self,
-        cluster,
-        n_clusters,
-        vectors,
-        used_roles: UsedRoles,
-        sample_size=1,
-        seed=123,
-    ):
-        self._used_roles = used_roles
+    def __init__(self, cluster, n_clusters, used_roles: UsedRoles, seed=123):
         self._embed_roles = used_roles.embeddable
         if not isinstance(cluster, dict):
             self._cluster = {el: clone(cluster) for el in self._embed_roles}
@@ -32,30 +23,40 @@ class Clustering:
         else:
             self._n_clusters = n_clusters
 
+        for el in self._embed_roles:
+            self._cluster[el].n_clusters = self._n_clusters[el]
+
+    def fit(self, vectors, sample_size: Optional[int] = None):
         if not isinstance(sample_size, dict):
             self._sample_size = {el: sample_size for el in self._embed_roles}
         else:
             self._sample_size = sample_size
 
         self._X = {}
-        for el in self._used_roles:
-            self._cluster[el].n_clusters = self._n_clusters[el]
-            if self._sample_size[el] == 1:
+        for el in self._embed_roles:
+            if self._sample_size[el] is None:
                 self._X[el] = vectors[el]
             else:
                 size_v = vectors[el].shape[0]
                 idx = np.random.randint(size_v, int(size_v * self._sample_size[el]))
                 self._X[el] = vectors[el][idx]
 
-    def fit(self):
-        for el in self._used_roles:
             self._cluster[el] = self._cluster[el].fit(self._X[el])
 
     def predict(self, X):
         res = {}
-        for el in self._used_roles:
+        for el in self._embed_roles:
             res[el] = self._cluster[el].predict(X[el])
         return res
+
+    def normalise_centroids(self):
+        # TODO
+        pass
+
+    def compute_distance(self, distance, predicted, centroids_like):
+        # TODO
+        # for each predicted get the label and pick from centroids_like the one with the same label and apply distance
+        pass
 
 
 def assign_cluster(centroids, points):
