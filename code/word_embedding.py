@@ -1,4 +1,4 @@
-from typing import List, Union, Dict, Any, Optional, Tuple
+from typing import List, Union, Dict, Optional, Tuple
 
 import numpy as np
 import tensorflow_hub as hub

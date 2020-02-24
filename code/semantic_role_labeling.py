@@ -1,6 +1,5 @@
 from copy import deepcopy
-import json
-from typing import List, Union, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple
 
 from allennlp.predictors.predictor import Predictor
 

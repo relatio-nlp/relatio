@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.base import clone
-from sklearn.model_selection import train_test_split
 
 from utils import UsedRoles
 
@@ -43,10 +42,10 @@ class Clustering:
 
             self._cluster[el] = self._cluster[el].fit(self._X[el])
 
-    def predict(self, X):
+    def predict(self, vectors):
         res = {}
         for el in self._embed_roles:
-            res[el] = self._cluster[el].predict(X[el])
+            res[el] = self._cluster[el].predict(vectors[el])
         return res
 
     def normalise_centroids(self):
@@ -75,11 +74,14 @@ def assign_cluster(centroids, points):
     return assigned_cluster
 
 
+## OLD CODE
+
+
 def compute_kmeans_clusters(
     clustering,
     vectors: List[Dict[str, np.ndarray]],
-    sample_size: float,
-    role_n_clusters: Dict["str", int],
+    size_sample: float,
+    roles_num_clusters: Dict["str", int],
     roles: List[str] = ["ARGO", "B-V"],
     seed: int = 1234,
 ):
