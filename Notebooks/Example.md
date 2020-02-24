@@ -1,49 +1,99 @@
 ```python
 import sys
-
 sys.path.append("../code")
 ```
 
 
 ```python
-text = """Sub-module available for the above is sent_tokenize. 
+text = """Sub-module available for the above is sent_tokenize.
             An obvious question in your mind would be why sentence tokenization is needed when we have the option of word tokenization. 
             Imagine you need to count average words per sentence, how you will calculate? 
             For accomplishing such a task, you need both sentence tokenization as well as words to calculate the ratio. 
             Such output serves as an important feature for machine training as the answer would be numeric. 
             Check the below example to learn how sentence tokenization is different from words tokenization.
+            The taxes the President announced will not lower work incentives. Evrika!
             """
 ```
 
 
 ```python
-from gensim.models import KeyedVectors, Word2Vec
-
-from utils import tokenize_into_sentences, filter_sentences, preprocess
-from word_embedding import run_word2vec
-from semantic_role_labeling import run_srl
+from utils import tokenize_into_sentences, filter_sentences, preprocess, UsedRoles
+from word_embedding import run_word2vec, compute_embedding, USE, SIF_Word2Vec
+from semantic_role_labeling import SRL, extract_roles, postprocess_roles
+from clustering import Clustering
+from sklearn.cluster import KMeans
+from cooccurrence import build_df, subset_as_tuples, unique_counts, compute_pmi
 ```
 
 
 ```python
-help(tokenize_into_sentences)
+used_roles=UsedRoles()
+used_roles['ARG2']=True
+print(f"{used_roles.used}\n{used_roles.embeddable}\n{used_roles.not_embeddable}\n")
+```
+
+    ['ARGO', 'ARG1', 'ARG2', 'B-V', 'B-ARGM-MOD', 'B-ARGM-NEG']
+    ['ARGO', 'ARG1', 'ARG2', 'B-V']
+    ['B-ARGM-MOD', 'B-ARGM-NEG']
+    
+
+
+
+```python
+srl = SRL("./srl-model-2018.05.25.tar.gz")
+srl([" ".join(["What","are","you","doing"])])
+```
+
+
+
+
+    [{'verbs': [{'verb': 'are',
+        'description': 'What [V: are] [ARG1: you doing]',
+        'tags': ['O', 'B-V', 'B-ARG1', 'I-ARG1']},
+       {'verb': 'doing',
+        'description': '[ARG1: What] are [ARG0: you] [V: doing]',
+        'tags': ['B-ARG1', 'O', 'B-ARG0', 'B-V']}],
+      'words': ['What', 'are', 'you', 'doing']}]
+
+
+
+
+```python
+use = USE('./USE-4')
+use(["What","are","you","doing"]).shape
+```
+
+
+
+
+    (512,)
+
+
+
+
+```python
+sif_w2v = SIF_Word2Vec("./nytimes_word2vec.model")
+sif_w2v(["what","are","you","doing"]).shape
+```
+
+
+
+
+    (300,)
+
+
+
+
+```python
+kmeans=KMeans()
+```
+
+
+```python
 sentences = tokenize_into_sentences(text)
 sentences
 ```
 
-    Help on function tokenize_into_sentences in module utils:
-    
-    tokenize_into_sentences(document: str) -> List[str]
-        Split a document in sentences.
-        
-        Args:
-            document: The document
-        
-        Returns:
-            List of sentences
-    
-
-
 
 
 
@@ -52,38 +102,18 @@ sentences
      'Imagine you need to count average words per sentence, how you will calculate?',
      'For accomplishing such a task, you need both sentence tokenization as well as words to calculate the ratio.',
      'Such output serves as an important feature for machine training as the answer would be numeric.',
-     'Check the below example to learn how sentence tokenization is different from words tokenization.']
+     'Check the below example to learn how sentence tokenization is different from words tokenization.',
+     'The taxes the President announced will not lower work incentives.',
+     'Evrika!']
 
 
 
 
 ```python
-help(filter_sentences)
 sentences = filter_sentences(sentences, max_sentence_length=350)
 sentences
 ```
 
-    Help on function filter_sentences in module utils:
-    
-    filter_sentences(sentences: List[str], max_sentence_length: int = -1) -> List[str]
-        Filter list of sentences based on the number of characters length.
-        
-        Args:
-            max_sentence_length: Keep only sentences with a a number of character lower or equal to max_sentence_length. For max_sentence_length = -1 all sentences are kept.
-        
-        Returns:
-            Filtered list of sentences.
-        
-        Examples:
-            >>> filter_sentences(['This is a house'])
-            ['This is a house']
-            >>> filter_sentences(['This is a house'], max_sentence_length=15)
-            ['This is a house']
-            >>> filter_sentences(['This is a house'], max_sentence_length=14)
-            []
-    
-
-
 
 
 
@@ -92,180 +122,15 @@ sentences
      'Imagine you need to count average words per sentence, how you will calculate?',
      'For accomplishing such a task, you need both sentence tokenization as well as words to calculate the ratio.',
      'Such output serves as an important feature for machine training as the answer would be numeric.',
-     'Check the below example to learn how sentence tokenization is different from words tokenization.']
+     'Check the below example to learn how sentence tokenization is different from words tokenization.',
+     'The taxes the President announced will not lower work incentives.',
+     'Evrika!']
 
 
 
 
 ```python
-help(preprocess)
-sentences_for_w2v = preprocess(sentences)
-sentences_for_w2v
-```
-
-    Help on function preprocess in module utils:
-    
-    preprocess(sentences: List[str], remove_punctuation: bool = True, remove_digits: bool = True, remove_chars: str = '', lowercase: bool = True, strip: bool = True, remove_whitespaces: bool = True) -> List[str]
-        Preprocess a list of sentences for word embedding.
-        
-        Args:
-            sentence: list of sentences
-            remove_punctuation: whether to remove string.punctuation
-            remove_digits: whether to remove string.digits
-            remove_chars: remove the given characters
-            lowercase: whether to lower the case
-            strip: whether to strip
-            remove_whitespaces: whether to remove superfluous whitespaceing by " ".join(str.split(())
-        Returns:
-            Processed list of sentences
-        
-        Examples:
-            >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'])
-            ['return the factorial of n an exact integer']
-            >>> preprocess(['A1b c\n\nde \t fg\rkl\r\n m+n'])
-            ['ab c de fg kl mn']
-    
-
-
-
-
-
-    ['submodule available for the above is senttokenize',
-     'an obvious question in your mind would be why sentence tokenization is needed when we have the option of word tokenization',
-     'imagine you need to count average words per sentence how you will calculate',
-     'for accomplishing such a task you need both sentence tokenization as well as words to calculate the ratio',
-     'such output serves as an important feature for machine training as the answer would be numeric',
-     'check the below example to learn how sentence tokenization is different from words tokenization']
-
-
-
-
-```python
-help(run_word2vec)
-w2v_model = run_word2vec(
-    sentences=sentences_for_w2v,
-    model=Word2Vec(size=300, window=10, min_count=1, workers=1),
-    pretrained_path="glove_2_word2vec.6B.300d.txt",
-    save_path=None,
-)
-```
-
-    Help on function run_word2vec in module word_embedding:
-    
-    run_word2vec(sentences: List[str], model: gensim.models.word2vec.Word2Vec, pretrained_path: str, save_path: Union[NoneType, str] = None) -> gensim.models.word2vec.Word2Vec
-    
-
-
-
-```python
-for word, vocab_obj in w2v_model.wv.vocab.items():
-    print_bool=False
-    for sent in sentences_for_w2v:
-        if word in sent.split():
-            print_bool=True
-            break
-    if print_bool:
-        print(word,vocab_obj.count)
-```
-
-    submodule 2
-    available 2
-    for 4
-    the 6
-    above 2
-    is 4
-    senttokenize 1
-    an 3
-    obvious 2
-    question 2
-    in 2
-    your 2
-    mind 2
-    would 3
-    be 3
-    why 2
-    sentence 5
-    tokenization 6
-    needed 2
-    when 2
-    we 2
-    have 2
-    option 2
-    of 2
-    word 2
-    imagine 2
-    you 4
-    need 3
-    to 4
-    count 2
-    average 2
-    words 4
-    per 2
-    how 3
-    will 2
-    calculate 3
-    accomplishing 2
-    such 3
-    a 2
-    task 2
-    both 2
-    as 5
-    well 2
-    ratio 2
-    output 2
-    serves 2
-    important 2
-    feature 2
-    machine 2
-    training 2
-    answer 2
-    numeric 2
-    check 2
-    below 2
-    example 2
-    learn 2
-    different 2
-    from 2
-
-
-## Semantic Role Labeling
-### Warning
-Make sure that you have a `srl-model-2018.05.25.tar.gz` available at https://s3-us-west-2.amazonaws.com/allennlp/models/srl-model-2018.05.25.tar.gz
-
-
-
-```python
-sentences
-```
-
-
-
-
-    ['Sub-module available for the above is sent_tokenize.',
-     'An obvious question in your mind would be why sentence tokenization is needed when we have the option of word tokenization.',
-     'Imagine you need to count average words per sentence, how you will calculate?',
-     'For accomplishing such a task, you need both sentence tokenization as well as words to calculate the ratio.',
-     'Such output serves as an important feature for machine training as the answer would be numeric.',
-     'Check the below example to learn how sentence tokenization is different from words tokenization.']
-
-
-
-
-```python
-help(run_srl)
-srl_res = run_srl(
-    sentences=sentences, predictor_path="srl-model-2018.05.25.tar.gz", save_path=None
-)
-```
-
-    Help on function run_srl in module semantic_role_labeling:
-    
-    run_srl(sentences: List[str], predictor_path: str, save_path: Union[NoneType, str] = None) -> List[Dict[str, Any]]
-    
-
-
-
-```python
+srl_res = srl(sentences=sentences)
 srl_res
 ```
 
@@ -273,13 +138,13 @@ srl_res
 
 
     [{'verbs': [{'verb': 'is',
-        'description': 'Sub - module available for [ARG1: the above] [V: is] [ARG2: sent_tokenize] .',
+        'description': 'Sub - module [ARG1: available for the above] [V: is] [ARG2: sent_tokenize] .',
         'tags': ['O',
          'O',
          'O',
-         'O',
-         'O',
          'B-ARG1',
+         'I-ARG1',
+         'I-ARG1',
          'I-ARG1',
          'B-V',
          'B-ARG2',
@@ -454,7 +319,7 @@ srl_res
          'I-ARG1',
          'O']},
        {'verb': 'need',
-        'description': 'Imagine [ARG0: you] [V: need] [ARG1: to count average words per sentence , how you will calculate] ?',
+        'description': 'Imagine [ARG0: you] [V: need] [ARG1: to count average words per sentence] , how you will calculate ?',
         'tags': ['O',
          'B-ARG0',
          'B-V',
@@ -464,11 +329,11 @@ srl_res
          'I-ARG1',
          'I-ARG1',
          'I-ARG1',
-         'I-ARG1',
-         'I-ARG1',
-         'I-ARG1',
-         'I-ARG1',
-         'I-ARG1',
+         'O',
+         'O',
+         'O',
+         'O',
+         'O',
          'O']},
        {'verb': 'count',
         'description': 'Imagine [ARG0: you] need to [V: count] [ARG1: average words per sentence] , how you will calculate ?',
@@ -761,7 +626,635 @@ srl_res
        'from',
        'words',
        'tokenization',
-       '.']}]
+       '.']},
+     {'verbs': [{'verb': 'announced',
+        'description': '[ARG1: The taxes] [ARG0: the President] [V: announced] will not lower work incentives .',
+        'tags': ['B-ARG1',
+         'I-ARG1',
+         'B-ARG0',
+         'I-ARG0',
+         'B-V',
+         'O',
+         'O',
+         'O',
+         'O',
+         'O',
+         'O']},
+       {'verb': 'will',
+        'description': 'The taxes the President announced [V: will] not lower work incentives .',
+        'tags': ['O', 'O', 'O', 'O', 'O', 'B-V', 'O', 'O', 'O', 'O', 'O']},
+       {'verb': 'lower',
+        'description': '[ARG0: The taxes the President announced] [ARGM-MOD: will] [ARGM-NEG: not] [V: lower] [ARG1: work incentives] .',
+        'tags': ['B-ARG0',
+         'I-ARG0',
+         'I-ARG0',
+         'I-ARG0',
+         'I-ARG0',
+         'B-ARGM-MOD',
+         'B-ARGM-NEG',
+         'B-V',
+         'B-ARG1',
+         'I-ARG1',
+         'O']}],
+      'words': ['The',
+       'taxes',
+       'the',
+       'President',
+       'announced',
+       'will',
+       'not',
+       'lower',
+       'work',
+       'incentives',
+       '.']},
+     {'verbs': [], 'words': ['Evrika', '!']}]
+
+
+
+
+```python
+roles,sentence_index = extract_roles(srl_res)
+sentence_index
+```
+
+
+
+
+    [0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 5, 6, 6, 7]
+
+
+
+
+```python
+roles
+```
+
+
+
+
+    [{'ARG1': ['available', 'for', 'the', 'above'],
+      'ARG2': ['sent_tokenize'],
+      'B-V': ['is']},
+     {'B-ARGM-MOD': ['would'],
+      'ARG1': ['An', 'obvious', 'question', 'in', 'your', 'mind'],
+      'ARG2': ['why',
+       'sentence',
+       'tokenization',
+       'is',
+       'needed',
+       'when',
+       'we',
+       'have',
+       'the',
+       'option',
+       'of',
+       'word',
+       'tokenization'],
+      'B-V': ['be']},
+     {'ARG1': ['sentence', 'tokenization'], 'B-V': ['needed']},
+     {'ARGO': ['we'],
+      'ARG1': ['the', 'option', 'of', 'word', 'tokenization'],
+      'B-V': ['have']},
+     {'ARG1': ['you',
+       'need',
+       'to',
+       'count',
+       'average',
+       'words',
+       'per',
+       'sentence',
+       ',',
+       'how',
+       'you',
+       'will',
+       'calculate'],
+      'B-V': ['Imagine']},
+     {'ARGO': ['you'],
+      'ARG1': ['to', 'count', 'average', 'words', 'per', 'sentence'],
+      'B-V': ['need']},
+     {'ARGO': ['you'],
+      'ARG1': ['average', 'words', 'per', 'sentence'],
+      'B-V': ['count']},
+     {'B-ARGM-MOD': ['will'], 'ARGO': ['you'], 'B-V': ['calculate']},
+     {'ARGO': ['you'], 'ARG1': ['such', 'a', 'task'], 'B-V': ['accomplishing']},
+     {'ARGO': ['you'],
+      'ARG1': ['both', 'sentence', 'tokenization', 'as', 'well', 'as', 'words'],
+      'B-V': ['need']},
+     {'ARGO': ['you'], 'ARG1': ['the', 'ratio'], 'B-V': ['calculate']},
+     {'ARGO': ['Such', 'output'],
+      'ARG1': ['as', 'an', 'important', 'feature', 'for', 'machine', 'training'],
+      'B-V': ['serves']},
+     {'B-ARGM-MOD': ['would'],
+      'ARG1': ['the', 'answer'],
+      'ARG2': ['numeric'],
+      'B-V': ['be']},
+     {'ARG1': ['the', 'below', 'example'], 'B-V': ['Check']},
+     {'ARG1': ['how',
+       'sentence',
+       'tokenization',
+       'is',
+       'different',
+       'from',
+       'words',
+       'tokenization'],
+      'B-V': ['learn']},
+     {'ARG1': ['sentence', 'tokenization'],
+      'ARG2': ['different', 'from', 'words', 'tokenization'],
+      'B-V': ['is']},
+     {'ARGO': ['the', 'President'],
+      'ARG1': ['The', 'taxes'],
+      'B-V': ['announced']},
+     {'B-ARGM-MOD': ['will'],
+      'ARGO': ['The', 'taxes', 'the', 'President', 'announced'],
+      'ARG1': ['work', 'incentives'],
+      'B-V': ['lower'],
+      'B-ARGM-NEG': True},
+     {}]
+
+
+
+
+```python
+postproc_roles = postprocess_roles(roles)
+postproc_roles
+```
+
+
+
+
+    [{'ARG1': ['available', 'for', 'the', 'above'],
+      'ARG2': ['senttokenize'],
+      'B-V': ['is']},
+     {'B-ARGM-MOD': ['would'],
+      'ARG1': ['an', 'obvious', 'question', 'in', 'your', 'mind'],
+      'ARG2': ['why',
+       'sentence',
+       'tokenization',
+       'is',
+       'needed',
+       'when',
+       'we',
+       'have',
+       'the',
+       'option',
+       'of',
+       'word',
+       'tokenization'],
+      'B-V': ['be']},
+     {'ARG1': ['sentence', 'tokenization'], 'B-V': ['needed']},
+     {'ARGO': ['we'],
+      'ARG1': ['the', 'option', 'of', 'word', 'tokenization'],
+      'B-V': ['have']},
+     {'ARG1': ['you',
+       'need',
+       'to',
+       'count',
+       'average',
+       'word',
+       'per',
+       'sentence',
+       'how',
+       'you',
+       'will',
+       'calculate'],
+      'B-V': ['imagine']},
+     {'ARGO': ['you'],
+      'ARG1': ['to', 'count', 'average', 'word', 'per', 'sentence'],
+      'B-V': ['need']},
+     {'ARGO': ['you'],
+      'ARG1': ['average', 'word', 'per', 'sentence'],
+      'B-V': ['count']},
+     {'B-ARGM-MOD': ['will'], 'ARGO': ['you'], 'B-V': ['calculate']},
+     {'ARGO': ['you'], 'ARG1': ['such', 'a', 'task'], 'B-V': ['accomplishing']},
+     {'ARGO': ['you'],
+      'ARG1': ['both', 'sentence', 'tokenization', 'a', 'well', 'a', 'word'],
+      'B-V': ['need']},
+     {'ARGO': ['you'], 'ARG1': ['the', 'ratio'], 'B-V': ['calculate']},
+     {'ARGO': ['such', 'output'],
+      'ARG1': ['a', 'an', 'important', 'feature', 'for', 'machine', 'training'],
+      'B-V': ['serf']},
+     {'B-ARGM-MOD': ['would'],
+      'ARG1': ['the', 'answer'],
+      'ARG2': ['numeric'],
+      'B-V': ['be']},
+     {'ARG1': ['the', 'below', 'example'], 'B-V': ['check']},
+     {'ARG1': ['how',
+       'sentence',
+       'tokenization',
+       'is',
+       'different',
+       'from',
+       'word',
+       'tokenization'],
+      'B-V': ['learn']},
+     {'ARG1': ['sentence', 'tokenization'],
+      'ARG2': ['different', 'from', 'word', 'tokenization'],
+      'B-V': ['is']},
+     {'ARGO': ['the', 'president'], 'ARG1': ['the', 'tax'], 'B-V': ['announced']},
+     {'B-ARGM-MOD': ['will'],
+      'ARGO': ['the', 'tax', 'the', 'president', 'announced'],
+      'ARG1': ['work', 'incentive'],
+      'B-V': ['lower'],
+      'B-ARGM-NEG': True},
+     {}]
+
+
+
+
+```python
+sif_vectors, sif_statements_index, sif_funny_index =compute_embedding(sif_w2v,statements=postproc_roles,
+                                                                      used_roles=used_roles)
+```
+
+
+```python
+sif_statements_index
+```
+
+
+
+
+    {'ARGO': array([ 3,  5,  6,  7,  8,  9, 10, 11, 16, 17]),
+     'ARG1': array([ 0,  1,  2,  3,  4,  5,  6,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17]),
+     'ARG2': array([ 1, 12, 15]),
+     'B-V': array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
+            17])}
+
+
+
+
+```python
+{el:sif_vectors[el].shape for el in sif_vectors.keys()}
+```
+
+
+
+
+    {'ARGO': (10, 300), 'ARG1': (17, 300), 'ARG2': (3, 300), 'B-V': (18, 300)}
+
+
+
+
+```python
+sif_funny_index
+```
+
+
+
+
+    {'ARGO': [], 'ARG1': [], 'ARG2': [0], 'B-V': []}
+
+
+
+
+```python
+postproc_roles[0]["ARG2"]
+```
+
+
+
+
+    ['senttokenize']
+
+
+
+
+```python
+USE_vectors, USE_statements_index, USE_funny_index = compute_embedding(use,roles,used_roles)
+
+```
+
+
+```python
+USE_statements_index
+```
+
+
+
+
+    {'ARGO': array([ 3,  5,  6,  7,  8,  9, 10, 11, 16, 17]),
+     'ARG1': array([ 0,  1,  2,  3,  4,  5,  6,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17]),
+     'ARG2': array([ 0,  1, 12, 15]),
+     'B-V': array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
+            17])}
+
+
+
+
+```python
+{el:USE_vectors[el].shape for el in USE_vectors.keys()}
+```
+
+
+
+
+    {'ARGO': (10, 512), 'ARG1': (17, 512), 'ARG2': (4, 512), 'B-V': (18, 512)}
+
+
+
+
+```python
+clustering = Clustering(cluster=kmeans,n_clusters={'ARGO':2, 'ARG1': 2, 'ARG2':2, 'B-V':1},
+                         used_roles=used_roles)
+```
+
+
+```python
+clustering.fit(vectors=sif_vectors,sample_size=None)
+```
+
+
+```python
+{el:clustering._cluster[el].labels_ for el in clustering._cluster.keys()}
+```
+
+
+
+
+    {'ARGO': array([0, 0, 0, 0, 0, 0, 0, 1, 1, 1], dtype=int32),
+     'ARG1': array([1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1], dtype=int32),
+     'ARG2': array([1, 0, 1], dtype=int32),
+     'B-V': array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=int32)}
+
+
+
+
+```python
+clustering_res = clustering.predict(vectors=sif_vectors)
+clustering_res
+```
+
+
+
+
+    {'ARGO': array([0, 0, 0, 0, 0, 0, 0, 1, 1, 1], dtype=int32),
+     'ARG1': array([1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1], dtype=int32),
+     'ARG2': array([1, 0, 1], dtype=int32),
+     'B-V': array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=int32)}
+
+
+
+
+```python
+df = build_df(postproc_roles,clustering_res,sif_statements_index,used_roles)
+df
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ARGO</th>
+      <th>ARG1</th>
+      <th>ARG2</th>
+      <th>B-V</th>
+      <th>B-ARGM-MOD</th>
+      <th>B-ARGM-NEG</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>&lt;NA&gt;</td>
+      <td>1</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>&lt;NA&gt;</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>would</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0</td>
+      <td>0</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>&lt;NA&gt;</td>
+      <td>1</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0</td>
+      <td>1</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>0</td>
+      <td>1</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>0</td>
+      <td>&lt;NA&gt;</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>will</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>0</td>
+      <td>1</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>0</td>
+      <td>0</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>0</td>
+      <td>1</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>1</td>
+      <td>1</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>&lt;NA&gt;</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>would</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>&lt;NA&gt;</td>
+      <td>1</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>1</td>
+      <td>1</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>1</td>
+      <td>1</td>
+      <td>&lt;NA&gt;</td>
+      <td>0</td>
+      <td>will</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>&lt;NA&gt;</td>
+      <td>&lt;NA&gt;</td>
+      <td>&lt;NA&gt;</td>
+      <td>&lt;NA&gt;</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+subset_tuple = subset_as_tuples(df,used_roles)
+subset_tuple = subset_as_tuples(df,used_roles,{"ARGO","ARG1","B-V","B-ARGM-MOD","B-ARGM-NEG"})
+subset_tuple = subset_as_tuples(df,used_roles,{"ARGO","ARG1","B-V"})
+
+subset_tuple
+```
+
+
+
+
+    [(0, 0, 0),
+     (0, 1, 0),
+     (0, 1, 0),
+     (0, 1, 0),
+     (0, 0, 0),
+     (0, 1, 0),
+     (1, 1, 0),
+     (1, 1, 0),
+     (1, 1, 0)]
+
+
+
+
+```python
+unique_counts(subset_tuple)
+```
+
+
+
+
+    {(0, 0, 0): 2, (0, 1, 0): 4, (1, 1, 0): 3}
+
+
+
+
+```python
+results_dic = compute_pmi(subset_tuple)
+results_dic
+```
+
+
+
+
+    {(0, 0, 0): -3.9889840465642745,
+     (0, 1, 0): -4.548599834499697,
+     (1, 1, 0): -4.143134726391533}
 
 
 
@@ -770,6 +1263,6 @@ srl_res
 !jupyter nbconvert --to markdown Example.ipynb
 ```
 
-    [NbConvertApp] Converting notebook Example.ipynb to markdown
-    [NbConvertApp] Writing 6415 bytes to Example.md
+    [NbConvertApp] Converting notebook New_example.ipynb to markdown
+    [NbConvertApp] Writing 27872 bytes to New_example.md
 

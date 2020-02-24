@@ -67,13 +67,13 @@ print("nltk version:", nltk.__version__)
 %timeit -o nltk.tokenize.sent_tokenize(text)
 ```
 
-    181 µs ± 10.4 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+    169 µs ± 3.02 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)
 
 
 
 
 
-    <TimeitResult : 181 µs ± 10.4 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)>
+    <TimeitResult : 169 µs ± 3.02 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)>
 
 
 
@@ -82,13 +82,13 @@ print("nltk version:", nltk.__version__)
 %timeit -o nltk.tokenize.sent_tokenize(text_json)
 ```
 
-    259 ms ± 15.4 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
+    225 ms ± 11.8 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
 
 
 
 
 
-    <TimeitResult : 259 ms ± 15.4 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)>
+    <TimeitResult : 225 ms ± 11.8 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)>
 
 
 
@@ -145,13 +145,13 @@ def split_into_sentences(text):
 %timeit -o split_into_sentences(text)
 ```
 
-    73.5 µs ± 1.72 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)
+    73.2 µs ± 1.14 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)
 
 
 
 
 
-    <TimeitResult : 73.5 µs ± 1.72 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)>
+    <TimeitResult : 73.2 µs ± 1.14 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)>
 
 
 
@@ -160,13 +160,13 @@ def split_into_sentences(text):
 %timeit -o split_into_sentences(text_json)
 ```
 
-    92.8 ms ± 3.53 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+    90.2 ms ± 1.62 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
 
 
 
 
-    <TimeitResult : 92.8 ms ± 3.53 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)>
+    <TimeitResult : 90.2 ms ± 1.62 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)>
 
 
 
@@ -226,13 +226,13 @@ nlp.meta
 %timeit -o doc = nlp(text,disable=['tagger', 'ner'])
 ```
 
-    7.57 ms ± 304 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+    7.28 ms ± 444 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 
 
 
 
 
-    <TimeitResult : 7.57 ms ± 304 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)>
+    <TimeitResult : 7.28 ms ± 444 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)>
 
 
 
@@ -240,6 +240,16 @@ nlp.meta
 ```python
 %timeit -o doc = nlp(text_json,disable=['tagger', 'ner'])
 ```
+
+    10.3 s ± 210 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
+
+
+
+
+
+    <TimeitResult : 10.3 s ± 210 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)>
+
+
 
 ## Text Preprocessing
 1. lower
@@ -280,13 +290,13 @@ def original_text_preprocessing(sentences):
 %timeit -o original_text_preprocessing(sentences)
 ```
 
-    38.4 µs ± 1.33 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)
+    37.1 µs ± 149 ns per loop (mean ± std. dev. of 7 runs, 10000 loops each)
 
 
 
 
 
-    <TimeitResult : 38.4 µs ± 1.33 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)>
+    <TimeitResult : 37.1 µs ± 149 ns per loop (mean ± std. dev. of 7 runs, 10000 loops each)>
 
 
 
@@ -295,13 +305,13 @@ def original_text_preprocessing(sentences):
 %timeit -o original_text_preprocessing(sentences_json)
 ```
 
-    41.7 ms ± 1.28 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+    40.1 ms ± 508 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
 
 
 
 
-    <TimeitResult : 41.7 ms ± 1.28 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)>
+    <TimeitResult : 40.1 ms ± 508 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)>
 
 
 
@@ -334,13 +344,13 @@ preprocess(sentences)
 %timeit -o preprocess(sentences)
 ```
 
-    17 µs ± 180 ns per loop (mean ± std. dev. of 7 runs, 100000 loops each)
+    17.6 µs ± 199 ns per loop (mean ± std. dev. of 7 runs, 100000 loops each)
 
 
 
 
 
-    <TimeitResult : 17 µs ± 180 ns per loop (mean ± std. dev. of 7 runs, 100000 loops each)>
+    <TimeitResult : 17.6 µs ± 199 ns per loop (mean ± std. dev. of 7 runs, 100000 loops each)>
 
 
 
@@ -349,13 +359,13 @@ preprocess(sentences)
 %timeit -o preprocess(sentences_json)
 ```
 
-    30.9 ms ± 1.86 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+    29.2 ms ± 75.7 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
 
 
 
 
-    <TimeitResult : 30.9 ms ± 1.86 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)>
+    <TimeitResult : 29.2 ms ± 75.7 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)>
 
 
 
@@ -365,5 +375,5 @@ preprocess(sentences)
 ```
 
     [NbConvertApp] Converting notebook Benchmarking.ipynb to markdown
-    [NbConvertApp] Writing 8088 bytes to Benchmarking.md
+    [NbConvertApp] Writing 6492 bytes to Benchmarking.md
 
