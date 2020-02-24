@@ -1,6 +1,5 @@
 from collections import Counter
-import itertools
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional, Set
 
 import numpy as np
 import pandas as pd
@@ -8,24 +7,57 @@ import pandas as pd
 from utils import UsedRoles
 
 
-def vectors_as_tuples(vectors: List[List[Dict[str, Any]]], used_roles: UsedRoles):
-    # Chain list of lists to get only list of dicts
-    list_of_all_dicts = list(itertools.chain.from_iterable(vectors))
+def build_df(
+    postproc_roles, clustering_res, statement_index, used_roles
+) -> pd.DataFrame:
+    series = []
+    for role in used_roles.used:
+        if role == "B-ARGM-NEG":
+            serie = pd.Series(
+                data=[statement.get(role) for statement in postproc_roles],
+                dtype="boolean",
+                name=role,
+            )
+        elif role == "B-ARGM-MOD":
+            b_arg_mod_res = []
+            b_arg_mod_index = []
+            for i, statement in enumerate(postproc_roles):
+                if statement.get(role) is not None:
+                    _res = statement[role]
+                    if len(_res) > 1:
+                        raise ValueError(f"Expect one element:{_res}")
+                    else:
+                        b_arg_mod_index.append(i)
+                        b_arg_mod_res.append(_res[0])
+            serie = pd.Series(data=b_arg_mod_res, index=b_arg_mod_index, name=role)
 
-    # Now write list of dicts to df
-    df = pd.DataFrame(list_of_all_dicts)
-    subset = [el for el in used_roles.keys() if used_roles[el]]
-    df = df[subset]
-    df = df.dropna()
+        elif role in used_roles.embeddable:
+            serie = pd.Series(
+                data=clustering_res[role],
+                index=statement_index[role],
+                dtype="UInt16",
+                name=role,
+            )
+        series.append(serie)
+    return pd.concat(series, axis=1)
 
-    # Set to integer
-    BV_index = subset.index("B-V")
-    df.iloc[:, :BV_index] = df.iloc[:, :BV_index].astype("Int64")
+
+def subset_as_tuples(
+    df: pd.DataFrame, used_roles: UsedRoles, roles_subset: Optional[Set[str]] = None
+):
+    if roles_subset is None:
+        sublist = used_roles.used
+    else:
+        if not set(roles_subset).issubset(used_roles.used):
+            raise ValueError(f"{roles_subset} not in {used_roles.used}")
+        sublist = [el for el in used_roles.used if el in roles_subset]
+
+    df = df.loc[:, sublist].dropna()
 
     tuples = list(df.itertuples(index=False, name=None))
     # Group verb and negation or modals into one tuple
-    if "B-ARGM-MOD" in subset or "B-ARGM-NEG" in subset:
-
+    BV_index = sublist.index("B-V")
+    if "B-ARGM-MOD" in sublist or "B-ARGM-NEG" in sublist:
         tuples = [tup[:BV_index] + (tup[BV_index:],) for tup in tuples]
     return tuples
 
