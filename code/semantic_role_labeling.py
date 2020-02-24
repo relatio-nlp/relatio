@@ -7,18 +7,14 @@ from allennlp.predictors.predictor import Predictor
 from utils import preprocess
 
 
-def run_srl(
-    sentences: List[str], predictor_path: str, save_path: Union[None, str] = None
-) -> List[Dict[str, Any]]:
-    predictor = Predictor.from_path(predictor_path)
-    sentences_json = [{"sentence": sent} for sent in sentences]
-    res = predictor.predict_batch_json(sentences_json)
+class SRL:
+    def __init__(self, path: str):
+        self._predictor = Predictor.from_path(path)
 
-    if save_path is not None:
-        with open(save_path, "w+") as outfile:
-            json.dump(res, outfile)
-
-    return res
+    def __call__(self, sentences: List[str]):
+        sentences_json = [{"sentence": sent} for sent in sentences]
+        res = self._predictor.predict_batch_json(sentences_json)
+        return res
 
 
 def extract_roles(
