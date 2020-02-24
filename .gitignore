@@ -10,9 +10,9 @@ Notebooks/nytimes_word2vec.model
 Notebooks/nytimes_word2vec.model.wv.vectors.npy
 Notebooks/nytimes_word2vec.model.trainables.syn1neg.npy
 Notebooks/use-4/
+Notebooks/_to_delete*
 myNotebooks/
 
-*.ipynb*
 *.pytest_cache
 
 *.ipynb_checkpoints/

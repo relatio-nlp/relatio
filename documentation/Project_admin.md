@@ -36,7 +36,7 @@ Object oriented programming similar to [TfidfVectorizer](https://scikit-learn.or
 ## Decisions made:
 
 ### sentence tokenizer
-- use nltk and add potentially add new rules. See [here](../Notebooks/Benchmarking.md).
+- use nltk and add potentially add new rules. See [here](../Notebooks/Benchmarking.ipynb).
 
 |                        | spacy   | nltk   | in-house |
 |------------------------|---------|--------|----------|
