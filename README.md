@@ -24,7 +24,7 @@ jupyter-repo2docker --volume ./narrative-nlp/Notebooks:Notebooks narrative-nlp/
 ```
 
 ## Usage
-See [Example.md](./Notebooks/Example.md). 
+See [Example.md](./Notebooks/Example.asciidoc). 
 In your python script or Jupyter Notebook add to the path `narrative-nlp/code` and use any module as desired
 ```python
 import sys
