@@ -45,6 +45,9 @@ class SIF_Word2Vec:
             res = res / norm(res)  # normalize
         return res
 
+    def most_similar(self, v):
+        return self._model.wv.most_similar(positive=[v], topn=1)[0]
+
 
 def run_word2vec(
     sentences: List[str],
@@ -97,7 +100,7 @@ def compute_embedding(
 
     for role_name in embed_roles:
         roles_vectors[role_name] = np.asarray(
-            roles_vectors[role_name], dtype=np.float64
+            roles_vectors[role_name], dtype=np.float32
         )
         for el in [statements_index, not_found_or_empty_index]:
             el[role_name] = np.asarray(el[role_name], dtype=np.uint32)

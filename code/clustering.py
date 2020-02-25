@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans
 from sklearn.base import clone
 
 from utils import UsedRoles
+from word_embedding import SIF_Word2Vec
 
 
 class Clustering:
@@ -21,6 +22,16 @@ class Clustering:
             self._n_clusters = {el: n_clusters for el in self._embed_roles}
         else:
             self._n_clusters = n_clusters
+
+        self._dtype = {}
+        for el, value in self._n_clusters.items():
+            self._dtype[el] = np.uint8
+            if value > np.iinfo(np.uint8).max:
+                self._dtype[el] = np.uint16
+            elif value > np.iinfo(np.uint16).max:
+                self._dtype[el] = np.uint32
+            elif value > np.iinfo(np.uint32).max:
+                raise ValueError(f"m_clusters for {el} > {np.iinfo(np.uint32).max}")
 
         for el in self._embed_roles:
             self._cluster[el].n_clusters = self._n_clusters[el]
@@ -45,8 +56,18 @@ class Clustering:
     def predict(self, vectors):
         res = {}
         for el in self._embed_roles:
-            res[el] = self._cluster[el].predict(vectors[el])
+            res[el] = np.asarray(
+                self._cluster[el].predict(vectors[el]), dtype=self._dtype[el]
+            )
         return res
+
+    def label(self, word2vec: SIF_Word2Vec):
+        labels = {}
+        for el in self._embed_roles:
+            labels[el] = {}
+            for i, vec in enumerate(self._cluster[el].cluster_centers_):
+                labels[el][i] = word2vec.most_similar(vec)
+        return labels
 
     def normalise_centroids(self):
         # TODO

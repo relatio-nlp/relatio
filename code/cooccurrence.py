@@ -7,62 +7,103 @@ import pandas as pd
 from utils import UsedRoles
 
 
-def build_df(
-    postproc_roles, clustering_res, statement_index, used_roles
-) -> pd.DataFrame:
-    series = []
-    for role in used_roles.used:
-        if role == "B-ARGM-NEG":
-            serie = pd.Series(
-                data=[statement.get(role) for statement in postproc_roles],
-                dtype="boolean",
-                name=role,
-            )
-        elif role == "B-ARGM-MOD":
-            b_arg_mod_res = []
-            b_arg_mod_index = []
-            for i, statement in enumerate(postproc_roles):
-                if statement.get(role) is not None:
-                    _res = statement[role]
-                    if len(_res) > 1:
-                        raise ValueError(f"Expect one element:{_res}")
-                    else:
-                        b_arg_mod_index.append(i)
-                        b_arg_mod_res.append(_res[0])
-            serie = pd.Series(data=b_arg_mod_res, index=b_arg_mod_index, name=role)
+class CoOccurence:
+    def __init__(
+        self,
+        postproc_roles,
+        clustering_res,
+        labels,
+        statement_index,
+        used_roles: UsedRoles,
+    ):
+        self._used_roles = used_roles
+        self._labels = labels
+        self._df = self._build_df(postproc_roles, clustering_res, statement_index)
 
-        elif role in used_roles.embeddable:
-            serie = pd.Series(
-                data=clustering_res[role],
-                index=statement_index[role],
-                dtype="UInt16",
-                name=role,
-            )
-        series.append(serie)
-    return pd.concat(series, axis=1)
+    def _build_df(self, postproc_roles, clustering_res, statement_index):
+        series = []
+        for role in self._used_roles.used:
+            if role == "B-ARGM-NEG":
+                serie = pd.Series(
+                    data=[statement.get(role) for statement in postproc_roles],
+                    dtype="boolean",
+                    name=role,
+                )
+            elif role == "B-ARGM-MOD":
+                b_arg_mod_res = []
+                b_arg_mod_index = []
+                for i, statement in enumerate(postproc_roles):
+                    if statement.get(role) is not None:
+                        _res = statement[role]
+                        if len(_res) > 1:
+                            raise ValueError(f"Expect one element:{_res}")
+                        else:
+                            b_arg_mod_index.append(i)
+                            b_arg_mod_res.append(_res[0])
+                serie = pd.Series(data=b_arg_mod_res, index=b_arg_mod_index, name=role)
+
+            elif role in self._used_roles.embeddable:
+                # Nullable integer
+                _dtype = clustering_res["ARGO"].dtype.name.replace("ui", "UI")
+                serie = pd.Series(
+                    data=clustering_res[role],
+                    index=statement_index[role],
+                    dtype=_dtype,
+                    name=role,
+                )
+            series.append(serie)
+        return pd.concat(series, axis=1)
+
+    @property
+    def subset(self):
+        return set(self._sublist)
+
+    @subset.setter
+    def subset(self, roles_subset: Optional[Set[str]]):
+        if roles_subset is None:
+            roles_subset = set(self._used_roles.used)
+        elif not set(roles_subset).issubset(self._used_roles.used):
+            raise ValueError(f"{roles_subset} not in {self._used_roles.used}")
+        sublist = [el for el in self._used_roles.used if el in roles_subset]
+        self._sublist = sublist
+        df = self._df.loc[:, self._sublist].dropna()
+
+        tuples = list(df.itertuples(index=False, name=None))
+        # Group verb and negation or modals into one tuple
+        self._BV_index = self._sublist.index("B-V")
+        if "B-ARGM-MOD" in self._sublist or "B-ARGM-NEG" in self._sublist:
+            tuples = [
+                tup[: self._BV_index] + (tup[self._BV_index :],) for tup in tuples
+            ]
+        self._tuples = tuples
+
+    @property
+    def narratives_counts(self):
+        res = unique_counts(self._tuples)
+        return {self._label_tuple(k): v for k, v in res.items()}
+
+    @property
+    def narratives_pmi(self):
+        res = compute_pmi(self._tuples)
+        return {self._label_tuple(k): v for k, v in res.items()}
+
+    def _label_tuple(self, el):
+        if self._BV_index != len(self._sublist) - 1:
+            _el = el[: self._BV_index] + (el[self._BV_index])
+        else:
+            _el = el
+        res = [
+            self._labels[role][_el[i]][0]
+            for i, role in enumerate(self._sublist[: self._BV_index + 1])
+        ]
+        if self._BV_index != len(self._sublist) - 1:
+            res[self._BV_index] = (res[self._BV_index], *_el[self._BV_index + 1 :])
+        return tuple(res)
 
 
-def subset_as_tuples(
-    df: pd.DataFrame, used_roles: UsedRoles, roles_subset: Optional[Set[str]] = None
-):
-    if roles_subset is None:
-        sublist = used_roles.used
-    else:
-        if not set(roles_subset).issubset(used_roles.used):
-            raise ValueError(f"{roles_subset} not in {used_roles.used}")
-        sublist = [el for el in used_roles.used if el in roles_subset]
-
-    df = df.loc[:, sublist].dropna()
-
-    tuples = list(df.itertuples(index=False, name=None))
-    # Group verb and negation or modals into one tuple
-    BV_index = sublist.index("B-V")
-    if "B-ARGM-MOD" in sublist or "B-ARGM-NEG" in sublist:
-        tuples = [tup[:BV_index] + (tup[BV_index:],) for tup in tuples]
-    return tuples
-
-
-def unique_counts(tuples: List[Tuple[Any]]) -> Dict[Tuple[Any], int]:
+def unique_counts(
+    tuples: List[Tuple[Any]], descending: bool = True
+) -> Dict[Tuple[Any], int]:
     """
     Count the unique elements of the List.
     
@@ -75,6 +116,8 @@ def unique_counts(tuples: List[Tuple[Any]]) -> Dict[Tuple[Any], int]:
     {(1, None): 2, (1, 2): 1}
     """
     res = dict(Counter(tuples))
+    if descending:
+        res = {k: v for k, v in sorted(res.items(), key=lambda item: -item[1])}
     return res
 
 
