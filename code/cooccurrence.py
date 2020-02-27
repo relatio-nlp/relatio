@@ -142,7 +142,9 @@ def unique_tuple_values_counts(tuples: List[Tuple[Any]]) -> List[Dict[Any, int]]
     return res
 
 
-def compute_pmi(tuples: List[Tuple[Any]]) -> Dict[Tuple[Any], float]:
+def compute_pmi(
+    tuples: List[Tuple[Any]], descending: bool = True
+) -> Dict[Tuple[Any], float]:
     if not tuples:
         return {}
     counts_narratives = unique_counts(tuples)
@@ -156,4 +158,9 @@ def compute_pmi(tuples: List[Tuple[Any]]) -> Dict[Tuple[Any], float]:
             product = product * counts_individual[j][t[j]]
         pmi = np.log(frequency_narrative / product)
         results_dic[t] = pmi
+
+    if descending:
+        results_dic = {
+            k: v for k, v in sorted(results_dic.items(), key=lambda item: -item[1])
+        }
     return results_dic
