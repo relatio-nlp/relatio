@@ -164,7 +164,7 @@ class UsedRoles:
         "B-ARGM-MOD": True,
         "B-ARGM-NEG": True,
     }
-    _not_embeddable = ["B-ARGM-MOD", "B-ARGM-NEG"]
+    _not_embeddable = ("B-ARGM-MOD", "B-ARGM-NEG")
 
     def __init__(self, roles: Optional[Dict[str, bool]] = None):
         if roles is not None:
@@ -222,13 +222,13 @@ class UsedRoles:
         for el, value in self._roles.items():
             if value and (el not in self._not_embeddable):
                 role_names.append(el)
-        return role_names
+        return tuple(role_names)
 
     @property
     def not_embeddable(self):
-        return self._not_embeddable.copy()
+        return self._not_embeddable
 
     @property
     def used(self):
-        return [el for el, value in self._roles.items() if value]
+        return tuple([el for el, value in self._roles.items() if value])
 

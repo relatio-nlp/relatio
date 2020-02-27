@@ -13,7 +13,7 @@ Make sure that you have [conda](https://docs.conda.io/projects/conda/en/latest/)
 
 ```bash
 conda env create -f narrative-nlp/environment.yml
-conda activate narrative-nlp-dev
+conda activate narrative-nlp
 bash ./narrative-nlp/postBuild
 jupyter notebook
 ```
@@ -35,6 +35,13 @@ sys.path.append("narrative-nlp/code")
 from utils import preprocess
 ```
 ## Development
+
+In case you want to develop further the code you might find useful to have some packages from `environment-dev.yml`
+```bash
+conda env create -f narrative-nlp/environment-dev.yml
+conda activate narrative-nlp-dev
+bash ./narrative-nlp/postBuild
+```
 
 ### Tools
 - Auto-formatter: [black](https://black.readthedocs.io/en/stable/) that might break the [79 characters maximum line length](https://www.python.org/dev/peps/pep-0008/#maximum-line-length) from PEP8 (see [here](https://github.com/psf/black#line-length))
