@@ -1,14 +1,18 @@
+from itertools import groupby
 from collections import Counter
-from typing import List, Dict, Any, Tuple, Optional, Set
 
+from typing import List, Dict, Any, Tuple, Optional, Set
 import numpy as np
 import pandas as pd
 
 from utils import UsedRoles
 
 
-def build_df(postproc_roles, clustering_res, statement_index, used_roles: UsedRoles):
+def build_df_and_labels(
+    postproc_roles, clustering_res, statement_index, used_roles: UsedRoles
+):
     series = []
+    labels = {}
     for role in used_roles.used:
         if role == "B-ARGM-NEG":
             serie = pd.Series(
@@ -38,8 +42,29 @@ def build_df(postproc_roles, clustering_res, statement_index, used_roles: UsedRo
                 dtype=_dtype,
                 name=role,
             )
+            # labels
+            labels[role] = {}
+            grouped_data = groupby(
+                (
+                    (value, "_".join(postproc_roles[statement_index[role][i]][role]))
+                    for i, value in enumerate(clustering_res[role])
+                ),
+                key=lambda x: x[0],
+            )
+            labels[role] = {
+                k: Counter(ngrams).most_common(1) for k, ngrams in grouped_data
+            }
+            for k, v in labels[role].items():
+                sorted_v = sorted([(el[0][1], el[1]) for el in v], key=lambda el: el[0])
+                if len(labels[role][k]) > 1:
+                    print(
+                        f"Multiple labels: labels[{role}][{k}]={sorted_v}]. \n Picked first."
+                    )
+                labels[role][k] = sorted_v[0]
+
         series.append(serie)
-    return pd.concat(series, axis=1)
+
+    return pd.concat(series, axis=1), labels
 
 
 class CoOccurence:

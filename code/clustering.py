@@ -67,7 +67,7 @@ class Clustering:
             )
         return res
 
-    def label(self, word2vec: SIF_Word2Vec):
+    def label_most_similar_in_w2v(self, word2vec: SIF_Word2Vec):
         labels = {}
         for el in self._embed_roles:
             labels[el] = {}
