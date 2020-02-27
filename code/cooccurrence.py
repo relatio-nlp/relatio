@@ -7,52 +7,48 @@ import pandas as pd
 from utils import UsedRoles
 
 
+def build_df(postproc_roles, clustering_res, statement_index, used_roles: UsedRoles):
+    series = []
+    for role in used_roles.used:
+        if role == "B-ARGM-NEG":
+            serie = pd.Series(
+                data=[statement.get(role) for statement in postproc_roles],
+                dtype="boolean",
+                name=role,
+            )
+        elif role == "B-ARGM-MOD":
+            b_arg_mod_res = []
+            b_arg_mod_index = []
+            for i, statement in enumerate(postproc_roles):
+                if statement.get(role) is not None:
+                    _res = statement[role]
+                    if len(_res) > 1:
+                        raise ValueError(f"Expect one element:{_res}")
+                    else:
+                        b_arg_mod_index.append(i)
+                        b_arg_mod_res.append(_res[0])
+            serie = pd.Series(data=b_arg_mod_res, index=b_arg_mod_index, name=role)
+
+        elif role in used_roles.embeddable:
+            # Nullable integer
+            _dtype = clustering_res["ARGO"].dtype.name.replace("ui", "UI")
+            serie = pd.Series(
+                data=clustering_res[role],
+                index=statement_index[role],
+                dtype=_dtype,
+                name=role,
+            )
+        series.append(serie)
+    return pd.concat(series, axis=1)
+
+
 class CoOccurence:
     def __init__(
-        self,
-        postproc_roles,
-        clustering_res,
-        labels,
-        statement_index,
-        used_roles: UsedRoles,
+        self, df, labels, used_roles: UsedRoles,
     ):
-        self._used_roles = used_roles
+        self._df = df
         self._labels = labels
-        self._df = self._build_df(postproc_roles, clustering_res, statement_index)
-
-    def _build_df(self, postproc_roles, clustering_res, statement_index):
-        series = []
-        for role in self._used_roles.used:
-            if role == "B-ARGM-NEG":
-                serie = pd.Series(
-                    data=[statement.get(role) for statement in postproc_roles],
-                    dtype="boolean",
-                    name=role,
-                )
-            elif role == "B-ARGM-MOD":
-                b_arg_mod_res = []
-                b_arg_mod_index = []
-                for i, statement in enumerate(postproc_roles):
-                    if statement.get(role) is not None:
-                        _res = statement[role]
-                        if len(_res) > 1:
-                            raise ValueError(f"Expect one element:{_res}")
-                        else:
-                            b_arg_mod_index.append(i)
-                            b_arg_mod_res.append(_res[0])
-                serie = pd.Series(data=b_arg_mod_res, index=b_arg_mod_index, name=role)
-
-            elif role in self._used_roles.embeddable:
-                # Nullable integer
-                _dtype = clustering_res["ARGO"].dtype.name.replace("ui", "UI")
-                serie = pd.Series(
-                    data=clustering_res[role],
-                    index=statement_index[role],
-                    dtype=_dtype,
-                    name=role,
-                )
-            series.append(serie)
-        return pd.concat(series, axis=1)
+        self._used_roles = used_roles
 
     @property
     def subset(self):
