@@ -12,7 +12,7 @@ from word_embedding import SIF_Word2Vec
 
 
 class Clustering:
-    def __init__(self, cluster, n_clusters, used_roles: UsedRoles, seed=123):
+    def __init__(self, cluster, n_clusters, used_roles: UsedRoles, sample_seed=123):
         self._embed_roles = used_roles.embeddable
         if not isinstance(cluster, dict):
             self._cluster = {el: clone(cluster) for el in self._embed_roles}
@@ -22,6 +22,11 @@ class Clustering:
             self._n_clusters = {el: n_clusters for el in self._embed_roles}
         else:
             self._n_clusters = n_clusters
+
+        if not isinstance(sample_seed, dict):
+            self._sample_seed = {el: sample_seed for el in self._embed_roles}
+        else:
+            self._sample_seed = sample_seed
 
         self._dtype = {}
         for el, value in self._n_clusters.items():
@@ -47,6 +52,7 @@ class Clustering:
             if self._sample_size[el] is None:
                 self._X[el] = vectors[el]
             else:
+                np.random.seed(self._sample_seed[el])
                 size_v = vectors[el].shape[0]
                 idx = np.random.randint(size_v, int(size_v * self._sample_size[el]))
                 self._X[el] = vectors[el][idx]
