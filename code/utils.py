@@ -9,16 +9,21 @@ import numpy as np
 
 
 def dict_concatenate(d1, d2, axis=0):
-    if not d1:
+    if not d1 and not d2:
+        return {}
+    elif not d1:
         return d2
     elif not d2:
         return d1
-    elif not d1 and not d2:
-        return {}
     d = {}
 
     for k in d1.keys():
-        d[k] = np.concatenate((d1[k], d2[k]), axis=axis)
+        if d1[k].size == 0:
+            d[k] = d2[k].copy()
+        elif d2[k].size == 0:
+            d[k] = d1[k].copy()
+        else:
+            d[k] = np.concatenate((d1[k], d2[k]), axis=axis)
     return d
 
 
