@@ -29,10 +29,13 @@ def build_df_and_labels(
                 if statement.get(role) is not None:
                     _res = statement[role]
                     if len(_res) > 1:
-                        raise ValueError(f"Expect one element:{_res}")
+                        warnings.warn(
+                            f"Multiple labels \n  labels[{role}]={_res}. First one is picked.",
+                            RuntimeWarning,
+                        )
                     else:
-                        b_arg_mod_index.append(i)
-                        b_arg_mod_res.append(_res[0])
+                    b_arg_mod_index.append(i)
+                    b_arg_mod_res.append(_res[0])
             serie = pd.Series(data=b_arg_mod_res, index=b_arg_mod_index, name=role)
 
         elif role in used_roles.embeddable:
