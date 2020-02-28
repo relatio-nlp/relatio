@@ -33,7 +33,6 @@ def build_df_and_labels(
                             f"Multiple labels \n  labels[{role}]={_res}. First one is picked.",
                             RuntimeWarning,
                         )
-                    else:
                     b_arg_mod_index.append(i)
                     b_arg_mod_res.append(_res[0])
             serie = pd.Series(data=b_arg_mod_res, index=b_arg_mod_index, name=role)
