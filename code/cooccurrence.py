@@ -1,7 +1,9 @@
-from itertools import groupby
 from collections import Counter
-
+from itertools import groupby
 from typing import List, Dict, Any, Tuple, Optional, Set
+import warnings
+
+
 import numpy as np
 import pandas as pd
 
@@ -46,21 +48,27 @@ def build_df_and_labels(
             labels[role] = {}
             grouped_data = groupby(
                 (
-                    (value, "_".join(postproc_roles[statement_index[role][i]][role]))
+                    (
+                        int(value),
+                        "_".join(postproc_roles[statement_index[role][i]][role]),
+                    )
                     for i, value in enumerate(clustering_res[role])
                 ),
                 key=lambda x: x[0],
             )
+
             labels[role] = {
-                k: Counter(ngrams).most_common(1) for k, ngrams in grouped_data
+                k: Counter(el[1] for el in ngrams).most_common(2)
+                for k, ngrams in grouped_data
             }
+
             for k, v in labels[role].items():
-                sorted_v = sorted([(el[0][1], el[1]) for el in v], key=lambda el: el[0])
-                if len(labels[role][k]) > 1:
-                    print(
-                        f"Multiple labels: labels[{role}][{k}]={sorted_v}]. \n Picked first."
+                if labels[role][k][0][1] == labels[role][k][1][1]:
+                    warnings.warn(
+                        f"Multiple labels - 2 shown: \n  labels[{role}][{k}]={labels[role][k]}. First one is picked.",
+                        RuntimeWarning,
                     )
-                labels[role][k] = sorted_v[0]
+                labels[role][k] = labels[role][k][0]
 
         series.append(serie)
 
