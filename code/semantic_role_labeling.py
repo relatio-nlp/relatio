@@ -18,12 +18,12 @@ class SRL:
 
 
 def extract_roles(
-    srl: List[Dict[str, Any]], modals=True
+    srl: List[Dict[str, Any]], modals=True, start: int = 0
 ) -> Tuple[List[Dict[str, List]], List[int]]:
     # TODO use UsedRoles instead of modals
     statements_role_list: List[Dict[str, List]] = []
     sentence_index: List[int] = []
-    for i, sentence_dict in enumerate(srl):
+    for i, sentence_dict in enumerate(srl, start=start):
         role_per_sentence = extract_role_per_sentence(sentence_dict, modals)
         sentence_index.extend([i] * len(role_per_sentence))
         statements_role_list.extend(role_per_sentence)

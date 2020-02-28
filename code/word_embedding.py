@@ -74,6 +74,7 @@ def compute_embedding(
     model: Union[USE, SIF_Word2Vec],
     statements: List[Dict[str, List]],
     used_roles: UsedRoles,
+    start: int = 0,
 ) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray], Dict[str, int]]:
     # normalize is applied only to Word2Vec
     if not isinstance(model, (USE, SIF_Word2Vec)):
@@ -85,7 +86,7 @@ def compute_embedding(
     roles_vectors = {el: [] for el in embed_roles}
     not_found_or_empty_index = {el: [] for el in embed_roles}
 
-    for i, statement in enumerate(statements):
+    for i, statement in enumerate(statements, start=start):
         for role_name, tokens in statement.items():
             if (role_name in embed_roles) and (role_name not in not_embed_roles):
                 if isinstance(model, SIF_Word2Vec):

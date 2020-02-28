@@ -63,12 +63,12 @@ def build_df_and_labels(
             }
 
             for k, v in labels[role].items():
-                if labels[role][k][0][1] == labels[role][k][1][1]:
+                if len(v) > 1 and (v[0][1] == v[1][1]):
                     warnings.warn(
-                        f"Multiple labels - 2 shown: \n  labels[{role}][{k}]={labels[role][k]}. First one is picked.",
+                        f"Multiple labels - 2 shown: \n  labels[{role}][{k}]={v}. First one is picked.",
                         RuntimeWarning,
                     )
-                labels[role][k] = labels[role][k][0]
+                labels[role][k] = list(v[0])
 
         series.append(serie)
 

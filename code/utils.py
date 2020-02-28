@@ -1,10 +1,25 @@
 import re
 import string
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, NamedTuple
 
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer, SnowballStemmer
 from nltk.tokenize import sent_tokenize
+import numpy as np
+
+
+def dict_concatenate(d1, d2, axis=0):
+    if not d1:
+        return d2
+    elif not d2:
+        return d1
+    elif not d1 and not d2:
+        return {}
+    d = {}
+
+    for k in d1.keys():
+        d[k] = np.concatenate((d1[k], d2[k]), axis=axis)
+    return d
 
 
 def tokenize_into_sentences(document: str) -> List[str]:
@@ -216,6 +231,9 @@ class UsedRoles:
             self._check_value(key, value)
             self._roles[key] = value
 
+    def as_dict(self):
+        return self._roles.copy()
+
     @property
     def embeddable(self):
         role_names = []
@@ -231,4 +249,9 @@ class UsedRoles:
     @property
     def used(self):
         return tuple([el for el, value in self._roles.items() if value])
+
+
+class Document(NamedTuple):
+    path: str
+    statement_start_index: int
 
