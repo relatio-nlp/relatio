@@ -3,7 +3,13 @@ code base for constructing narrative statements from text
 
 ## Installation using Conda
 
-### Only for Windows10 - WSL and Conda
+### Only for Windows10
+You can use conda native for Windows10 or you can get a Linux-like experience via Windows Subsystems for Linux.
+
+#### Native
+- install [git](https://git-scm.com/download/win)
+
+#### WSL and Conda
 - [Install Windows Subsystems for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10#install-the-windows-subsystem-for-linux)
 - Install [Ubuntu distribution](https://www.microsoft.com/en-us/p/ubuntu/9nblggh4msv6?activetab=pivot:overviewtab) . **This is NOT 16.04 nor 18.04 LTS!**  following the [documentation](https://docs.microsoft.com/en-us/windows/wsl/install-win10#install-your-linux-distribution-of-choice)
 - Go again in Windows Store and lunch the installed distribution
