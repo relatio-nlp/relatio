@@ -16,16 +16,15 @@ Clone the project and move to the branch of interest and go to the parent of you
 git clone https://github.com/elliottash/narrative-nlp.git
 cd narrative-nlp
 git checkout existingbranch
-cd ..
 ```
 ### Use conda (Windows10, Linux, macOS)
 Make sure that you have [conda / miniconda](https://docs.conda.io/en/latest/miniconda.html) installed. Use command line and run
 
 ```bash
-conda env create -f narrative-nlp/environment.yml
+conda env create -f environment.yml
 conda activate narrative-nlp
-bash ./narrative-nlp/postBuild
-jupyter notebook
+bash ./postBuild # in windows copy and run each line from the ./postBuild file
+jupyter notebook # you might want to run it from a parent location
 ```
 In Windows10 using WSL you have to copy the url similar to `http://127.0.0.1:8888/?token=...` to the desired browser.
 
@@ -50,9 +49,10 @@ from utils import preprocess
 
 In case you want to develop further the code you might find useful to have some packages from `environment-dev.yml`
 ```bash
-conda env create -f narrative-nlp/environment-dev.yml
+conda env create -f environment-dev.yml
 conda activate narrative-nlp-dev
-bash ./narrative-nlp/postBuild
+bash ./postBuild # in windows copy and run each line from the ./postBuild file
+jupyter notebook # you might want to run it from a parent location
 ```
 
 ### Tools
