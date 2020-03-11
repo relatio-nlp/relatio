@@ -4,17 +4,17 @@ code base for constructing narrative statements from text
 ## Installation using Conda
 
 ### Only for Windows10
-You can use conda native for Windows10 or you can get a Linux-like experience via Windows Subsystems for Linux.
+One can use conda native for Windows10 or a Linux-like experience via Windows Subsystems for Linux. For compatibility reasons the second option is the recommended. 
 
-#### Native
-- install [git](https://git-scm.com/download/win)
-
-#### WSL and Conda
+#### Recommended - WSL and Conda
 - [Install Windows Subsystems for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10#install-the-windows-subsystem-for-linux)
 - Install [Ubuntu distribution](https://www.microsoft.com/en-us/p/ubuntu/9nblggh4msv6?activetab=pivot:overviewtab) . **This is NOT 16.04 nor 18.04 LTS!**  following the [documentation](https://docs.microsoft.com/en-us/windows/wsl/install-win10#install-your-linux-distribution-of-choice)
 - Go again in Windows Store and lunch the installed distribution
 - in the terminal corresponding to the distribution download & install miniconda running `wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && bash Miniconda3-latest-Linux-x86_64.sh` and answer to all the questions as desired (I recommend to follow the suggested option) and `source ~/.bashrc` . The terminal should look like `(base) ... :~$` . You can remove the downloaded package `rm Miniconda3-latest-Linux-x86_64.sh`
 - install make and g++ (needed by jsonnet in pip): `sudo apt-get install make g++`
+
+#### Native
+- install [git](https://git-scm.com/download/win)
 
 ### Clone the project
 Clone the project and move to the branch of interest and go to the parent of your repo
