@@ -1,15 +1,25 @@
 # narrative-nlp
 code base for constructing narrative statements from text
 
-## Installation
+## Installation using Conda
+
+### Optional for Windows10 - WSL and Conda
+- [Install Windows Subsystems for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10#install-the-windows-subsystem-for-linux)
+- Install [Ubuntu distribution](https://www.microsoft.com/en-us/p/ubuntu/9nblggh4msv6?activetab=pivot:overviewtab) . **This is NOT 16.04 nor 18.04 LTS!**  following the [documentation](https://docs.microsoft.com/en-us/windows/wsl/install-win10#install-your-linux-distribution-of-choice)
+- Go again in Windows Store and lunch the installed distribution
+- in the terminal corresponding to the distribution download & install miniconda running `wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && bash Miniconda3-latest-Linux-x86_64.sh` and answer to all the questions as desired (I recommend to follow the suggested option) and `source ~/.bashrc` . The terminal should look like `(base) ... :~$` . You can remove the downloaded package `rm Miniconda3-latest-Linux-x86_64.sh`
+- install make and g++ (needed by jsonnet in pip): `sudo apt-get install make g++`
+
+### Clone the project
 Clone the project and move to the branch of interest and go to the parent of your repo
 ```bash
+git clone https://github.com/elliottash/narrative-nlp.git
+cd narrative-nlp
 git checkout existingbranch
 cd ..
 ```
-
-### Via Conda on macOS or Linux
-Make sure that you have [conda](https://docs.conda.io/projects/conda/en/latest/) installed. Use command line and run
+### Use conda (Windows10, Linux, macOS)
+Make sure that you have [conda / miniconda](https://docs.conda.io/en/latest/miniconda.html) installed. Use command line and run
 
 ```bash
 conda env create -f narrative-nlp/environment.yml
@@ -17,7 +27,9 @@ conda activate narrative-nlp
 bash ./narrative-nlp/postBuild
 jupyter notebook
 ```
-### Via Docker - repo2docker (technology used in https://mybinder.org/)
+In Windows10 using WSL you have to copy the url similar to `http://127.0.0.1:8888/?token=...` to the desired browser.
+
+## *Experimental* - Installation using repo2docker (technology used in https://mybinder.org/)
 Make sure you have [repo2docker](https://repo2docker.readthedocs.io/en/latest/install.html) - Docker is needed. In case you want to mount a volume just use `--volume`. It might take up to 10 minutes to build the container
 ```bash
 jupyter-repo2docker --volume ./narrative-nlp/Notebooks:Notebooks narrative-nlp/
