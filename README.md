@@ -55,7 +55,7 @@ jupyter-repo2docker --volume ./narrative-nlp/Notebooks:Notebooks narrative-nlp/
 You can easily start a jupyter notebook `jupyter notebook` .
 In Windows10 using WSL you have to copy the url similar to `http://127.0.0.1:8888/?token=...` to the desired browser.
 ### Leonhard
-You will start jupyter notebook on the cluster but you will use the browser from your PC.
+For this step you need to terminals: one where you connect to leonhard and one for the ssh tunneling. You will start jupyter notebook on the cluster but you will use the browser from your PC.
 
 **On Leonhard**
 - make sure that you can connect passwordless. If not please follow the [documentation](https://scicomp.ethz.ch/wiki/Getting_started_with_clusters#SSH_keys)
