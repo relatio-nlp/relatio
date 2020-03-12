@@ -59,7 +59,8 @@ You will start jupyter notebook on the cluster but you will use the browser from
 
 **On Leonhard**
 - make sure that you can connect passwordless. If not please follow the [documentation](https://scicomp.ethz.ch/wiki/Getting_started_with_clusters#SSH_keys)
-- start an interactive session: `bsub -n 1 -Is -W 1:00 bash`
+- start an interactive session (1 core for 1 hour): `bsub -n 1 -Is -W 1:00 bash`  
+In case you need more resources ask for them (see [here](https://scicomp.ethz.ch/wiki/Getting_started_with_clusters#Resource_requirements))
 - activate the desired conda environment: `conda activate narrative-nlp`
 - in case you want to download/connect to external services: `module load eth_proxy`  (see [here](https://scicomp.ethz.ch/wiki/Accessing_the_clusters#Security))
 - start jupyter notebook without browser: `jupyter notebook --no-browser --ip $(hostname -i)` . 
