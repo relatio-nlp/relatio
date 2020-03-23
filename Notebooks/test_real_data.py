@@ -36,8 +36,8 @@ from cooccurrence import build_df_and_labels, CoOccurence
 
 used_roles = UsedRoles()
 used_roles["ARG2"] = True
-
-sif_w2v = SIF_Word2Vec("./test/w2v/cong_gpo_word2vec.model")
+folder = "../myNotebooks/test/"
+sif_w2v = SIF_Word2Vec(folder + "w2v/cong_gpo_word2vec.model")
 
 kmeans = KMeans(random_state=0)
 
@@ -48,7 +48,7 @@ clustering = Clustering(
 )
 
 # %%
-filenames = glob.glob("./test/srl*")
+filenames = glob.glob(folder + "srl*")
 
 # %%
 documents_all = []
@@ -92,8 +92,11 @@ df, labels = build_df_and_labels(
 # %%
 # Write df, labels and previously used roles to files for future work
 
-df.to_pickle("./df.pkl")
-with open("labels.json", "w") as f:
+df.to_pickle(folder + "df.pkl")
+with open(folder + "labels.json", "w") as f:
     json.dump(labels, f, indent=4)
-with open("used_roles.json", "w") as f:
+with open(folder + "used_roles.json", "w") as f:
     json.dump(used_roles.as_dict(), f, indent=4)
+
+
+# %%

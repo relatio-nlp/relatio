@@ -79,15 +79,29 @@ def build_df_and_labels(
 
 class CoOccurence:
     def __init__(
-        self, df, labels, used_roles: UsedRoles,
+        self,
+        df,
+        labels,
+        used_roles: UsedRoles,
+        display_order=("ARGO", "B-ARGM-MOD", "B-V", "B-ARGM-NEG", "ARG1", "ARG2"),
     ):
         self._df = df
         self._labels = labels
         self._used_roles = used_roles
+        self._display_order = display_order
 
     @property
     def subset(self):
         return set(self._sublist)
+
+    @property
+    def display_order(self):
+        return tuple(sorted(self._sublist, key=self._display_order.index))
+
+    def _display(self, inp):
+        new_order = [self.display_order.index(el) for el in self._sublist]
+        res = [inp[el] for el in new_order]
+        return type(inp)(res)
 
     @subset.setter
     def subset(self, roles_subset: Optional[Set[str]]):
@@ -111,14 +125,14 @@ class CoOccurence:
     @property
     def narratives_counts(self):
         res = unique_counts(self._tuples)
-        return {self._label_tuple(k): v for k, v in res.items()}
+        return {self._label_and_order_tuple(k): v for k, v in res.items()}
 
     @property
     def narratives_pmi(self):
         res = compute_pmi(self._tuples)
-        return {self._label_tuple(k): v for k, v in res.items()}
+        return {self._label_and_order_tuple(k): v for k, v in res.items()}
 
-    def _label_tuple(self, el):
+    def _label_and_order_tuple(self, el):
         if self._BV_index != len(self._sublist) - 1:
             _el = el[: self._BV_index] + (el[self._BV_index])
         else:
@@ -129,7 +143,9 @@ class CoOccurence:
         ]
         if self._BV_index != len(self._sublist) - 1:
             res[self._BV_index] = (res[self._BV_index], *_el[self._BV_index + 1 :])
-        return tuple(res)
+
+        res = tuple(res)
+        return self._display(res)
 
 
 def unique_counts(
