@@ -1,11 +1,12 @@
 import random
-from typing import List, Dict, Union, Any, Optional
+from typing import List, Dict, Union, Any
 
 from gensim.models import Word2Vec
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.base import clone
+from sklearn.utils import resample
 
 from utils import UsedRoles
 from word_embedding import SIF_Word2Vec
@@ -23,11 +24,6 @@ class Clustering:
         else:
             self._n_clusters = n_clusters
 
-        if not isinstance(sample_seed, dict):
-            self._sample_seed = {el: sample_seed for el in self._embed_roles}
-        else:
-            self._sample_seed = sample_seed
-
         self._dtype = {}
         for el, value in self._n_clusters.items():
             self._dtype[el] = np.uint8
@@ -41,23 +37,45 @@ class Clustering:
         for el in self._embed_roles:
             self._cluster[el].n_clusters = self._n_clusters[el]
 
-    def fit(self, vectors, sample_size: Optional[int] = None):
-        if not isinstance(sample_size, dict):
-            self._sample_size = {el: sample_size for el in self._embed_roles}
+    def resample(
+        self,
+        vectors,
+        sample_size: Union[int, float, Dict[str, Union[int, float]]] = 1,
+        random_state: Union[int, Dict[str, int]] = 0,
+    ):
+        if not isinstance(random_state, dict):
+            random_state = {el: random_state for el in self._embed_roles}
         else:
-            self._sample_size = sample_size
+            random_state = random_state
 
-        self._X = {}
+        if not isinstance(sample_size, dict):
+            sample_size = {el: sample_size for el in self._embed_roles}
+        else:
+            sample_size = sample_size
+
+        sample_vectors = {}
         for el in self._embed_roles:
-            if self._sample_size[el] is None:
-                self._X[el] = vectors[el]
+            if sample_size[el] in [1, 1.0]:
+                sample_vectors[el] = vectors[el]
             else:
-                np.random.seed(self._sample_seed[el])
-                size_v = vectors[el].shape[0]
-                idx = np.random.randint(size_v, int(size_v * self._sample_size[el]))
-                self._X[el] = vectors[el][idx]
+                _size = vectors[el].shape[0]
+                _sample_size = sample_size[el]
+                _n_samples = (
+                    _sample_size
+                    if isinstance(_sample_size, int)
+                    else int(_size * _sample_size)
+                )
+                sample_vectors[el] = resample(
+                    vectors[el],
+                    n_samples=_n_samples,
+                    replace=False,
+                    random_state=random_state[el],
+                )
+        return sample_vectors
 
-            self._cluster[el] = self._cluster[el].fit(self._X[el])
+    def fit(self, vectors):
+        for el in self._embed_roles:
+            self._cluster[el] = self._cluster[el].fit(vectors[el])
 
     def predict(self, vectors):
         res = {}

@@ -82,7 +82,8 @@ for filename in filenames:
 
 # %%
 # Clustering and Labelling all the data
-clustering.fit(vectors=vectors_all, sample_size=None)
+sample_vectors = clustering.resample(vectors=vectors_all, sample_size=0.9)
+clustering.fit(vectors=sample_vectors)
 clustering_res = clustering.predict(vectors=vectors_all)
 
 df, labels = build_df_and_labels(
@@ -96,4 +97,3 @@ with open("labels.json", "w") as f:
     json.dump(labels, f, indent=4)
 with open("used_roles.json", "w") as f:
     json.dump(used_roles.as_dict(), f, indent=4)
-

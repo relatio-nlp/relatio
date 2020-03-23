@@ -161,9 +161,9 @@ def preprocess(
 class UsedRoles:
     """
     A dict like class for used roles.
-    
+
     The class has predefined keys and one cannot delete nor add new keys.
-    
+
     Example:
     >>> used_roles = UsedRoles(); used_roles
     {'ARGO': True, 'ARG1': True, 'ARG2': False, 'B-V': True, 'B-ARGM-MOD': True, 'B-ARGM-NEG': True}
@@ -259,4 +259,3 @@ class UsedRoles:
 class Document(NamedTuple):
     path: str
     statement_start_index: int
-

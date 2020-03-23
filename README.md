@@ -84,12 +84,9 @@ from utils import preprocess
 ```
 ## Development
 
-In case you want to develop further the code you might find useful to have some packages from `environment-dev.yml`
+In case you want to develop further the code you might find useful to have some packages
 ```bash
-conda env create -f environment-dev.yml
-conda activate narrative-nlp-dev
-bash ./postBuild # in windows copy and run each line from the ./postBuild file
-jupyter notebook # you might want to run it from a parent location
+python -m pip install black pytest mypy bandit pylint flake8 pydocstyle line_profiler memory_profiler psutil
 ```
 
 ### Tools
