@@ -97,6 +97,3 @@ with open(folder + "labels.json", "w") as f:
     json.dump(labels, f, indent=4)
 with open(folder + "used_roles.json", "w") as f:
     json.dump(used_roles.as_dict(), f, indent=4)
-
-
-# %%

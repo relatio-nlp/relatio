@@ -98,8 +98,18 @@ class CoOccurence:
     def display_order(self):
         return tuple(sorted(self._sublist, key=self._display_order.index))
 
+    @property
+    def normal_order(self):
+        if "B-ARGM-MOD" in self._sublist or "B-ARGM-NEG" in self._sublist:
+            res = tuple(self._sublist[: self._BV_index]) + (
+                tuple(self._sublist[self._BV_index :]),
+            )
+        else:
+            res = tuple(self._sublist)
+        return res
+
     def _display(self, inp):
-        new_order = [self.display_order.index(el) for el in self._sublist]
+        new_order = [self._sublist.index(el) for el in self.display_order]
         res = [inp[el] for el in new_order]
         return type(inp)(res)
 
@@ -144,6 +154,9 @@ class CoOccurence:
         if self._BV_index != len(self._sublist) - 1:
             res[self._BV_index] = (res[self._BV_index], *_el[self._BV_index + 1 :])
 
+        # display is not taking into account the tuple in tuple structure
+        if self._BV_index != len(self._sublist) - 1:
+            res = res[:-1] + list(res[-1])
         res = tuple(res)
         return self._display(res)
 
