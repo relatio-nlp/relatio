@@ -8,23 +8,21 @@ from nltk.tokenize import sent_tokenize
 import numpy as np
 
 
-def dict_concatenate(d1, d2, axis=0):
-    if not d1 and not d2:
-        return {}
-    elif not d1:
-        return d2
-    elif not d2:
-        return d1
-    d = {}
-
-    for k in d1.keys():
-        if d1[k].size == 0:
-            d[k] = d2[k].copy()
-        elif d2[k].size == 0:
-            d[k] = d1[k].copy()
-        else:
-            d[k] = np.concatenate((d1[k], d2[k]), axis=axis)
-    return d
+def dict_concatenate(d_list, axis=0):
+    d_non_empty = [d for d in d_list if d]
+    res = {}
+    if not d_non_empty:
+        pass
+    elif len(d_non_empty) == 1:
+        res = d_non_empty[0]
+    else:
+        for k in d_non_empty[0].keys():
+            d_to_concat = [d[k] for d in d_non_empty if d[k].size != 0]
+            if not d_to_concat:
+                res[k] = d_non_empty[0][k].copy()
+            else:
+                res[k] = np.concatenate(d_to_concat, axis=axis)
+    return res
 
 
 def tokenize_into_sentences(document: str) -> List[str]:

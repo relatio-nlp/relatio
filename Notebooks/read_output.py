@@ -9,8 +9,7 @@ sys.path.append("../code")
 from utils import UsedRoles
 from cooccurrence import CoOccurence
 
-folder = "../myNotebooks/test/"
-
+folder = "../myNotebooks/test/res/"
 
 # %%
 # Read df, labels and previously used roles
@@ -21,14 +20,16 @@ with open(folder + "labels.json", "r") as f:
         labels[role] = {int(k): v for k, v in value.items()}
 with open(folder + "used_roles.json", "r") as f:
     used_roles = UsedRoles(json.load(f))
-
+print(labels)
 # %%
 # Run cooccurence
 
 cooc = CoOccurence(df, labels, used_roles)
-cooc.subset = {"ARGO", "ARG1", "B-V", "B-ARGM-NEG", "B-ARGM-MOD"}
+cooc.subset = {"ARGO", "ARG1", "B-V", "B-ARGM-NEG"}
 print(cooc.normal_order)
 print(cooc.display_order)
 
-cooc.narratives_counts
 cooc.narratives_pmi
+# %%
+cooc.narratives_counts
+# %%
