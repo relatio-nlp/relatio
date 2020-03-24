@@ -49,12 +49,15 @@ def build_df_and_labels(
             # labels
             labels[role] = {}
             grouped_data = groupby(
-                (
+                sorted(
                     (
-                        int(value),
-                        "_".join(postproc_roles[statement_index[role][i]][role]),
-                    )
-                    for i, value in enumerate(clustering_res[role])
+                        (
+                            int(value),
+                            "_".join(postproc_roles[statement_index[role][i]][role]),
+                        )
+                        for i, value in enumerate(clustering_res[role])
+                    ),
+                    key=lambda x: x[0],
                 ),
                 key=lambda x: x[0],
             )
