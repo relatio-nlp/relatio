@@ -10,13 +10,10 @@
 # %%
 import glob
 import json
-import typing
 
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-
-import line_profiler
 
 # %%
 import sys
@@ -97,12 +94,15 @@ clustering = Clustering(
 sample_vectors = clustering.resample(vectors=vectors_all, sample_size=0.9)
 clustering.fit(vectors=sample_vectors)
 clustering_res = clustering.predict(vectors=vectors_all)
-
+distance = clustering.compute_distance(vectors_all, clustering_res)
+for role in used_roles.embeddable:
+    pd.Series(distance[role], name=role).hist()
+# %%
+clustering_mask = clustering.distance_mask(distance, threshold=1.5)
 df, labels = build_df_and_labels(
-    postproc_roles_all, clustering_res, statement_index_all, used_roles
+    postproc_roles_all, clustering_res, statement_index_all, used_roles, clustering_mask
 )
 labels
-
 # %%
 # Write df, labels and previously used roles to files for future work
 
@@ -111,3 +111,29 @@ with open(folder + "res/labels.json", "w") as f:
     json.dump(labels, f, indent=4)
 with open(folder + "res/used_roles.json", "w") as f:
     json.dump(used_roles.as_dict(), f, indent=4)
+
+
+# %%
+# Read df, labels and previously used roles
+df = pd.read_pickle(folder + "res/df.pkl")
+with open(folder + "res/labels.json", "r") as f:
+    labels = json.load(f)
+    for role, value in labels.items():
+        labels[role] = {int(k): v for k, v in value.items()}
+with open(folder + "res/used_roles.json", "r") as f:
+    used_roles = UsedRoles(json.load(f))
+labels
+# %%
+# Run cooccurence
+
+cooc = CoOccurence(df, labels, used_roles)
+cooc.subset = {"ARGO", "ARG1", "B-V", "B-ARGM-NEG"}
+print(cooc.normal_order)
+print(cooc.display_order)
+
+cooc.narratives_counts
+# %%
+# %%
+cooc.narratives_pmi
+
+# %%

@@ -11,7 +11,11 @@ from utils import UsedRoles
 
 
 def build_df_and_labels(
-    postproc_roles, clustering_res, statement_index, used_roles: UsedRoles
+    postproc_roles,
+    clustering_res,
+    statement_index,
+    used_roles: UsedRoles,
+    clustering_mask=True,
 ):
     series = []
     labels = {}
@@ -46,6 +50,9 @@ def build_df_and_labels(
                 dtype=_dtype,
                 name=role,
             )
+            if clustering_mask is not True:
+                serie = serie[clustering_mask[role]]
+
             # labels
             labels[role] = {}
             grouped_data = groupby(
@@ -56,6 +63,7 @@ def build_df_and_labels(
                             "_".join(postproc_roles[statement_index[role][i]][role]),
                         )
                         for i, value in enumerate(clustering_res[role])
+                        if clustering_mask is True or clustering_mask[role][i]
                     ),
                     key=lambda x: x[0],
                 ),
