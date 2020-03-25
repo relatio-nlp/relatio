@@ -79,12 +79,39 @@ def extract_role_per_sentence(sentence_dict, modals=True):
     return sentence_role_list
 
 
-def postprocess_roles(statements: List[Dict[str, List]]) -> List[Dict[str, List]]:
+def postprocess_roles(
+    statements: List[Dict[str, List]],
+    remove_punctuation: bool = True,
+    remove_digits: bool = True,
+    remove_chars: str = "",
+    remove_stop_words: bool = False,
+    lowercase: bool = True,
+    strip: bool = True,
+    remove_whitespaces: bool = True,
+    lemmatize: bool = True,
+    stem: bool = False,
+) -> List[Dict[str, List]]:
+    """
+    For arguments see utils.preprocess .
+    """
     roles_copy = deepcopy(statements)
     for i, statement in enumerate(statements):
         for role, tokens in statements[i].items():
             if isinstance(tokens, list):
-                res = [preprocess([" ".join(tokens)], lemmatize=True)[0].split()][0]
+                res = [
+                    preprocess(
+                        [" ".join(tokens)],
+                        remove_punctuation=remove_punctuation,
+                        remove_digits=remove_digits,
+                        remove_chars=remove_chars,
+                        remove_stop_words=remove_stop_words,
+                        lowercase=lowercase,
+                        strip=strip,
+                        remove_whitespaces=remove_whitespaces,
+                        lemmatize=lemmatize,
+                        stem=stem,
+                    )[0].split()
+                ][0]
                 roles_copy[i][role] = res
             elif isinstance(tokens, bool):
                 pass
