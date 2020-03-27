@@ -30,7 +30,7 @@ from utils import (
 )
 from word_embedding import run_word2vec, compute_embedding, USE, SIF_Word2Vec
 from semantic_role_labeling import SRL, extract_roles, postprocess_roles
-from clustering import Clustering
+from clustering import Clustering, label_clusters
 from sklearn.cluster import KMeans
 from cooccurrence import build_df_and_labels, CoOccurence
 
@@ -95,6 +95,11 @@ sample_vectors = clustering.resample(vectors=vectors_all, sample_size=0.9)
 clustering.fit(vectors=sample_vectors)
 clustering_res = clustering.predict(vectors=vectors_all)
 distance = clustering.compute_distance(vectors_all, clustering_res)
+# %% Use the labeling based on Euclidean distance. If you want to use it in CoOccurence make sure you use top=1
+labels = label_clusters(
+    clustering_res, distance, postproc_roles_all, statement_index_all, top=20,
+)
+labels
 # %%
 clustering_mask = clustering.distance_mask(distance, threshold=1.5)
 df, labels = build_df_and_labels(

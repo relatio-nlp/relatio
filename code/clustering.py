@@ -117,3 +117,33 @@ class Clustering:
     def normalise_centroids(self):
         # TODO
         pass
+
+
+def label_clusters(
+    clustering_res,
+    distance,
+    postproc_roles,
+    statement_index,
+    top: int = 10,
+    drop_duplicates: bool = True,
+):
+    labels = {}
+    for role, clustering in clustering_res.items():
+        labels[role] = {}
+        for cluster_id in np.unique(clustering):
+            dist = np.ma.MaskedArray(distance[role], clustering == cluster_id)
+            argsorts = dist.argsort()[:top]
+            labels[role][cluster_id] = [
+                (
+                    "_".join(postproc_roles[statement_index[role][i]][role]),
+                    distance[role][i],
+                )
+                for i in argsorts
+            ]
+            if top == 1:
+                labels[role][cluster_id] = list(labels[role][cluster_id][0])
+            elif drop_duplicates:
+                labels[role][cluster_id] = sorted(
+                    list(set(labels[role][cluster_id])), key=lambda x: x[1]
+                )
+    return labels
