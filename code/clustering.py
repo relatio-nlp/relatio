@@ -131,13 +131,10 @@ def label_clusters(
     for role, clustering in clustering_res.items():
         labels[role] = {}
         for cluster_id in np.unique(clustering):
-            dist = np.ma.MaskedArray(distance[role], clustering == cluster_id)
+            dist = np.ma.MaskedArray(distance[role], clustering != cluster_id)
             argsorts = dist.argsort()[:top]
             labels[role][cluster_id] = [
-                (
-                    "_".join(postproc_roles[statement_index[role][i]][role]),
-                    distance[role][i],
-                )
+                ("_".join(postproc_roles[statement_index[role][i]][role]), dist[i],)
                 for i in argsorts
             ]
             if top == 1:
