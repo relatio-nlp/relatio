@@ -95,8 +95,6 @@ sample_vectors = clustering.resample(vectors=vectors_all, sample_size=0.9)
 clustering.fit(vectors=sample_vectors)
 clustering_res = clustering.predict(vectors=vectors_all)
 distance = clustering.compute_distance(vectors_all, clustering_res)
-for role in used_roles.embeddable:
-    pd.Series(distance[role], name=role).hist()
 # %%
 clustering_mask = clustering.distance_mask(distance, threshold=1.5)
 df, labels = build_df_and_labels(

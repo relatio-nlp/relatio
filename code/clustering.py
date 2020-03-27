@@ -17,7 +17,7 @@ class Clustering:
         if not isinstance(cluster, dict):
             self._cluster = {el: clone(cluster) for el in self._embed_roles}
         else:
-            self.cluster = cluster
+            self._cluster = cluster
         if not isinstance(n_clusters, dict):
             self._n_clusters = {el: n_clusters for el in self._embed_roles}
         else:
@@ -71,6 +71,9 @@ class Clustering:
                     random_state=random_state[el],
                 )
         return sample_vectors
+
+    def __getitem__(self, role_name):
+        return self._cluster[role_name]
 
     def fit(self, vectors):
         for el in self._embed_roles:
