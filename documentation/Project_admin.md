@@ -46,3 +46,14 @@ Object oriented programming similar to [TfidfVectorizer](https://scikit-learn.or
 -
 
 ## Open Questions:
+## Meetings / Reporting
+### 2020-03-30
+- the code is tested at scale and the bugs are fixed (excluding SRL and training of gensim.word2vec)
+- new features: 
+    - compute distance
+    - discard vectors based on a distance threshold
+    - cluster labeling based on (i) most frequent ngram in the cluster or (ii) the closest vector to the centroid
+### 2020-02-24
+See [Slides](./Slides/2020-02-24 Updates.pptx)
+### 2020-02-06
+See [Slides](./Slides/2020-02-06 Big_Picture.pptx)
