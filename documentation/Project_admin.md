@@ -54,6 +54,6 @@ Object oriented programming similar to [TfidfVectorizer](https://scikit-learn.or
     - discard vectors based on a distance threshold
     - cluster labeling based on (i) most frequent ngram in the cluster or (ii) the closest vector to the centroid
 ### 2020-02-24
-See [Slides](/Slides/2020-02-24%20Updates.pptx)
+See [Slides](./Slides/2020-02-24%20Updates.pptx)
 ### 2020-02-06
 See [Slides](./Slides/2020-02-06%20Big_Picture.pptx)
