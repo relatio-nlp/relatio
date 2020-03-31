@@ -45,7 +45,7 @@ np.savez(file_path, a)
 h_bytes(file_path.stat().st_size)
 
 
-# %%
+# %% Use protocol=4 https://stackoverflow.com/a/29704623
 file_path = Path("_to_delete_a.pickle")
 with open(file_path, "wb") as f:
     pickle.dump(a, f, protocol=4)
