@@ -1,8 +1,10 @@
 # %%
 import math
 from pathlib import Path
+import pickle
 import sys
 from typing import Union
+
 import numpy as np
 
 
@@ -12,11 +14,11 @@ def h_bytes(size: Union[int, float]) -> str:
     if log2 < 7:
         return f"{size} B"
     elif log2 < 17:
-        return f"{size/(2**10):.2f} KB"
+        return f"{size/(2**10):.2f} KiB"
     elif log2 < 27:
-        return f"{size/(2**20):.2f} MB"
+        return f"{size/(2**20):.2f} MiB"
     else:
-        return f"{size/(2**30):.2f} GB"
+        return f"{size/(2**30):.2f} GiB"
 
 
 def size_bytes(arr, h=True):
@@ -43,4 +45,9 @@ np.savez(file_path, a)
 h_bytes(file_path.stat().st_size)
 
 
+# %%
+file_path = Path("_to_delete_a.pickle")
+with open(file_path, "wb") as f:
+    pickle.dump(a, f)
+h_bytes(file_path.stat().st_size)
 # %%
