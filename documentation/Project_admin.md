@@ -54,8 +54,8 @@ Object oriented programming similar to [TfidfVectorizer](https://scikit-learn.or
     - discard vectors based on a distance threshold
     - cluster labeling based on (i) most frequent ngram in the cluster or (ii) the closest vector to the centroid
 - TODO:
-    - parallelization of the code (ipyparallel)
-    - SRL: GPU and parallelization (ipyparallel - no workflow management system)
+    - parallelization of the code (IPython Parallel [`ipyparallel` package](https://ipyparallel.readthedocs.io/en/stable/))
+    - SRL: GPU and parallelization (IPython Parallel - no workflow management system)
     - cluster labeling: closest word in embedding for gensim.word2vec
     - cluster labeling: add a new parameter min_freq for the closest vector to the centroid
 ### 2020-02-24
