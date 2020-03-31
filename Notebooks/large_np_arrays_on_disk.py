@@ -48,6 +48,5 @@ h_bytes(file_path.stat().st_size)
 # %%
 file_path = Path("_to_delete_a.pickle")
 with open(file_path, "wb") as f:
-    pickle.dump(a, f)
+    pickle.dump(a, f, protocol=4)
 h_bytes(file_path.stat().st_size)
-# %%
