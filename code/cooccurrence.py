@@ -1,5 +1,4 @@
 from collections import Counter
-from itertools import groupby
 from typing import List, Dict, Any, Tuple, Optional, Set
 import warnings
 
@@ -10,15 +9,15 @@ import pandas as pd
 from utils import UsedRoles
 
 
-def build_df_and_labels(
-    postproc_roles,
+def build_df(
+    *,
     clustering_res,
+    postproc_roles,
     statement_index,
     used_roles: UsedRoles,
     clustering_mask=True,
 ):
     series = []
-    labels = {}
     for role in used_roles.used:
         if role == "B-ARGM-NEG":
             serie = pd.Series(
@@ -53,42 +52,12 @@ def build_df_and_labels(
             if clustering_mask is not True:
                 serie = serie[clustering_mask[role]]
 
-            # labels
-            labels[role] = {}
-            grouped_data = groupby(
-                sorted(
-                    (
-                        (
-                            int(value),
-                            "_".join(postproc_roles[statement_index[role][i]][role]),
-                        )
-                        for i, value in enumerate(clustering_res[role])
-                        if clustering_mask is True or clustering_mask[role][i]
-                    ),
-                    key=lambda x: x[0],
-                ),
-                key=lambda x: x[0],
-            )
-
-            labels[role] = {
-                k: Counter(el[1] for el in ngrams).most_common(2)
-                for k, ngrams in grouped_data
-            }
-
-            for k, v in labels[role].items():
-                if len(v) > 1 and (v[0][1] == v[1][1]):
-                    warnings.warn(
-                        f"Multiple labels - 2 shown: \n  labels[{role}][{k}]={v}. First one is picked.",
-                        RuntimeWarning,
-                    )
-                labels[role][k] = list(v[0])
-
         series.append(serie)
 
-    return pd.concat(series, axis=1), labels
+    return pd.concat(series, axis=1)
 
 
-class CoOccurence:
+class CoOccurrence:
     def __init__(
         self,
         df,

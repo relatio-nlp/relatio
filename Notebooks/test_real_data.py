@@ -30,9 +30,9 @@ from utils import (
 )
 from word_embedding import run_word2vec, compute_embedding, USE, SIF_Word2Vec
 from semantic_role_labeling import SRL, extract_roles, postprocess_roles
-from clustering import Clustering, label_clusters
+from clustering import Clustering, label_clusters, label_clusters_most_freq
 from sklearn.cluster import KMeans
-from cooccurrence import build_df_and_labels, CoOccurence
+from cooccurrence import build_df, CoOccurrence
 
 used_roles = UsedRoles()
 used_roles["ARG2"] = True
@@ -81,13 +81,14 @@ sentence_index_all = np.concatenate(sentence_index_all)
 vectors_all = dict_concatenate(vectors_all)
 statement_index_all = dict_concatenate(statement_index_all)
 funny_index_all = dict_concatenate(funny_index_all)
+
 # %%
 # Clustering and Labelling all the data
 kmeans = KMeans(random_state=0)
 
 clustering = Clustering(
     cluster=kmeans,
-    n_clusters={"ARGO": 2, "ARG1": 2, "ARG2": 2, "B-V": 2},
+    n_clusters={"ARGO": 4, "ARG1": 2, "ARG2": 1, "B-V": 4},
     used_roles=used_roles,
 )
 
@@ -95,17 +96,37 @@ sample_vectors = clustering.resample(vectors=vectors_all, sample_size=0.9)
 clustering.fit(vectors=sample_vectors)
 clustering_res = clustering.predict(vectors=vectors_all)
 distance = clustering.compute_distance(vectors_all, clustering_res)
-# %% Use the labeling based on Euclidean distance. If you want to use it in CoOccurence make sure you use top=1
+
+# %% Use the most similar based on embedding (word2vec)
+labels = clustering.label_most_similar_in_w2v(sif_w2v)
+labels
+# %% Use the labeling based on Euclidean distance. If you want to use it in CoOccurrence make sure you use top=1 (default value)
 labels = label_clusters(
-    clustering_res, distance, postproc_roles_all, statement_index_all, top=20,
+    clustering_res=clustering_res,
+    distance=distance,
+    postproc_roles=postproc_roles_all,
+    statement_index=statement_index_all,
+    top=1,
+)
+labels
+# %% Use the labeling based on most frequent
+clustering_mask = clustering.distance_mask(distance, threshold=1.5)
+labels = label_clusters_most_freq(
+    clustering_res=clustering_res,
+    postproc_roles=postproc_roles_all,
+    statement_index=statement_index_all,
+    clustering_mask=clustering_mask,
 )
 labels
 # %%
-clustering_mask = clustering.distance_mask(distance, threshold=1.5)
-df, labels = build_df_and_labels(
-    postproc_roles_all, clustering_res, statement_index_all, used_roles, clustering_mask
+df = build_df(
+    clustering_res=clustering_res,
+    postproc_roles=postproc_roles_all,
+    statement_index=statement_index_all,
+    used_roles=used_roles,
+    clustering_mask=clustering_mask,
 )
-labels
+df
 # %%
 # Write df, labels and previously used roles to files for future work
 
@@ -127,15 +148,14 @@ with open(folder + "res/used_roles.json", "r") as f:
     used_roles = UsedRoles(json.load(f))
 labels
 # %%
-# Run cooccurence
+# Run CoOccurrence
 
-cooc = CoOccurence(df, labels, used_roles)
+cooc = CoOccurrence(df, labels, used_roles)
 cooc.subset = {"ARGO", "ARG1", "B-V", "B-ARGM-NEG"}
 print(cooc.normal_order)
 print(cooc.display_order)
 
 cooc.narratives_counts
-# %%
 # %%
 cooc.narratives_pmi
 

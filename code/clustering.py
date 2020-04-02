@@ -1,8 +1,10 @@
-from typing import List, Dict, Union, Any
+from collections import Counter
+from itertools import groupby
+from typing import Dict, Union
+import warnings
 
 from gensim.models import Word2Vec
 import numpy as np
-import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.base import clone
 from sklearn.utils import resample
@@ -111,7 +113,7 @@ class Clustering:
         for el in self._embed_roles:
             labels[el] = {}
             for i, vec in enumerate(self._cluster[el].cluster_centers_):
-                labels[el][i] = word2vec.most_similar(vec)
+                labels[el][i] = list(word2vec.most_similar(vec))
         return labels
 
     def normalise_centroids(self):
@@ -120,11 +122,12 @@ class Clustering:
 
 
 def label_clusters(
+    *,
     clustering_res,
     distance,
     postproc_roles,
     statement_index,
-    top: int = 10,
+    top: int = 1,
     drop_duplicates: bool = True,
 ):
     labels = {}
@@ -143,4 +146,40 @@ def label_clusters(
                 labels[role][cluster_id] = sorted(
                     list(set(labels[role][cluster_id])), key=lambda x: x[1]
                 )
+    return labels
+
+
+def label_clusters_most_freq(
+    *, clustering_res, postproc_roles, statement_index, clustering_mask=True,
+):
+    labels = {}
+    for role, clustering in clustering_res.items():
+        labels[role] = {}
+        grouped_data = groupby(
+            sorted(
+                (
+                    (
+                        int(value),
+                        "_".join(postproc_roles[statement_index[role][i]][role]),
+                    )
+                    for i, value in enumerate(clustering)
+                    if clustering_mask is True or clustering_mask[role][i]
+                ),
+                key=lambda x: x[0],
+            ),
+            key=lambda x: x[0],
+        )
+
+        labels[role] = {
+            k: Counter(el[1] for el in ngrams).most_common(2)
+            for k, ngrams in grouped_data
+        }
+
+        for k, v in labels[role].items():
+            if len(v) > 1 and (v[0][1] == v[1][1]):
+                warnings.warn(
+                    f"Multiple labels - 2 shown: \n  labels[{role}][{k}]={v}. First one is picked.",
+                    RuntimeWarning,
+                )
+            labels[role][k] = list(v[0])
     return labels
