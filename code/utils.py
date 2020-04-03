@@ -6,6 +6,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer, SnowballStemmer
 from nltk.tokenize import sent_tokenize
 import numpy as np
+import pandas as pd
 
 
 def dict_concatenate(d_list, axis=0):
@@ -257,3 +258,28 @@ class UsedRoles:
 class Document(NamedTuple):
     path: str
     statement_start_index: int
+
+
+class DocumentTracker:
+    def __init__(self, documents, sentence_index):
+        self._sentence_index = sentence_index
+        _df = pd.DataFrame(documents).set_index("path")
+        _df["statement_end_index"] = (
+            _df.squeeze().shift(-1, fill_value=sentence_index.size) - 1
+        )
+        _df["number_of_sentences"] = (
+            sentence_index[_df.loc[:, "statement_end_index"]]
+            - sentence_index[_df.loc[:, "statement_start_index"]]
+        ) + 1
+        self.doc = _df.reset_index()
+
+    def find_doc(self, statement_index):
+        mask = (self.doc.loc[:, "statement_start_index"] <= statement_index) & (
+            statement_index <= self.doc.loc[:, "statement_end_index"]
+        )
+        res = self.doc[mask].copy()
+        res["sentence_index_inside_doc"] = (
+            self._sentence_index[statement_index]
+            - self._sentence_index[res.loc[:, "statement_start_index"]]
+        )
+        return res

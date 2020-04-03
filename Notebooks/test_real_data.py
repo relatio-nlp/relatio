@@ -27,6 +27,7 @@ from utils import (
     UsedRoles,
     Document,
     dict_concatenate,
+    DocumentTracker,
 )
 from word_embedding import run_word2vec, compute_embedding, USE, SIF_Word2Vec
 from semantic_role_labeling import SRL, extract_roles, postprocess_roles
@@ -59,7 +60,9 @@ def do_all(filenames):
         with open(filename) as json_file:
             srl_res = json.load(json_file)
 
-        roles, sentence_index = extract_roles(srl_res, start=start_index)
+        roles, sentence_index = extract_roles(
+            srl_res, start=0 if start_index == 0 else sentence_index[-1]
+        )
 
         postproc_roles = postprocess_roles(roles)
 
@@ -127,6 +130,10 @@ df = build_df(
     clustering_mask=clustering_mask,
 )
 df
+# %% Find Document
+doc_tracker = DocumentTracker(documents_all, sentence_index_all)
+
+doc_tracker.find_doc(1886)
 # %%
 # Write df, labels and previously used roles to files for future work
 
@@ -158,5 +165,9 @@ print(cooc.display_order)
 cooc.narratives_counts
 # %%
 cooc.narratives_pmi
+
+# %%
+cooc.subset = {"ARGO", "ARG1", "B-V", "B-ARGM-MOD"}
+
 
 # %%
