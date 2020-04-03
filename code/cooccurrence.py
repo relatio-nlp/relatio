@@ -31,11 +31,17 @@ def build_df(
             for i, statement in enumerate(postproc_roles):
                 if statement.get(role) is not None:
                     _res = statement[role]
-                    if len(_res) > 1:
+                    if len(_res) == 0:
                         warnings.warn(
-                            f"Multiple labels \n  labels[{role}]={_res}. First one is picked.",
+                            f"No labels in statement {i}", RuntimeWarning,
+                        )
+                        continue
+                    elif len(_res) > 1:
+                        warnings.warn(
+                            f"Multiple labels \n  labels[{role}]={_res} in statement {i}. First one is picked.",
                             RuntimeWarning,
                         )
+
                     b_arg_mod_index.append(i)
                     b_arg_mod_res.append(_res[0])
             serie = pd.Series(data=b_arg_mod_res, index=b_arg_mod_index, name=role)
