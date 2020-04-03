@@ -44,6 +44,13 @@ Object oriented programming similar to [TfidfVectorizer](https://scikit-learn.or
 | large doc (900K chars) | 11_000 ms  | 260 ms | 90 ms |
 
 -
+## TODO
+- [ ] mark how to find any warning in the original document 
+
+## Nice to have:
+
+- [ ] utils.preprocess arguments also as Callable when it makes sense, e.g. lemmatize
+- [ ] address opposites (e.g. increase and decrease) that could end up in the same cluster via verbnet synsets top dimension-reduce the verbs (see https://www.nltk.org/howto/wordnet.html)
 
 ## Open Questions:
 ## Meetings / Reporting
@@ -54,10 +61,10 @@ Object oriented programming similar to [TfidfVectorizer](https://scikit-learn.or
     - discard vectors based on a distance threshold
     - cluster labeling based on (i) most frequent ngram in the cluster or (ii) the closest vector to the centroid
 - TODO:
-    - parallelization of the code (IPython Parallel [`ipyparallel` package](https://ipyparallel.readthedocs.io/en/stable/))
-    - SRL: GPU and parallelization (IPython Parallel - no workflow management system)
-    - cluster labeling: closest word in embedding for gensim.word2vec
-    - cluster labeling: add a new parameter min_freq for the closest vector to the centroid
+    - [ ] parallelization of the code (IPython Parallel [`ipyparallel` package](https://ipyparallel.readthedocs.io/en/stable/))
+    - [ ] SRL: GPU and parallelization (IPython Parallel - no workflow management system)
+    - [x] cluster labeling: closest word in embedding for gensim.word2vec
+    - [ ] cluster labeling: add a new parameter min_freq for the closest vector to the centroid
 ### 2020-02-24
 See [Slides](./Slides/2020-02-24%20Updates.pptx)
 ### 2020-02-06
