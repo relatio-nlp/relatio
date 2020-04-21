@@ -2,7 +2,8 @@ import re
 import string
 from typing import List, Optional, Dict, NamedTuple
 
-from nltk.corpus import stopwords
+from nltk import pos_tag
+from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer, SnowballStemmer
 from nltk.tokenize import sent_tokenize
 import numpy as np
@@ -70,12 +71,25 @@ def filter_sentences(sentences: List[str], max_sentence_length: int = -1) -> Lis
     return sentences
 
 
+def _get_wordnet_pos(word):
+    """Map POS tag to first character lemmatize() accepts"""
+    tag = pos_tag([word])[0][1][0].upper()
+    tag_dict = {
+        "J": wordnet.ADJ,
+        "N": wordnet.NOUN,
+        "V": wordnet.VERB,
+        "R": wordnet.ADV,
+    }
+
+    return tag_dict.get(tag, wordnet.NOUN)
+
+
 def preprocess(
     sentences: List[str],
     remove_punctuation: bool = True,
     remove_digits: bool = True,
     remove_chars: str = "",
-    remove_stop_words: bool = False,
+    stop_words: Optional[List[str]] = None,
     lowercase: bool = True,
     strip: bool = True,
     remove_whitespaces: bool = True,
@@ -90,7 +104,7 @@ def preprocess(
         remove_punctuation: whether to remove string.punctuation
         remove_digits: whether to remove string.digits
         remove_chars: remove the given characters
-        remove_stop_words: remove stopwords.words("english")
+        stop_words: list of stopwords to remove
         lowercase: whether to lower the case
         strip: whether to strip
         remove_whitespaces: whether to remove superfluous whitespaceing by " ".join(str.split(())
@@ -101,17 +115,25 @@ def preprocess(
 
     Examples:
         >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'])
-        ['return factorial n exact integer']
+        ['return the factorial of n an exact integer']
+        >>> preprocess(['Learning is usefull.'])
+        ['learning is usefull']
+        >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'], stop_words=['factorial'])
+        ['return the of n an exact integer']
         >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'], lemmatize=True)
-        ['return factorial n exact integer']
+        ['return the factorial of n an exact integer']
+        >>> preprocess(['Learning is usefull.'],lemmatize=True)
+        ['learn be usefull']
         >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'], stem=True)
-        ['return factori n exact integ']
+        ['return the factori of n an exact integ']
+        >>> preprocess(['Learning is usefull.'],stem=True)
+        ['learn is useful']
         >>> preprocess(['A1b c\\n\\nde \\t fg\\rkl\\r\\n m+n'])
         ['ab c de fg kl mn']
     """
     if lemmatize is True and stem is True:
         raise ValueError("lemmatize and stemming cannot be both True")
-    if remove_stop_words is True and lowercase is False:
+    if stop_words is not None and lowercase is False:
         raise ValueError("remove stop words make sense only for lowercase")
 
     # remove chars
@@ -135,7 +157,10 @@ def preprocess(
         f_lemmatize = wnl.lemmatize
 
         sentences = [
-            " ".join([f_lemmatize(word) for word in sent.split()]) for sent in sentences
+            " ".join(
+                [f_lemmatize(word, _get_wordnet_pos(word)) for word in sent.split()]
+            )
+            for sent in sentences
         ]
 
     if stem:
@@ -145,8 +170,7 @@ def preprocess(
         sentences = [
             " ".join([f_stem(word) for word in sent.split()]) for sent in sentences
         ]
-    if remove_stop_words:
-        stop_words = stopwords.words("english")
+    if stop_words is not None:
         sentences = [
             " ".join([word for word in sent.split() if word not in stop_words])
             for sent in sentences

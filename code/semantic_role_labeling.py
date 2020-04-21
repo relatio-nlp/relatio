@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 
 from allennlp.predictors.predictor import Predictor
 import numpy as np
@@ -84,7 +84,7 @@ def postprocess_roles(
     remove_punctuation: bool = True,
     remove_digits: bool = True,
     remove_chars: str = "",
-    remove_stop_words: bool = False,
+    stop_words: Optional[List[str]] = None,
     lowercase: bool = True,
     strip: bool = True,
     remove_whitespaces: bool = True,
@@ -104,7 +104,7 @@ def postprocess_roles(
                         remove_punctuation=remove_punctuation,
                         remove_digits=remove_digits,
                         remove_chars=remove_chars,
-                        remove_stop_words=remove_stop_words,
+                        stop_words=stop_words,
                         lowercase=lowercase,
                         strip=strip,
                         remove_whitespaces=remove_whitespaces,
