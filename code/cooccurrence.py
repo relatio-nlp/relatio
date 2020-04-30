@@ -48,7 +48,7 @@ def build_df(
 
         elif role in used_roles.embeddable:
             # Nullable integer
-            _dtype = clustering_res["ARGO"].dtype.name.replace("ui", "UI")
+            _dtype = clustering_res[role].dtype.name.replace("ui", "UI")
             serie = pd.Series(
                 data=clustering_res[role],
                 index=statement_index[role],
