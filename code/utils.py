@@ -1,13 +1,14 @@
 import re
 import string
-from typing import List, Optional, Dict, NamedTuple
+import warnings
+from typing import Dict, List, NamedTuple, Optional
 
-from nltk import pos_tag
-from nltk.corpus import wordnet
-from nltk.stem import WordNetLemmatizer, SnowballStemmer
-from nltk.tokenize import sent_tokenize
 import numpy as np
 import pandas as pd
+from nltk import pos_tag
+from nltk.corpus import wordnet
+from nltk.stem import SnowballStemmer, WordNetLemmatizer
+from nltk.tokenize import sent_tokenize
 
 
 def dict_concatenate(d_list, axis=0):
@@ -69,6 +70,33 @@ def filter_sentences(sentences: List[str], max_sentence_length: int = -1) -> Lis
     else:
         sentences = [sent for sent in sentences if len(sent) <= max_sentence_length]
     return sentences
+
+
+def group_sentences_in_batches(
+    sentences: List[str], max_char_length: int
+) -> List[List[str]]:
+    batch_char_length = 0
+    batches: List[List[str]] = []
+    batch: List[str] = []
+    for el in sentences:
+        length = len(el)
+        if length > max_char_length:
+            warnings.warn(
+                f"The length of the sentence = {length} > max_char_length={max_char_length}. The following sentence is skipped: \n > {el}",
+                RuntimeWarning,
+            )
+            continue
+        batch_char_length += length
+        if batch_char_length > max_char_length:
+            batches.append(batch)
+            batch = []
+            batch_char_length = 0
+        else:
+            batch.append(el)
+    if batch:
+        batches.append(batch)
+
+    return batches
 
 
 def _get_wordnet_pos(word):

@@ -1,19 +1,23 @@
 from copy import deepcopy
-from typing import List, Dict, Any, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
-from allennlp.predictors.predictor import Predictor
 import numpy as np
 
-from utils import preprocess
+from allennlp.predictors.predictor import Predictor
+from utils import group_sentences_in_batches, preprocess
 
 
 class SRL:
-    def __init__(self, path: str):
-        self._predictor = Predictor.from_path(path)
+    def __init__(self, path: str, cuda_device: int = -1):
+        self._predictor = Predictor.from_path(path, cuda_device=cuda_device)
 
-    def __call__(self, sentences: List[str]):
-        sentences_json = [{"sentence": sent} for sent in sentences]
-        res = self._predictor.predict_batch_json(sentences_json)
+    def __call__(self, sentences: List[str], max_char_length: int = 10000):
+        batches = group_sentences_in_batches(sentences, max_char_length=max_char_length)
+        res = []
+        for batch in batches:
+            sentences_json = [{"sentence": sent} for sent in batch]
+            res_batch = self._predictor.predict_batch_json(sentences_json)
+            res.extend(res_batch)
         return res
 
 

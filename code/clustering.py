@@ -1,14 +1,14 @@
+import warnings
 from collections import Counter
 from itertools import groupby
 from typing import Dict, Union
-import warnings
 
-from gensim.models import Word2Vec
 import numpy as np
-from sklearn.cluster import KMeans
 from sklearn.base import clone
+from sklearn.cluster import KMeans
 from sklearn.utils import resample
 
+from gensim.models import Word2Vec
 from utils import UsedRoles
 from word_embedding import SIF_Word2Vec
 

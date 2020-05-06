@@ -59,8 +59,12 @@ For this step you need to terminals: one where you connect to leonhard and one f
 
 **On Leonhard**
 - make sure that you can connect passwordless. If not please follow the [documentation](https://scicomp.ethz.ch/wiki/Getting_started_with_clusters#SSH_keys)
-- start an interactive session (1 core for 1 hour): `bsub -n 1 -Is -W 1:00 bash`  
-In case you need more resources ask for them (see [here](https://scicomp.ethz.ch/wiki/Getting_started_with_clusters#Resource_requirements))
+- start an interactive session (1 core for 1 hour): `bsub -n 1 -Is -W 1:00 -R "rusage[mem=10000]" bash`  
+In case you need more resources ask for them (see [here](https://scicomp.ethz.ch/wiki/Getting_started_with_clusters#Resource_requirements))  
+`bsub -n 1 -Is -W 2:00 -R "rusage[mem=20000]" -R "rusage[ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" -R "select[gpu_model0==GeForceRTX2080Ti]" bash`
+
+`bsub -n 4 -Is -W 2:00 -R "rusage[mem=20000]" -R "rusage[ngpus_excl_p=2]" -R "select[gpu_mtotal0>=10240]" -R "select[gpu_model0==GeForceRTX2080Ti]" bash `
+
 - activate the desired conda environment: `conda activate narrative-nlp`
 - in case you want to download/connect to external services: `module load eth_proxy`  (see [here](https://scicomp.ethz.ch/wiki/Accessing_the_clusters#Security))
 - start jupyter notebook without browser: `jupyter notebook --no-browser --ip $(hostname -i)` . 
@@ -90,7 +94,9 @@ python -m pip install black pytest mypy bandit pylint flake8 pydocstyle line_pro
 ```
 
 ### Tools
-- Auto-formatter: [black](https://black.readthedocs.io/en/stable/) that might break the [79 characters maximum line length](https://www.python.org/dev/peps/pep-0008/#maximum-line-length) from PEP8 (see [here](https://github.com/psf/black#line-length))
+- Auto-formatter: 
+    - [black](https://black.readthedocs.io/en/stable/) that might break the [79 characters maximum line length](https://www.python.org/dev/peps/pep-0008/#maximum-line-length) from PEP8 (see [here](https://github.com/psf/black#line-length))
+    - [isort](https://timothycrosley.github.io/isort/): "isort your imports, so you don't have to." . Used with black line length and trailing comma `-l 88 -tc`
 - Testing via [pytest](https://docs.pytest.org/en/latest/) with `--doctest-modules` enabled (see [doctest](http://doc.pytest.org/en/latest/doctest.html))
 - security issues: [bandit](https://github.com/PyCQA/bandit)
 - [mypy](http://mypy-lang.org/)
