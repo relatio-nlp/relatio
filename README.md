@@ -61,9 +61,9 @@ For this step you need to terminals: one where you connect to leonhard and one f
 - make sure that you can connect passwordless. If not please follow the [documentation](https://scicomp.ethz.ch/wiki/Getting_started_with_clusters#SSH_keys)
 - start an interactive session (1 core for 1 hour): `bsub -n 1 -Is -W 1:00 -R "rusage[mem=10000]" bash`  
 In case you need more resources ask for them (see [here](https://scicomp.ethz.ch/wiki/Getting_started_with_clusters#Resource_requirements))  
-`bsub -n 1 -Is -W 2:00 -R "rusage[mem=20000]" -R "rusage[ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" -R "select[gpu_model0==GeForceRTX2080Ti]" bash`
-
-`bsub -n 4 -Is -W 2:00 -R "rusage[mem=20000]" -R "rusage[ngpus_excl_p=2]" -R "select[gpu_mtotal0>=10240]" -R "select[gpu_model0==GeForceRTX2080Ti]" bash `
+`bsub -n 1 -Is -W 2:00 -R "rusage[mem=20000,ngpus_excl_p=1] select[gpu_mtotal0>=10240,gpu_model0==GeForceRTX2080Ti]" bash`  
+`bsub -n 4 -Is -W 2:00 -R "rusage[mem=20000,ngpus_excl_p=2]" -R "select[gpu_mtotal0>=10240,gpu_model0==GeForceRTX2080Ti]" bash `
+`bsub -n 5 -Is -W 2:00 -R "rusage[mem=20000,ngpus_excl_p=2] select[gpu_model0==GeForceRTX2080Ti] span[ptile=2]" bash`
 
 - activate the desired conda environment: `conda activate narrative-nlp`
 - in case you want to download/connect to external services: `module load eth_proxy`  (see [here](https://scicomp.ethz.ch/wiki/Accessing_the_clusters#Security))
@@ -106,3 +106,14 @@ python -m pip install black pytest mypy bandit pylint flake8 pydocstyle line_pro
 - [PEP8](https://www.python.org/dev/peps/pep-0008/)
 - [Google Coding Style](http://google.github.io/styleguide/pyguide.html)
 - Docstring using Google Style: see [Sphinx 1.3 Google Style Python Docstrings](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html) and [pyguide](http://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings)
+
+## Use IPyParallel
+1. Create a new profile (see [here](https://ipyparallel.readthedocs.io/en/latest/process.html#configuring-an-ipython-cluster))
+```bash
+ipython profile create --parallel --profile=narrative-nlp
+```
+2. In the corresponding `ipengine_config.py` add the absolute path to the narrative-nlp code.
+```bash
+## specify a command to be run at startup
+c.IPEngineApp.startup_command = 'import sys; sys.path.append('...`)
+```

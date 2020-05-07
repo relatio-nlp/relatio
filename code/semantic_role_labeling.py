@@ -8,11 +8,16 @@ from utils import group_sentences_in_batches, preprocess
 
 
 class SRL:
-    def __init__(self, path: str, cuda_device: int = -1):
+    def __init__(self, path: str, cuda_device: int = -1, max_char_length: int = 10000):
         self._predictor = Predictor.from_path(path, cuda_device=cuda_device)
+        self._max_char_length = max_char_length
 
-    def __call__(self, sentences: List[str], max_char_length: int = 10000):
-        batches = group_sentences_in_batches(sentences, max_char_length=max_char_length)
+    def __call__(self, sentences: List[str], max_char_length: Optional[int] = None):
+        if max_char_length is None:
+            local_mcl = self._max_char_length
+        else:
+            local_mcl = max_char_length
+        batches = group_sentences_in_batches(sentences, max_char_length=local_mcl)
         res = []
         for batch in batches:
             sentences_json = [{"sentence": sent} for sent in batch]
