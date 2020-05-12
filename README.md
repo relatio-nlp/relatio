@@ -61,12 +61,16 @@ For this step you need to terminals: one where you connect to leonhard and one f
 - make sure that you can connect passwordless. If not please follow the [documentation](https://scicomp.ethz.ch/wiki/Getting_started_with_clusters#SSH_keys)
 - start an interactive session (1 core for 1 hour): `bsub -n 1 -Is -W 1:00 -R "rusage[mem=10000]" bash`  
 In case you need more resources ask for them (see [here](https://scicomp.ethz.ch/wiki/Getting_started_with_clusters#Resource_requirements))  
-`bsub -n 1 -Is -W 2:00 -R "rusage[mem=20000,ngpus_excl_p=1] select[gpu_mtotal0>=10240,gpu_model0==GeForceRTX2080Ti]" bash`  
-`bsub -n 4 -Is -W 2:00 -R "rusage[mem=20000,ngpus_excl_p=2]" -R "select[gpu_mtotal0>=10240,gpu_model0==GeForceRTX2080Ti]" bash `
-`bsub -n 5 -Is -W 2:00 -R "rusage[mem=20000,ngpus_excl_p=2] select[gpu_model0==GeForceRTX2080Ti] span[ptile=2]" bash`
+    - `bsub -n 1 -Is -W 2:00 -R "rusage[mem=20000,ngpus_excl_p=1] select[gpu_model0==GeForceRTX2080Ti]" bash`  
+    - `bsub -n 10 -Is -W 2:00 -R "rusage[mem=10000,ngpus_excl_p=2] select[gpu_model0==GeForceRTX2080Ti] span[ptile=5]" bash` - we asked for 2 nodes, each with 2 GPUs and 10GB per core.
 
+- load some modules: `module load eth_proxy openmpi/4.0.1 cuda/10.0.130`
+    - `eth_proxy` is needed in case you want to download/connect to external services  (see [here](https://scicomp.ethz.ch/wiki/Accessing_the_clusters#Security))
+    - `openmpi/4.0.1` is needed in case you want to run on multiple nodes
+    - `cuda/10.0.130` might be needed for gpus
 - activate the desired conda environment: `conda activate narrative-nlp`
-- in case you want to download/connect to external services: `module load eth_proxy`  (see [here](https://scicomp.ethz.ch/wiki/Accessing_the_clusters#Security))
+- just once: `pip install pycuda mpi4py`
+- only for ipyparallel: `ipcluster start --ip="*" --location=$(hostname) --engines=MPI -n 6 &`
 - start jupyter notebook without browser: `jupyter notebook --no-browser --ip $(hostname -i)` . 
 Pay attention at the remote_ip, remote_port and token, e.g. `http://remote_ip:remote_port/?token=token` . The remote_is is not `127.0.0.1`
 
@@ -74,7 +78,7 @@ Pay attention at the remote_ip, remote_port and token, e.g. `http://remote_ip:re
 - use the remote_ip, remote_port and make a decision regarding a port_local, e.g. 8888 if available.
 - `ssh username@hostname -L port_local:ip_remote:port_remote -N`
 - In your favourite browser open `http://localhost:port_local`. You might need the token.
-- Once you are done press on `Quit` in jupyter notebook and close your terminal (`Ctrl+C`) and `exit` from the interactive session (**on Leonhard**)
+- Once you are done press on `Quit` in jupyter notebook and close your terminal (`Ctrl+C`), stop ipcluster `ipcluster stop` and `exit` from the interactive session (**on Leonhard**)
 ### Example
 See [Example.ipynb](./Notebooks/Example.ipynb). 
 In your python script or Jupyter Notebook add to the path `narrative-nlp/code` and use any module as desired
@@ -106,14 +110,3 @@ python -m pip install black pytest mypy bandit pylint flake8 pydocstyle line_pro
 - [PEP8](https://www.python.org/dev/peps/pep-0008/)
 - [Google Coding Style](http://google.github.io/styleguide/pyguide.html)
 - Docstring using Google Style: see [Sphinx 1.3 Google Style Python Docstrings](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html) and [pyguide](http://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings)
-
-## Use IPyParallel
-1. Create a new profile (see [here](https://ipyparallel.readthedocs.io/en/latest/process.html#configuring-an-ipython-cluster))
-```bash
-ipython profile create --parallel --profile=narrative-nlp
-```
-2. In the corresponding `ipengine_config.py` add the absolute path to the narrative-nlp code.
-```bash
-## specify a command to be run at startup
-c.IPEngineApp.startup_command = 'import sys; sys.path.append('...`)
-```
