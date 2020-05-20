@@ -9,7 +9,7 @@ from utils import group_sentences_in_batches, preprocess
 
 class SRL:
     def __init__(self, path: str, cuda_device: int = -1, max_char_length: int = 17000):
-        # as a thumb of rule srl requires 1.3GB and for 0.5GB/1K chars. So 17K max_char_length requires roughly 10.0 GB
+        # as a rule of thumb srl requires 1.3GB and for 0.5GB/1K chars. So 17K max_char_length requires roughly 10.0 GB
         self._predictor = Predictor.from_path(path, cuda_device=cuda_device)
         self._max_char_length = max_char_length
 
