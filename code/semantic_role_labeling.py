@@ -1,24 +1,44 @@
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
 
+from allennlp.predictors.predictor import Predictor
 import numpy as np
 
-from allennlp.predictors.predictor import Predictor
 from utils import group_sentences_in_batches, preprocess
 
 
 class SRL:
-    def __init__(self, path: str, cuda_device: int = -1, max_char_length: int = 17000):
+    def __init__(
+        self,
+        path: str,
+        cuda_device: int = -1,
+        max_char_length: int = 17000,
+        max_number_words=350,
+    ):
         # as a rule of thumb srl requires 1.3GB and for 0.5GB/1K chars. So 17K max_char_length requires roughly 10.0 GB
         self._predictor = Predictor.from_path(path, cuda_device=cuda_device)
         self._max_char_length = max_char_length
+        self._max_number_words = max_number_words
 
-    def __call__(self, sentences: List[str], max_char_length: Optional[int] = None):
+    def __call__(
+        self,
+        sentences: List[str],
+        max_char_length: Optional[int] = None,
+        max_number_words: Optional[int] = None,
+    ):
         if max_char_length is None:
             local_mcl = self._max_char_length
         else:
             local_mcl = max_char_length
-        batches = group_sentences_in_batches(sentences, max_char_length=local_mcl)
+
+        if max_number_words is None:
+            local_mnw = self._max_number_words
+        else:
+            local_mnw = max_number_words
+
+        batches = group_sentences_in_batches(
+            sentences, max_char_length=local_mcl, max_number_words=local_mnw
+        )
         res = []
         for batch in batches:
             sentences_json = [{"sentence": sent} for sent in batch]

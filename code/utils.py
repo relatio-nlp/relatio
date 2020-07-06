@@ -1,14 +1,14 @@
 import re
 import string
-import warnings
 from typing import Dict, List, NamedTuple, Optional
+import warnings
 
-import numpy as np
-import pandas as pd
-from nltk import pos_tag
+from nltk import pos_tag, word_tokenize
 from nltk.corpus import wordnet
 from nltk.stem import SnowballStemmer, WordNetLemmatizer
 from nltk.tokenize import sent_tokenize
+import numpy as np
+import pandas as pd
 
 
 def dict_concatenate(d_list, axis=0):
@@ -43,12 +43,15 @@ def tokenize_into_sentences(document: str) -> List[str]:
     return sentences
 
 
-def filter_sentences(sentences: List[str], max_sentence_length: int = -1) -> List[str]:
+def filter_sentences(
+    sentences: List[str], max_sentence_length: int = -1, max_number_words=-1
+) -> List[str]:
     """
     Filter list of sentences based on the number of characters length.
 
     Args:
-        max_sentence_length: Keep only sentences with a a number of character lower or equal to max_sentence_length. For max_sentence_length = -1 all sentences are kept.
+        max_sentence_length: Keep only sentences with a a number of character lower or equal to max_sentence_length. For max_number_words = max_sentence_length = -1 all sentences are kept.
+        max_number_words: Keep only sentences with a a number of words lower or equal to max_number_words. For max_number_words = max_sentence_length = -1 all sentences are kept.
 
     Returns:
         Filtered list of sentences.
@@ -60,24 +63,43 @@ def filter_sentences(sentences: List[str], max_sentence_length: int = -1) -> Lis
         ['This is a house']
         >>> filter_sentences(['This is a house'], max_sentence_length=14)
         []
+        >>> filter_sentences(['This is a house'], max_number_words=4)
+        ['This is a house']
+        >>> filter_sentences(['This is a house'], max_number_words=3)
+        []
     """
-    if max_sentence_length < -1:
+    if max_sentence_length != -1 and max_number_words != -1:
+        raise ValueError(
+            "one can specify either max_sentence_length or max_number_words"
+        )
+    if max_sentence_length < -1 or max_number_words < -1:
         raise ValueError("max_sentence_length should be greater or equal to -1")
-    elif max_sentence_length == -1:
+    elif max_sentence_length == -1 and max_number_words == -1:
         pass
-    elif max_sentence_length == 0:
+    elif max_sentence_length == 0 or max_number_words == 0:
         sentences = []
     else:
-        sentences = [sent for sent in sentences if len(sent) <= max_sentence_length]
+        if max_sentence_length != -1:
+
+            def filter_funct(sent):
+                return len(sent) <= max_sentence_length
+
+        else:
+
+            def filter_funct(sent):
+                return len(sent.split()) <= max_number_words
+
+        sentences = [sent for sent in sentences if filter_funct(sent)]
     return sentences
 
 
 def group_sentences_in_batches(
-    sentences: List[str], max_char_length: int
+    sentences: List[str], max_char_length: int, max_number_words: int
 ) -> List[List[str]]:
     batch_char_length = 0
     batches: List[List[str]] = []
     batch: List[str] = []
+    sentences = filter_sentences(sentences, max_number_words=max_number_words)
     for el in sentences:
         length = len(el)
         if length > max_char_length:
