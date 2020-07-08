@@ -61,7 +61,7 @@ For this step you need to terminals: one where you connect to leonhard and one f
 - make sure that you can connect passwordless. If not please follow the [documentation](https://scicomp.ethz.ch/wiki/Getting_started_with_clusters#SSH_keys)
 - start an interactive session (1 core for 1 hour): `bsub -n 1 -Is -W 1:00 -R "rusage[mem=10000]" bash`  
 In case you need more resources ask for them (see [here](https://scicomp.ethz.ch/wiki/Getting_started_with_clusters#Resource_requirements))  
-    - `bsub -n 1 -Is -W 2:00 -R "rusage[mem=20000,ngpus_excl_p=1] select[gpu_model0==GeForceRTX2080Ti]" bash`  
+    - `bsub -n 1 -Is -W 2:00 -R "rusage[mem=10000,ngpus_excl_p=1] select[gpu_model0==GeForceRTX2080Ti]" bash`  
     - `bsub -n 10 -Is -W 2:00 -R "rusage[mem=10000,ngpus_excl_p=2] select[gpu_model0==GeForceRTX2080Ti] span[ptile=5]" bash` - we asked for 2 nodes, each with 2 GPUs and 10GB per core.
 
 - load some modules: `module load eth_proxy openmpi/4.0.1 cuda/10.0.130`
@@ -76,7 +76,7 @@ Pay attention at the remote_ip, remote_port and token, e.g. `http://remote_ip:re
 
 **On your PC (WSL for windows)**
 - use the remote_ip, remote_port and make a decision regarding a port_local, e.g. 8888 if available.
-- `ssh username@hostname -L port_local:ip_remote:port_remote -N`
+- `ssh username@hostname -N -L port_local:ip_remote:port_remote`
 - In your favourite browser open `http://localhost:port_local`. You might need the token.
 - Once you are done press on `Quit` in jupyter notebook and close your terminal (`Ctrl+C`), stop ipcluster `ipcluster stop` and `exit` from the interactive session (**on Leonhard**)
 ### Example
