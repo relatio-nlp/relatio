@@ -1,4 +1,5 @@
 from copy import deepcopy
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from allennlp.predictors.predictor import Predictor
@@ -56,6 +57,7 @@ class SRL:
             if self.__cuda_device > -1 and local_cec:
                 with torch.cuda.device(self.__cuda_device):
                     torch.cuda.empty_cache()
+                    time.sleep(0.1)
             res.extend(res_batch)
         return res
 
