@@ -17,13 +17,15 @@ class SRL:
         max_char_length: int = 17000,
         max_number_words: int = 350,
         cuda_empty_cache: bool = True,
+        cuda_sleep: float = 0.1,
     ):
         # as a rule of thumb srl requires 1.3GB and for 0.5GB/1K chars. So 17K max_char_length requires roughly 10.0 GB
         self._predictor = Predictor.from_path(path, cuda_device=cuda_device)
         self._max_char_length = max_char_length
         self._max_number_words = max_number_words
         self._cuda_empty_cache = cuda_empty_cache
-        self.__cuda_device = cuda_device
+        self._cuda_device = cuda_device
+        self._cuda_sleep = cuda_sleep
 
     def __call__(
         self,
@@ -31,6 +33,7 @@ class SRL:
         max_char_length: Optional[int] = None,
         max_number_words: Optional[int] = None,
         cuda_empty_cache: bool = None,
+        cuda_sleep: float = None,
     ):
         if max_char_length is None:
             local_mcl = self._max_char_length
@@ -47,6 +50,11 @@ class SRL:
         else:
             local_cec = cuda_empty_cache
 
+        if cuda_sleep is None:
+            local_cs = self._cuda_sleep
+        else:
+            local_cs = cuda_sleep
+
         batches = group_sentences_in_batches(
             sentences, max_char_length=local_mcl, max_number_words=local_mnw
         )
@@ -54,10 +62,10 @@ class SRL:
         for batch in batches:
             sentences_json = [{"sentence": sent} for sent in batch]
             res_batch = self._predictor.predict_batch_json(sentences_json)
-            if self.__cuda_device > -1 and local_cec:
-                with torch.cuda.device(self.__cuda_device):
+            if self._cuda_device > -1 and local_cec:
+                with torch.cuda.device(self._cuda_device):
                     torch.cuda.empty_cache()
-                    time.sleep(0.1)
+                    time.sleep(local_cs)
             res.extend(res_batch)
         return res
 
