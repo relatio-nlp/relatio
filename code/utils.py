@@ -44,7 +44,9 @@ def tokenize_into_sentences(document: str) -> List[str]:
 
 
 def filter_sentences(
-    sentences: List[str], max_sentence_length: int = -1, max_number_words=-1
+    sentences: List[str],
+    max_sentence_length: Optional[int] = None,
+    max_number_words: Optional[int] = None,
 ) -> List[str]:
     """
     Filter list of sentences based on the number of characters length.
@@ -67,54 +69,92 @@ def filter_sentences(
         ['This is a house']
         >>> filter_sentences(['This is a house'], max_number_words=3)
         []
+        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=18)
+        ['This is a house', 'It is a nice house']
+        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=4, max_sentence_length=18)
+        ['This is a house']
+        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=17)
+        ['This is a house']
+        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=0, max_sentence_length=18)
+        []
+        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=0)
+        []
+        >>> filter_sentences(['This is a house', 'It is a nice house'])
+        ['This is a house', 'It is a nice house']
+        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=4)
+        ['This is a house']
     """
-    if max_sentence_length != -1 and max_number_words != -1:
-        raise ValueError(
-            "one can specify either max_sentence_length or max_number_words"
-        )
-    if max_sentence_length < -1 or max_number_words < -1:
-        raise ValueError("max_sentence_length should be greater or equal to -1")
-    elif max_sentence_length == -1 and max_number_words == -1:
+
+    if max_sentence_length is None and max_number_words is None:
         pass
     elif max_sentence_length == 0 or max_number_words == 0:
         sentences = []
     else:
-        if max_sentence_length != -1:
+        if max_sentence_length is not None:
+            sentences = [sent for sent in sentences if len(sent) <= max_sentence_length]
 
             def filter_funct(sent):
                 return len(sent) <= max_sentence_length
 
-        else:
+        if max_number_words is not None:
+            sentences = [
+                sent for sent in sentences if len(sent.split()) <= max_number_words
+            ]
 
-            def filter_funct(sent):
-                return len(sent.split()) <= max_number_words
-
-        sentences = [sent for sent in sentences if filter_funct(sent)]
     return sentences
 
 
 def group_sentences_in_batches(
-    sentences: List[str], max_char_length: int, max_number_words: int
+    sentences: List[str], max_batch_char_length: Optional[int] = None
 ) -> List[List[str]]:
+    """
+    Group sentences in batches of given total character length.
+
+    Args:
+        sentences: List of sentences
+        max_batch_char_length: maximum char length for a batch
+
+    Returns:
+        List of batches (list) of sentences.
+
+    Examples:
+        >>> group_sentences_in_batches(['This is a house','This is a house'],15)
+        [['This is a house'], ['This is a house']]
+        >>> group_sentences_in_batches(['This is a house','This is a house'],14)
+        []
+        >>> group_sentences_in_batches(['This is a house','This is a house'],29)
+        [['This is a house'], ['This is a house']]
+        >>> group_sentences_in_batches(['This is a house','This is a house'],30)
+        [['This is a house', 'This is a house']]
+        >>> group_sentences_in_batches(['This is a house','This is a house'])
+        [['This is a house', 'This is a house']]
+        >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'],29)
+        [['This is a house'], ['This is a house'], ['This is a house']]
+    """
+
+    if max_batch_char_length is None:
+        return [sentences]
+
     batch_char_length = 0
     batches: List[List[str]] = []
     batch: List[str] = []
-    sentences = filter_sentences(sentences, max_number_words=max_number_words)
+
     for el in sentences:
         length = len(el)
-        if length > max_char_length:
+        batch_char_length += length
+        if length > max_batch_char_length:
             warnings.warn(
-                f"The length of the sentence = {length} > max_char_length={max_char_length}. The following sentence is skipped: \n > {el}",
+                f"The length of the sentence = {length} > max_batch_length={max_batch_char_length}. The following sentence is skipped: \n > {el}",
                 RuntimeWarning,
             )
             continue
-        batch_char_length += length
-        if batch_char_length > max_char_length:
+        if batch_char_length > max_batch_char_length:
             batches.append(batch)
-            batch = []
-            batch_char_length = 0
+            batch = [el]
+            batch_char_length = length
         else:
             batch.append(el)
+
     if batch:
         batches.append(batch)
 

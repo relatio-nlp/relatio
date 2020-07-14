@@ -6,7 +6,7 @@ from allennlp.predictors.predictor import Predictor
 import numpy as np
 import torch
 
-from utils import group_sentences_in_batches, preprocess
+from utils import group_sentences_in_batches, preprocess, filter_sentences
 
 
 class SRL:
@@ -14,14 +14,15 @@ class SRL:
         self,
         path: str,
         cuda_device: int = -1,
-        max_char_length: int = 17000,
-        max_number_words: int = 350,
+        max_batch_char_length: Optional[int] = None,
+        max_sentence_length: Optional[int] = 350,
+        max_number_words: Optional[int] = None,
         cuda_empty_cache: bool = True,
-        cuda_sleep: float = 0.1,
+        cuda_sleep: float = 0.0,
     ):
-        # as a rule of thumb srl requires 1.3GB and for 0.5GB/1K chars. So 17K max_char_length requires roughly 10.0 GB
         self._predictor = Predictor.from_path(path, cuda_device=cuda_device)
-        self._max_char_length = max_char_length
+        self._max_batch_char_length = max_batch_char_length
+        self._max_sentence_length = max_sentence_length
         self._max_number_words = max_number_words
         self._cuda_empty_cache = cuda_empty_cache
         self._cuda_device = cuda_device
@@ -30,42 +31,51 @@ class SRL:
     def __call__(
         self,
         sentences: List[str],
-        max_char_length: Optional[int] = None,
+        max_batch_char_length: Optional[int] = None,
+        max_sentence_length: Optional[int] = None,
         max_number_words: Optional[int] = None,
         cuda_empty_cache: bool = None,
         cuda_sleep: float = None,
     ):
-        if max_char_length is None:
-            local_mcl = self._max_char_length
-        else:
-            local_mcl = max_char_length
+        max_batch_char_length = (
+            max_batch_char_length
+            if max_batch_char_length is not None
+            else self._max_batch_char_length
+        )
 
-        if max_number_words is None:
-            local_mnw = self._max_number_words
-        else:
-            local_mnw = max_number_words
+        max_sentence_length = (
+            max_sentence_length
+            if max_sentence_length is not None
+            else self._max_sentence_length
+        )
 
-        if cuda_empty_cache is None:
-            local_cec = self._cuda_empty_cache
-        else:
-            local_cec = cuda_empty_cache
+        max_number_words = (
+            max_number_words if max_number_words is not None else self._max_number_words
+        )
 
-        if cuda_sleep is None:
-            local_cs = self._cuda_sleep
-        else:
-            local_cs = cuda_sleep
+        cuda_empty_cache = (
+            cuda_empty_cache if cuda_empty_cache is not None else self._cuda_empty_cache
+        )
+
+        cuda_sleep = cuda_sleep if cuda_sleep is not None else self._cuda_sleep
+
+        sentences = filter_sentences(
+            sentences,
+            max_sentence_length=max_sentence_length,
+            max_number_words=max_number_words,
+        )
 
         batches = group_sentences_in_batches(
-            sentences, max_char_length=local_mcl, max_number_words=local_mnw
+            sentences, max_batch_char_length=max_batch_char_length
         )
         res = []
         for batch in batches:
             sentences_json = [{"sentence": sent} for sent in batch]
             res_batch = self._predictor.predict_batch_json(sentences_json)
-            if self._cuda_device > -1 and local_cec:
+            if self._cuda_device > -1 and cuda_empty_cache:
                 with torch.cuda.device(self._cuda_device):
                     torch.cuda.empty_cache()
-                    time.sleep(local_cs)
+                    time.sleep(cuda_sleep)
             res.extend(res_batch)
         return res
 
