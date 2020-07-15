@@ -27,7 +27,15 @@ for filepath in filepaths:
 
 ```bash
 
-bsub -n 1 -W 4:00 -R "rusage[mem=10000,ngpus_excl_p=1] select[gpu_model0==GeForceRTX2080Ti]" -o out.txt -e err.txt 
+bsub -n 1 -W 4:00 -R "rusage[mem=10500,ngpus_excl_p=1] select[gpu_model0==GeForceRTX2080Ti]" -o out.txt -e err.txt 
+
+```
+
+A full node can be guaranteed using `-R fullnode`  
+
+```bash
+
+bsub -n 36 -W 4:00 -R fullnode -R "select[gpu_model0==GeForceRTX2080Ti]" -o out.txt -e err.txt 
 
 ```
 
