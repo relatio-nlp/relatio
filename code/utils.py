@@ -105,7 +105,9 @@ def filter_sentences(
 
 
 def group_sentences_in_batches(
-    sentences: List[str], max_batch_char_length: Optional[int] = None
+    sentences: List[str],
+    max_batch_char_length: Optional[int] = None,
+    batch_size: Optional[int] = None,
 ) -> List[List[str]]:
     """
     Group sentences in batches of given total character length.
@@ -118,45 +120,53 @@ def group_sentences_in_batches(
         List of batches (list) of sentences.
 
     Examples:
-        >>> group_sentences_in_batches(['This is a house','This is a house'],15)
+        >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=15)
         [['This is a house'], ['This is a house']]
-        >>> group_sentences_in_batches(['This is a house','This is a house'],14)
+        >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=14)
         []
-        >>> group_sentences_in_batches(['This is a house','This is a house'],29)
+        >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=29)
         [['This is a house'], ['This is a house']]
-        >>> group_sentences_in_batches(['This is a house','This is a house'],30)
+        >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=30)
         [['This is a house', 'This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house'])
         [['This is a house', 'This is a house']]
-        >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'],29)
+        >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], max_batch_char_length=29)
         [['This is a house'], ['This is a house'], ['This is a house']]
+        >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], batch_size=2)
+        [['This is a house', 'This is a house'], ['This is a house']]
     """
-
-    if max_batch_char_length is None:
-        return [sentences]
-
-    batch_char_length = 0
     batches: List[List[str]] = []
-    batch: List[str] = []
 
-    for el in sentences:
-        length = len(el)
-        batch_char_length += length
-        if length > max_batch_char_length:
-            warnings.warn(
-                f"The length of the sentence = {length} > max_batch_length={max_batch_char_length}. The following sentence is skipped: \n > {el}",
-                RuntimeWarning,
-            )
-            continue
-        if batch_char_length > max_batch_char_length:
+    if max_batch_char_length is None and batch_size is None:
+        batches = [sentences]
+    elif max_batch_char_length is not None and batch_size is not None:
+        raise ValueError("max_batch_char_length and batch_size are mutual exclusive.")
+    elif batch_size is not None:
+        batches = [
+            sentences[i : i + batch_size] for i in range(0, len(sentences), batch_size)
+        ]
+    else:
+        batch_char_length = 0
+        batch: List[str] = []
+
+        for el in sentences:
+            length = len(el)
+            batch_char_length += length
+            if length > max_batch_char_length:
+                warnings.warn(
+                    f"The length of the sentence = {length} > max_batch_length={max_batch_char_length}. The following sentence is skipped: \n > {el}",
+                    RuntimeWarning,
+                )
+                continue
+            if batch_char_length > max_batch_char_length:
+                batches.append(batch)
+                batch = [el]
+                batch_char_length = length
+            else:
+                batch.append(el)
+
+        if batch:
             batches.append(batch)
-            batch = [el]
-            batch_char_length = length
-        else:
-            batch.append(el)
-
-    if batch:
-        batches.append(batch)
 
     return batches
 

@@ -15,13 +15,15 @@ class SRL:
         path: str,
         cuda_device: int = -1,
         max_batch_char_length: Optional[int] = None,
-        max_sentence_length: Optional[int] = 350,
+        batch_size: Optional[int] = None,
+        max_sentence_length: Optional[int] = None,
         max_number_words: Optional[int] = None,
         cuda_empty_cache: bool = True,
         cuda_sleep: float = 0.0,
     ):
         self._predictor = Predictor.from_path(path, cuda_device=cuda_device)
         self._max_batch_char_length = max_batch_char_length
+        self._batch_size = batch_size
         self._max_sentence_length = max_sentence_length
         self._max_number_words = max_number_words
         self._cuda_empty_cache = cuda_empty_cache
@@ -32,6 +34,7 @@ class SRL:
         self,
         sentences: List[str],
         max_batch_char_length: Optional[int] = None,
+        batch_size: Optional[int] = None,
         max_sentence_length: Optional[int] = None,
         max_number_words: Optional[int] = None,
         cuda_empty_cache: bool = None,
@@ -42,6 +45,8 @@ class SRL:
             if max_batch_char_length is not None
             else self._max_batch_char_length
         )
+
+        batch_size = batch_size if batch_size is not None else self._batch_size
 
         max_sentence_length = (
             max_sentence_length
@@ -66,8 +71,11 @@ class SRL:
         )
 
         batches = group_sentences_in_batches(
-            sentences, max_batch_char_length=max_batch_char_length
+            sentences,
+            max_batch_char_length=max_batch_char_length,
+            batch_size=batch_size,
         )
+
         res = []
         for batch in batches:
             sentences_json = [{"sentence": sent} for sent in batch]
