@@ -47,8 +47,8 @@ bsub -n 36 -W 4:00 -R fullnode -R "select[gpu_model0==GeForceRTX2080Ti]" -o out.
 | GPU            | 80 sen                     | 349                       | 0     | 1    | 1805                     | 1852           |                                 |
 | GPU            | 20'000 char                | 349                       | 0     | 1    | 1619                     | 1663           |                                 |
 | IPyParallel    | 20'000 char                | 349                       | 18    | 0    | 1838                     | 1997           |                                 |
-| IPyParallel    | 20'000 char                | 349                       | 1     | 1    | 1649                     | 1787           |                                 |
-| IPyParallel    | 20'000 char                | 349                       | 2     | 2    | 764                      | 875            |                                 |
+| IPyParallel    | 20'000 char                | 349                       | 0     | 1    | 1649                     | 1787           |                                 |
+| IPyParallel    | 20'000 char                | 349                       | 0     | 2    | 764                      | 875            |                                 |
 | IPyParallel    | 20'000 char                | 349                       | 0     | 4    | 378                      | 511            |                                 |
 | IPyParallel    | 20'000 char                | 349                       | 14    | 4    | 1171                     | 1337           | 700                             |
 
