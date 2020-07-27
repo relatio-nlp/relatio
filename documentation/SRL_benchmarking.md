@@ -23,11 +23,11 @@ for filepath in filepaths:
 
 ### Architecture
 
-**GeForceRTX2080Ti** 8xGPU nodes with ~ 10GB / GPU and 36 CORES with 10 GB / Core
+**GeForceRTX2080Ti** 8xGPU nodes with ~ 10.5GB / GPU and 36 CORES with 10.5GB / Core
 
 ```bash
 
-bsub -n 1 -W 4:00 -R "rusage[mem=10500,ngpus_excl_p=1] select[gpu_model0==GeForceRTX2080Ti]" -o out.txt -e err.txt 
+bsub -n 1 -W 4:00 -R "rusage[mem=10500,ngpus_excl_p=1] select[gpu_model0==GeForceRTX2080Ti]"
 
 ```
 
@@ -35,22 +35,27 @@ A full node can be guaranteed using `-R fullnode`
 
 ```bash
 
-bsub -n 36 -W 4:00 -R fullnode -R "select[gpu_model0==GeForceRTX2080Ti]" -o out.txt -e err.txt 
+bsub -n 36 -W 4:00 -R fullnode -R "select[gpu_model0==GeForceRTX2080Ti]" 
 
 ```
 
 ### Results
 
-| Implementation | batch size \[sen or char\] | max sentence len \[char\] | COREs | GPUs | SRL execution time \[s\] | Run time \[s\] | Time for cores at the end \[s\] |
-| -------------- | -------------------------- | ------------------------- | ----- | ---- | ------------------------ | -------------- | ------------------------------- |
-| Ref (Joblib)   | 80 sen                     | 349                       | 18    | 0    | 2361                     | 2402           |                                 |
-| GPU            | 80 sen                     | 349                       | 0     | 1    | 1805                     | 1852           |                                 |
-| GPU            | 20'000 char                | 349                       | 0     | 1    | 1619                     | 1663           |                                 |
-| IPyParallel    | 20'000 char                | 349                       | 18    | 0    | 1838                     | 1997           |                                 |
-| IPyParallel    | 20'000 char                | 349                       | 0     | 1    | 1649                     | 1787           |                                 |
-| IPyParallel    | 20'000 char                | 349                       | 0     | 2    | 764                      | 875            |                                 |
-| IPyParallel    | 20'000 char                | 349                       | 0     | 4    | 378                      | 511            |                                 |
-| IPyParallel    | 20'000 char                | 349                       | 14    | 4    | 1171                     | 1337           | 700                             |
+| Implementation   | batch size \[sen or char\] | max sentence len \[char\] | COREs | GPUs | SRL execution time \[s\] | Run time \[s\] | Time for cores at the end \[s\] |
+| ---------------- | -------------------------- | ------------------------- | ----- | ---- | ------------------------ | -------------- | ------------------------------- |
+| Ref (Joblib)     | 80 sen                     | 349                       | 18    | 0    | 2361                     | 2402           |                                 |
+| GPU              | 80 sen                     | 349                       | 0     | 1    | 1805                     | 1852           |                                 |
+| GPU              | 20'000 char                | 349                       | 0     | 1    | 1619                     | 1663           |                                 |
+| IPyParallel      | 20'000 char                | 349                       | 18    | 0    | 1838                     | 1997           | 160                             |
+| IPyParallel      | 20'000 char                | 349                       | 0     | 1    | 1649                     | 1787           |                                 |
+| IPyParallel      | 20'000 char                | 349                       | 0     | 2    | 764                      | 875            |                                 |
+| IPyParallel      | 20'000 char                | 349                       | 0     | 4    | 378                      | 511            |                                 |
+| IPyParallel      | 20'000 char                | 349                       | 14    | 4    | 1171                     | 1337           | 700                             |
+| IPyParallel+BERT | 20'000 char                | 349                       | 0     | 1    | 1234                     | 1362           |                                 |
+| IPyParallel+BERT | 80'000 char                | 349                       | 0     | 1    | 1140                     | 1268           |                                 |
+| IPyParallel+BERT | 20'000 char                | 349                       | 18    | 0    | 1352                     | 1480           |                                 |
+| IPyParallel+BERT | 80'000 char                | 349                       | 18    | 0    | 1747                     | 1935           | 400                             |
+| IPyParallel+BERT | 20'000 char                | 349                       | 1     | 0    | 15375                    | 15497          |                                 |                       |
 
 When *n* GPUs were used there also *n* cores required but not mentioned in the table above because they were not used to perform SRL but only for the communication with the GPU.
 

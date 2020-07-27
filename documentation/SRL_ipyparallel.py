@@ -54,9 +54,16 @@ dview.scatter("cuda_device", cuda_device_ids)
 code_path = Path(
     "/cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/Andrei/narrative-nlp/code"
 ).resolve()
+
 srl_model_path = Path(
-    "/cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/NYT/srl_model/srl-model-2018.05.25.tar.gz"
+    "/cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/Andrei/SRL/srl_model/srl-model-2018.05.25.tar.gz"
 ).resolve()
+
+srl_model_path = Path(
+    "/cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/Andrei/SRL/srl_model/bert-base-srl-2020.03.24.tar.gz"
+).resolve()
+
+
 documents_path = Path(
     "/cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/Andrei/cong_gpo_taxation_sentences/"
 ).resolve()

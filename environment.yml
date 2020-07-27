@@ -13,6 +13,6 @@ dependencies:
   - pytorch # pytorch is needed by allennlp and from pip not working on macOS
   - pip
   - pip:
-      - allennlp
+      - allennlp==0.9
       - tensorflow
       - tensorflow-hub
