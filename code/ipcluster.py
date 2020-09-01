@@ -5,21 +5,6 @@ import time
 import ipyparallel as ipp
 
 
-class LeonhardIPCluster(IPCluster):
-    def __init__(
-        self,
-        profile="LSB" + os.getenv("LSB_JOBID"),
-        n=int(os.getenv("LSB_MAX_NUM_PROCESSORS")),
-        init=True,
-        ip='"*"',
-        location="$(hostname)",
-        engines="MPI",
-    ):
-        super().__init__(
-            profile=profile, n=n, init=init, ip=ip, location=location, engines=engines,
-        )
-
-
 class IPCluster:
     def __init__(
         self, profile="default", n=1, init=False, ip=None, location=None, engines=None
@@ -95,3 +80,18 @@ class IPCluster:
             cuda_device_ids.append(cuda_device_id)
 
         return cuda_device_ids
+
+
+class LeonhardIPCluster(IPCluster):
+    def __init__(
+        self,
+        profile="LSB" + os.getenv("LSB_JOBID"),
+        n=int(os.getenv("LSB_MAX_NUM_PROCESSORS")),
+        init=True,
+        ip='"*"',
+        location="$(hostname)",
+        engines="MPI",
+    ):
+        super().__init__(
+            profile=profile, n=n, init=init, ip=ip, location=location, engines=engines,
+        )
