@@ -20,10 +20,14 @@ class IPCluster:
         if engines is not None:
             command += f" --engines={engines}"
 
-        subprocess.run(command, shell=True, check=True, capture_output=True)
-
+        self._start_commmand = command
         self._n = n
         self._profile = profile
+
+    def start(self):
+        subprocess.run(
+            self._start_commmand, shell=True, check=True, capture_output=True
+        )
 
     def connect(self, max_waiting_time=300):
         rc = ipp.Client(profile=self._profile)
