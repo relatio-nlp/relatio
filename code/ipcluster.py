@@ -6,14 +6,17 @@ import ipyparallel as ipp
 
 
 class LeonhardIPCluster(IPCluster):
-    def __init__(self):
+    def __init__(
+        self,
+        profile="LSB" + os.getenv("LSB_JOBID"),
+        n=int(os.getenv("LSB_MAX_NUM_PROCESSORS")),
+        init=True,
+        ip='"*"',
+        location="$(hostname)",
+        engines="MPI",
+    ):
         super().__init__(
-            profile="LSB_new" + os.getenv("LSB_JOBID"),
-            n=int(os.getenv("LSB_MAX_NUM_PROCESSORS")),
-            init=True,
-            ip='"*"',
-            location="$(hostname)",
-            engines="MPI",
+            profile=profile, n=n, init=init, ip=ip, location=location, engines=engines,
         )
 
 
