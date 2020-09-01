@@ -1,7 +1,7 @@
-from binascii import Error
 import os
 import subprocess
 import time
+from typing import List
 
 import ipyparallel as ipp
 
@@ -70,7 +70,7 @@ class IPCluster:
         self._started = False
         self._connected = False
 
-    def assign_cuda_device_ids(self, no_gpu=False):
+    def assign_cuda_device_ids(self, use_gpu: bool = True) -> List[int]:
         """
         At most one device is assigned per engine (worker).
         
