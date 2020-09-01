@@ -31,6 +31,12 @@ class SRL:
         self._cuda_device = cuda_device
         self._cuda_sleep = cuda_sleep
 
+    def _clean_cache(self, cuda_sleep, cuda_empty_cache):
+        if self._cuda_device > -1 and cuda_empty_cache:
+            with torch.cuda.device(self._cuda_device):
+                torch.cuda.empty_cache()
+                time.sleep(cuda_sleep)
+
     def __call__(
         self,
         sentences: List[str],
@@ -86,14 +92,13 @@ class SRL:
                 warnings.warn(
                     f"empty result {err}", RuntimeWarning,
                 )
-                res = []
+                res = [None]
                 break
             except:
                 raise
-            if self._cuda_device > -1 and cuda_empty_cache:
-                with torch.cuda.device(self._cuda_device):
-                    torch.cuda.empty_cache()
-                    time.sleep(cuda_sleep)
+            finally:
+                self._clean_cache(cuda_sleep, cuda_empty_cache)
+
             res.extend(res_batch)
         return res
 
