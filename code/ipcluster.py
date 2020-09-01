@@ -97,7 +97,7 @@ class IPCluster:
 class LeonhardIPCluster(IPCluster):
     def __init__(
         self,
-        profile="LSB" + os.getenv("LSB_JOBID"),
+        profile="LSB" + os.getenv("LSB_BATCH_JID"),
         n=int(os.getenv("LSB_MAX_NUM_PROCESSORS")),
         init=True,
         ip='"*"',
