@@ -22,6 +22,7 @@ class IPCluster:
 
         subprocess.run(command, shell=True, check=True, capture_output=True)
 
+        self._n = n
         self._profile = profile
 
     def connect(self, max_waiting_time=300):
@@ -29,7 +30,7 @@ class IPCluster:
 
         start_time = time.time()
 
-        while len(rc.ids) < n:
+        while len(rc.ids) < self._n:
             time.sleep(1)
             if time.time() - start_time > max_waiting_time:
                 raise RuntimeError(
