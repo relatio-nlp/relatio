@@ -28,10 +28,15 @@ class IPCluster:
         self._connected = False
 
     def start(self):
-        subprocess.run(
-            self._start_commmand, shell=True, check=True, capture_output=True
-        )
-        self._started = True
+        try:
+            res = subprocess.run(
+                self._start_commmand, shell=True, check=True, capture_output=True
+            )
+            self._started = True
+        except subprocess.CalledProcessError as err:
+            print(res.stdout)
+            print(res.stderr)
+            raise err
 
     def connect(self, max_waiting_time=300):
         if self._started is False:
@@ -55,7 +60,12 @@ class IPCluster:
         else:
             command = f"ipcluster stop --profile={self._profile}"
 
-            subprocess.run(command, shell=True, check=True, capture_output=True)
+        try:
+            res = subprocess.run(command, shell=True, check=True, capture_output=True)
+        except subprocess.CalledProcessError as err:
+            print(res.stdout)
+            print(res.stderr)
+            raise err
 
     def assign_cuda_device_ids(self, no_gpu=False):
         """
