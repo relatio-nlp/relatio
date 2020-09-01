@@ -1,3 +1,4 @@
+from binascii import Error
 import os
 import subprocess
 import time
@@ -33,6 +34,8 @@ class IPCluster:
         self._started = True
 
     def connect(self, max_waiting_time=300):
+        if self._started is False:
+            raise Error("start the ipcluster")
         rc = ipp.Client(profile=self._profile)
 
         start_time = time.time()
