@@ -38,46 +38,7 @@ class IPCluster:
             print("stdout:\t", err.stdout)
             print("stderr:\t", err.stderr)
 
-    def connect(self, max_waiting_time=300):
-        if self._started is False:
-            raise Error("start the ipcluster")
-        rc = ipp.Client(profile=self._profile)
-
-        start_time = time.time()
-
-        while len(rc.ids) < self._n:
-            time.sleep(1)
-            if time.time() - start_time > max_waiting_time:
-                raise RuntimeError(
-                    f"The engines were not ready after {max_waiting_time} seconds."
-                )
-        self.rc = rc
-        self._connected = True
-
-    def stop(self):
-        if self._connected:
-            self.rc.shutdown(hub=True)
-        else:
-            command = f"ipcluster stop --profile={self._profile}"
-
-            try:
-                subprocess.run(command, shell=True, check=True, capture_output=True)
-            except subprocess.CalledProcessError as err:
-                print("command::\t", err.cmd)
-                print("stdout:\t", err.stdout)
-                print("stderr:\t", err.stderr)
-                raise err
-        self._started = False
-        self._connected = False
-
-    def assign_cuda_device_ids(self, use_gpu: bool = True) -> List[int]:
-        """
-        At most one device is assigned per engine (worker).
-        
-        """
-        if use_gpu is False:
-            return [-1] * len(self.rc.ids)
-
+    def _hostname_and_cuda_visible_devices(self):
         dview = self.rc[:]
         dview.block = True
 
@@ -97,18 +58,65 @@ class IPCluster:
 
         res = dview.pull(("cuda_devices", "hostname"))
 
-        cuda_device_ids = []
-        cuda_devices_host = {}
+        self.hostnames = list([el[1] for el in res])
+        self.cuda_visible_devices = list([el[0] for el in res])
 
-        for el in res:
-            if not el[1] in cuda_devices_host:
-                cuda_devices_host[el[1]] = el[0]
-            cuda_device_id = (
-                cuda_devices_host[el[1]].pop(0) if cuda_devices_host[el[1]] else -1
-            )
-            cuda_device_ids.append(cuda_device_id)
+    def connect(self, max_waiting_time=300):
+        if self._started is False:
+            raise Error("start the ipcluster")
+        rc = ipp.Client(profile=self._profile)
 
-        return cuda_device_ids
+        start_time = time.time()
+
+        while len(rc.ids) < self._n:
+            time.sleep(1)
+            if time.time() - start_time > max_waiting_time:
+                raise RuntimeError(
+                    f"The engines were not ready after {max_waiting_time} seconds."
+                )
+        self.rc = rc
+        self._connected = True
+
+        self._hostname_and_cuda_visible_devices()
+
+    def stop(self):
+        if self._connected:
+            self.rc.shutdown(hub=True)
+        else:
+            command = f"ipcluster stop --profile={self._profile}"
+
+            try:
+                subprocess.run(command, shell=True, check=True, capture_output=True)
+            except subprocess.CalledProcessError as err:
+                print("command::\t", err.cmd)
+                print("stdout:\t", err.stdout)
+                print("stderr:\t", err.stderr)
+                raise err
+        self._started = False
+        self._connected = False
+
+    def assign_cuda_device(self, use_gpu: bool = True) -> List[int]:
+        """
+        At most one device is assigned per engine (worker).
+        
+        """
+        if use_gpu is False:
+            cuda_devices = [-1] * len(self.rc.ids)
+        else:
+            cuda_devices = []
+            cuda_devices_host = {}
+
+            for i, el in enumerate(self.hostnames):
+                if el not in cuda_devices_host:
+                    cuda_devices_host[el] = self.cuda_visible_devices[i]
+                cuda_device_id = (
+                    cuda_devices_host[el].pop(0) if cuda_devices_host[el] else -1
+                )
+                cuda_devices.append(cuda_device_id)
+
+        self.cuda_devices = cuda_devices
+
+        return cuda_devices
 
 
 class LeonhardIPCluster(IPCluster):
