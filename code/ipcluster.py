@@ -61,13 +61,13 @@ class IPCluster:
         else:
             command = f"ipcluster stop --profile={self._profile}"
 
-        try:
-            subprocess.run(command, shell=True, check=True, capture_output=True)
-        except subprocess.CalledProcessError as err:
-            print(err.cmd)
-            print(err.stdout)
-            print(err.stderr)
-            raise err
+            try:
+                subprocess.run(command, shell=True, check=True, capture_output=True)
+            except subprocess.CalledProcessError as err:
+                print(err.cmd)
+                print(err.stdout)
+                print(err.stderr)
+                raise err
 
     def assign_cuda_device_ids(self, no_gpu=False):
         """
