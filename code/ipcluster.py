@@ -52,6 +52,10 @@ class IPCluster:
     def stop(self):
         if self._connected:
             self.rc.shutdown(hub=True)
+        else:
+            command = f"ipcluster stop --profile={self._profile}"
+
+            subprocess.run(command, shell=True, check=True, capture_output=True)
 
     def assign_cuda_device_ids(self, no_gpu=False):
         """
