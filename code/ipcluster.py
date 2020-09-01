@@ -75,7 +75,7 @@ class IPCluster:
         At most one device is assigned per engine (worker).
         
         """
-        if no_gpu is True:
+        if use_gpu is True:
             return [-1] * len(self.rc.ids)
 
         dview = self.rc[:]
