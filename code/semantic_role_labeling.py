@@ -1,4 +1,5 @@
 from copy import deepcopy
+import warnings
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -79,7 +80,16 @@ class SRL:
         res = []
         for batch in batches:
             sentences_json = [{"sentence": sent} for sent in batch]
-            res_batch = self._predictor.predict_batch_json(sentences_json)
+            try:
+                res_batch = self._predictor.predict_batch_json(sentences_json)
+            except RuntimeError as err:
+                warnings.warn(
+                    f"empty result {err}", RuntimeWarning,
+                )
+                res = []
+                break
+            except:
+                raise
             if self._cuda_device > -1 and cuda_empty_cache:
                 with torch.cuda.device(self._cuda_device):
                     torch.cuda.empty_cache()
