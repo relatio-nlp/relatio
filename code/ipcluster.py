@@ -34,10 +34,9 @@ class IPCluster:
             )
             self._started = True
         except subprocess.CalledProcessError as err:
-            print(err.cmd)
-            print(err.stdout)
-            print(err.stderr)
-            raise err
+            print("command::\t", err.cmd)
+            print("stdout:\t", err.stdout)
+            print("stderr:\t", err.stderr)
 
     def connect(self, max_waiting_time=300):
         if self._started is False:
@@ -64,10 +63,12 @@ class IPCluster:
             try:
                 subprocess.run(command, shell=True, check=True, capture_output=True)
             except subprocess.CalledProcessError as err:
-                print(err.cmd)
-                print(err.stdout)
-                print(err.stderr)
+                print("command::\t", err.cmd)
+                print("stdout:\t", err.stdout)
+                print("stderr:\t", err.stderr)
                 raise err
+        self._started = False
+        self._connected = False
 
     def assign_cuda_device_ids(self, no_gpu=False):
         """
