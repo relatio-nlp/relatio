@@ -23,11 +23,14 @@ class IPCluster:
         self._start_commmand = command
         self._n = n
         self._profile = profile
+        self._started = False
+        self._connected = False
 
     def start(self):
         subprocess.run(
             self._start_commmand, shell=True, check=True, capture_output=True
         )
+        self._started = True
 
     def connect(self, max_waiting_time=300):
         rc = ipp.Client(profile=self._profile)
@@ -41,9 +44,11 @@ class IPCluster:
                     f"The engines were not ready after {max_waiting_time} seconds."
                 )
         self.rc = rc
+        self._connected = True
 
     def stop(self):
-        self.rc.shutdown(hub=True)
+        if self._connected:
+            self.rc.shutdown(hub=True)
 
     def assign_cuda_device_ids(self, no_gpu=False):
         """
