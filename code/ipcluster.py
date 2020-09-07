@@ -59,11 +59,11 @@ class IPCluster:
         res = dview.pull(("cuda_devices", "hostname"))
 
         self.hostnames = tuple([el[1] for el in res])
-        self.cuda_visible_devices = tuple([el[0] for el in res])
+        self.cuda_visible_devices = tuple(tuple([el[0] for el in res]))
 
     def connect(self, max_waiting_time=300):
         if self._started is False:
-            raise Error("start the ipcluster")
+            raise RuntimeError("start the ipcluster")
         rc = ipp.Client(profile=self._profile)
 
         start_time = time.time()
