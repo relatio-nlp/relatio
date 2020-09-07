@@ -58,8 +58,8 @@ class IPCluster:
 
         res = dview.pull(("cuda_devices", "hostname"))
 
-        self.hostnames = list([el[1] for el in res])
-        self.cuda_visible_devices = list([el[0] for el in res])
+        self.hostnames = tuple([el[1] for el in res])
+        self.cuda_visible_devices = tuple([el[0] for el in res])
 
     def connect(self, max_waiting_time=300):
         if self._started is False:
@@ -108,15 +108,15 @@ class IPCluster:
 
             for i, el in enumerate(self.hostnames):
                 if el not in cuda_devices_host:
-                    cuda_devices_host[el] = self.cuda_visible_devices[i]
+                    cuda_devices_host[el] = list(self.cuda_visible_devices[i])
                 cuda_device_id = (
                     cuda_devices_host[el].pop(0) if cuda_devices_host[el] else -1
                 )
                 cuda_devices.append(cuda_device_id)
 
-        self.cuda_devices = cuda_devices
+        self.cuda_devices = tuple(cuda_devices)
 
-        return cuda_devices
+        return self.cuda_devices
 
 
 class LeonhardIPCluster(IPCluster):
