@@ -136,7 +136,7 @@ def run_from_batch(batch_path: Path):
         filepaths = ast.literal_eval(f.readline())
         filepaths = [Path(filepath) for filepath in filepaths]
 
-    open_srl_save.map((filepath for filepath in tqdm(filepaths)))
+    open_srl_save.map((filepath for filepath in filepaths))
 
     ipcluster.stop()
 
