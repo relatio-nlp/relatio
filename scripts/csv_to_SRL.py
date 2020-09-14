@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List
 
 from ipyparallel.error import UnmetDependency
+from tqdm import tqdm
 
 CODE_PATH = Path(
     "/cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/Andrei/narrative-nlp/code"
@@ -52,7 +53,7 @@ def batch_filepaths(filepaths: List[Path], max_time: int = 4 * 60 * 60):
     return batches
 
 
-def split_in_batches():
+def split_in_batches() -> Path:
     filepaths = list(sorted(DOCUMENTS_PATH.glob("*-10-*_*.csv")))
     filepaths = [
         filepath
@@ -135,7 +136,7 @@ def run_from_batch(batch_path: Path):
         filepaths = ast.literal_eval(f.readline())
         filepaths = [Path(filepath) for filepath in filepaths]
 
-    open_srl_save.map((filepath for filepath in filepaths))
+    open_srl_save.map((filepath for filepath in tqdm(filepaths)))
 
     ipcluster.stop()
 
@@ -153,6 +154,7 @@ if __name__ == "__main__":
     SRL_OUTPUT_PATH.mkdir(exist_ok=True)
 
     if args.mode == "split":
-        split_in_batches()
+        res = split_in_batches()
+        print(str(res))
     elif args.mode == "run":
         run_from_batch(Path(args.batch_path))
