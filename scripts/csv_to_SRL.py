@@ -135,7 +135,7 @@ def run_from_batch(batch_path: Path):
     with open(batch_path, "r") as f:
         filepaths = ast.literal_eval(f.readline())
         filepaths = [Path(filepath) for filepath in filepaths]
-
+    print(f"Starting SRL on {len(filepaths)} files")
     open_srl_save.map((filepath for filepath in filepaths))
 
     ipcluster.stop()
