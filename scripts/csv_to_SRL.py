@@ -96,7 +96,7 @@ def run_from_batch(batch_path: Path):
         {
             "CODE_PATH": str(CODE_PATH),
             "SRL_KWARGS": srl_kwargs,
-            "SRL_OUPUT_PATH": SRL_OUTPUT_PATH,
+            "SRL_OUTPUT_PATH": SRL_OUTPUT_PATH,
         }
     )
 
@@ -173,6 +173,7 @@ if __name__ == "__main__":
         res = split_in_batches(args.glob_pattern)
         print(str(res))
     elif args.mode == "run":
-        if args.batch_path == "":
+        batch_path = Path(args.batch_path)
+        if args.batch_path == "" or batch_path.exists() is False:
             raise ValueError()
-        run_from_batch(Path(args.batch_path))
+        run_from_batch()
