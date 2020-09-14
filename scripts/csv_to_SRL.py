@@ -176,4 +176,4 @@ if __name__ == "__main__":
         batch_path = Path(args.batch_path)
         if args.batch_path == "" or batch_path.exists() is False:
             raise ValueError()
-        run_from_batch()
+        run_from_batch(batch_path)
