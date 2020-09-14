@@ -1,13 +1,14 @@
-from copy import deepcopy
-import warnings
+import pathlib
 import time
+import warnings
+from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
 
-from allennlp.predictors.predictor import Predictor
 import numpy as np
 import torch
+from allennlp.predictors.predictor import Predictor
 
-from utils import group_sentences_in_batches, preprocess, filter_sentences
+from utils import filter_sentences, group_sentences_in_batches, preprocess
 
 
 class SRL:
@@ -223,3 +224,8 @@ def estimate_time(char_length: int, device: str = "RTX2080Ti") -> float:
         raise ValueError("{device} not estimated.")
 
     return res
+
+
+def output_file(filepath: pathlib.Path, parent_path: pathlib.Path) -> pathlib.Path:
+    return (parent_path / filepath.name).with_suffix(".json")
+
