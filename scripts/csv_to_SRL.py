@@ -53,8 +53,8 @@ def batch_filepaths(filepaths: List[Path], max_time: int = 4 * 60 * 60):
     return batches
 
 
-def split_in_batches() -> Path:
-    filepaths = list(sorted(DOCUMENTS_PATH.glob("*-10-*_*.csv")))
+def split_in_batches(glob_pattern) -> Path:
+    filepaths = list(sorted(DOCUMENTS_PATH.glob(glob_pattern)))
     filepaths = [
         filepath
         for filepath in filepaths
@@ -109,7 +109,7 @@ def run_from_batch(batch_path: Path):
     from ipyparallel.error import UnmetDependency
 
     sys.path.append(CODE_PATH)
-    from semantic_role_labeling import SRL, output_path
+    from semantic_role_labeling import SRL, output_file
 
     CUDA_DEVICE = cuda_device[0]
 
@@ -151,14 +151,28 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument(
-        "-i", "--batch_path", help="input batch path for the choice run", default=""
+        "-i",
+        "--batch_path",
+        help="input batch path if the mode choice is run",
+        default="",
     )
+    parser.add_argument(
+        "-g",
+        "--glob_pattern",
+        help="input glob_pattern used for matching files if the mode choice is split",
+        default="",
+    )
+
     args = parser.parse_args()
 
     SRL_OUTPUT_PATH.mkdir(exist_ok=True)
 
     if args.mode == "split":
-        res = split_in_batches()
+        if args.glob_pattern == "":
+            raise ValueError()
+        res = split_in_batches(args.glob_pattern)
         print(str(res))
     elif args.mode == "run":
+        if args.batch_path == "":
+            raise ValueError()
         run_from_batch(Path(args.batch_path))
