@@ -122,15 +122,19 @@ def run_from_batch(batch_path: Path):
 
     @lview.parallel()
     def open_srl_save(filepath, max_char_length_on_core=MAX_CHAR_LENGTH_ON_CORE):
-        with open(filepath, "r") as f:
-            sentences = f.readlines()[1:]
-        sentences_char_length = sum([len(" ".join(el.split())) for el in sentences])
-        if sentences_char_length > max_char_length_on_core and CUDA_DEVICE == -1:
-            raise UnmetDependency
-        res = srl(sentences)
+        output_path = output_file(filepath, SRL_OUTPUT_PATH)
+        if output_path.exists():
+            pass
+        else:
+            with open(filepath, "r") as f:
+                sentences = f.readlines()[1:]
+            sentences_char_length = sum([len(" ".join(el.split())) for el in sentences])
+            if sentences_char_length > max_char_length_on_core and CUDA_DEVICE == -1:
+                raise UnmetDependency
+            res = srl(sentences)
 
-        with open(output_file(filepath, SRL_OUTPUT_PATH), "w") as f:
-            json.dump(res, f)
+            with open(output_path, "w") as f:
+                json.dump(res, f)
 
     with open(batch_path, "r") as f:
         filepaths = ast.literal_eval(f.readline())
