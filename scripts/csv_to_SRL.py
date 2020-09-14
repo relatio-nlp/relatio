@@ -144,7 +144,11 @@ def run_from_batch(batch_path: Path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-m", "--mode", help="how to run the script", choices=["split", "run"]
+        "-m",
+        "--mode",
+        help="how to run the script",
+        choices=["split", "run"],
+        required=True,
     )
     parser.add_argument(
         "-i", "--batch_path", help="input batch path for the choice run", default=""
