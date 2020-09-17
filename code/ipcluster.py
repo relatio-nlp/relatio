@@ -120,15 +120,13 @@ class IPCluster:
 
 
 class LeonhardIPCluster(IPCluster):
-    def __init__(
-        self,
-        profile="LSB" + os.getenv("LSB_BATCH_JID"),
-        n=int(os.getenv("LSB_MAX_NUM_PROCESSORS")),
-        init=True,
-        ip='"*"',
-        location="$(hostname)",
-        engines="MPI",
-    ):
+    def __init__(self):
+        profile = "LSB" + os.getenv("LSB_BATCH_JID")
+        n = int(os.getenv("LSB_MAX_NUM_PROCESSORS"))
+        init = True
+        ip = '"*"'
+        location = "$(hostname)"
+        engines = "MPI"
         super().__init__(
             profile=profile, n=n, init=init, ip=ip, location=location, engines=engines,
         )
