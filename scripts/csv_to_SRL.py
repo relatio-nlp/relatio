@@ -151,13 +151,13 @@ if __name__ == "__main__":
         "-d", "--documents_path", help="input documents path with csv", required=True,
     )
     parser.add_argument(
-        "-M",
+        "-s",
         "--srl_model_path",
         help="SRL model path if the mode choice is run ",
         default="",
     )
     parser.add_argument(
-        "-i",
+        "-b",
         "--batch_path",
         help="input batch path if the mode choice is run",
         default="",
