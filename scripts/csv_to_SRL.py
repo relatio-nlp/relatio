@@ -1,23 +1,11 @@
 import argparse
 import ast
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 from ipyparallel.error import UnmetDependency
-from tqdm import tqdm
 
-CODE_PATH = Path(
-    "/cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/Andrei/narrative-nlp/code"
-).resolve()
-
-SRL_MODEL_PATH = Path(
-    "/cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/Andrei/SRL/srl_model/bert-base-srl-2020.03.24.tar.gz"
-).resolve()
-DOCUMENTS_PATH = Path(
-    "/cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/gpo_for_srl/"
-).resolve()
-
-SRL_OUTPUT_PATH = DOCUMENTS_PATH.with_name(DOCUMENTS_PATH.name + "_output")
+CODE_PATH = Path(__file__).resolve().parent.parent / "code"
 
 MAX_CHAR_LENGTH_ON_CORE = 2_000
 MAX_BATCH_CHAR_LENGTH = 20_000
@@ -53,7 +41,8 @@ def batch_filepaths(filepaths: List[Path], max_time: int = 4 * 60 * 60):
     return batches
 
 
-def split_in_batches(glob_pattern) -> Path:
+def split_in_batches(glob_pattern, DOCUMENTS_PATH) -> Tuple[Path, int]:
+    SRL_OUTPUT_PATH = srl_output_path(DOCUMENTS_PATH)
     filepaths = list(sorted(DOCUMENTS_PATH.glob(glob_pattern)))
     filepaths = [
         filepath
@@ -72,10 +61,10 @@ def split_in_batches(glob_pattern) -> Path:
         (batch_output_path / (str(batch_index) + ".txt")).write_text(
             str([str(el) for el in batch])
         )
-    return batch_output_path
+    return batch_output_path, len(batches)
 
 
-def run_from_batch(batch_path: Path):
+def run_from_batch(batch_path: Path, SRL_OUTPUT_PATH: Path, SRL_MODEL_PATH: Path):
     ipcluster = LeonhardIPCluster()
     ipcluster.start()
     ipcluster.connect()
@@ -145,6 +134,10 @@ def run_from_batch(batch_path: Path):
     ipcluster.stop()
 
 
+def srl_output_path(DOCUMENTS_PATH: Path) -> Path:
+    return DOCUMENTS_PATH.with_name(DOCUMENTS_PATH.name + "_output")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -153,6 +146,15 @@ if __name__ == "__main__":
         help="how to run the script",
         choices=["split", "run"],
         required=True,
+    )
+    parser.add_argument(
+        "-d", "--documents_path", help="input documents path with csv", required=True,
+    )
+    parser.add_argument(
+        "-M",
+        "--srl_model_path",
+        help="SRL model path if the mode choice is run ",
+        default="",
     )
     parser.add_argument(
         "-i",
@@ -169,15 +171,25 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    SRL_OUTPUT_PATH.mkdir(exist_ok=True)
+    DOCUMENTS_PATH = Path(args.documents_path).resolve()
+
+    if DOCUMENTS_PATH.exists() is False:
+        raise ValueError(f"{DOCUMENTS_PATH} does not exists")
+
+    srl_output_path(DOCUMENTS_PATH).mkdir(exist_ok=True)
+
+    SRL_MODEL_PATH = Path(args.srl_model_path).resolve()
 
     if args.mode == "split":
         if args.glob_pattern == "":
             raise ValueError()
-        res = split_in_batches(args.glob_pattern)
-        print(str(res))
+        batch_path, len_batches = split_in_batches(args.glob_pattern, DOCUMENTS_PATH)
+        print(str(batch_path), "\n", len_batches)
     elif args.mode == "run":
         batch_path = Path(args.batch_path)
         if args.batch_path == "" or batch_path.exists() is False:
-            raise ValueError()
-        run_from_batch(batch_path)
+            raise ValueError(f"{args.batch_path} does not exists")
+        elif args.srl_model_path == "" or SRL_MODEL_PATH.exists() is False:
+            raise ValueError(f"{args.srl_model_path} does not exists")
+
+        run_from_batch(batch_path, srl_output_path(DOCUMENTS_PATH), SRL_MODEL_PATH)
