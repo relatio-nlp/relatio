@@ -4,7 +4,20 @@ The documentation for job arrays is available at [https://scicomp.ethz.ch/wiki/J
 
 We assume that 4h queue is desired (the fastest queue).
 
-## Preparation - making the batches for job arrays
+## Script `csv_to_SRL.py`
+
+It is in the repo `narrative-nlp/scripts/csv_to_SRL.py` . The csv are assumed to have one line header and each sentence is on a separate line.
+
+A script can split and run the batches.
+
+Please check the help
+
+```bash
+python /cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/Andrei/narrative-nlp/scripts/csv_to_SRL.py --help
+```
+
+
+## Split - making the batches for job arrays
 
 This step can be done interactively. For 1 million sentences it should not take more than 30 min. 
 
@@ -21,7 +34,7 @@ $ module load eth_proxy openmpi/4.0.1 cuda/10.0.130
 $ conda activate narrative-nlp-2
 ```
 
-Run the script to split in batches. It is in the repo `narrative-nlp/scripts/csv_to_SRL.py` :
+Run the script to split in batches. :
 
 ```bash
 $ python "/cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/Andrei/narrative-nlp/scripts/csv_to_SRL.py" \
@@ -49,7 +62,6 @@ conda activate narrative-nlp-2
 
 python "/cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/Andrei/narrative-nlp/scripts/csv_to_SRL.py" \
 --mode run \
---documents_path "/cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/gpo_for_srl" \
 --srl_model_path "/cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/Andrei/SRL/srl_model/bert-base-srl-2020.03.24.tar.gz" \
 --batch_path "/cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/gpo_for_srl_output/series00/${LSB_JOBINDEX}.txt" 
 ```
