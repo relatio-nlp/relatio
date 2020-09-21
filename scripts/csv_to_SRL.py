@@ -158,12 +158,6 @@ if __name__ == "__main__":
         help="input documents folder path with csv",
         default="",
     )
-    group1.add_argument(
-        "-o",
-        "--output_path_suffix",
-        help="output folder suffix for srl. It is appended to the documents_path. Default = '_output'",
-        default="_output",
-    )
 
     group2 = parser.add_argument_group("run", "--mode run")
 
@@ -190,10 +184,8 @@ if __name__ == "__main__":
         if args.glob_pattern == "":
             raise ValueError()
 
-        SRL_OUTPUT_PATH = srl_output_path(
-            DOCUMENTS_PATH, suffix=args.output_path_suffix
-        )
-        SRL_OUTPUT_PATH.mkdir(exist_ok=True, parents=True)
+        SRL_OUTPUT_PATH = srl_output_path(DOCUMENTS_PATH, suffix="_output")
+        SRL_OUTPUT_PATH.mkdir(exist_ok=True)
 
         batch_path, len_batches = split_in_batches(
             args.glob_pattern, DOCUMENTS_PATH, SRL_OUTPUT_PATH
