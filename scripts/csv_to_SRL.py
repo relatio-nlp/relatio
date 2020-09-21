@@ -41,8 +41,10 @@ def batch_filepaths(filepaths: List[Path], max_time: int = 4 * 60 * 60):
     return batches
 
 
-def split_in_batches(glob_pattern, DOCUMENTS_PATH) -> Tuple[Path, int]:
-    SRL_OUTPUT_PATH = srl_output_path(DOCUMENTS_PATH)
+def split_in_batches(
+    glob_pattern: str, DOCUMENTS_PATH: Path, SRL_OUTPUT_PATH: Path
+) -> Tuple[Path, int]:
+
     filepaths = list(sorted(DOCUMENTS_PATH.glob(glob_pattern)))
     filepaths = [
         filepath
@@ -64,7 +66,9 @@ def split_in_batches(glob_pattern, DOCUMENTS_PATH) -> Tuple[Path, int]:
     return batch_output_path, len(batches)
 
 
-def run_from_batch(batch_path: Path, SRL_OUTPUT_PATH: Path, SRL_MODEL_PATH: Path):
+def run_from_batch(batch_path: Path, SRL_MODEL_PATH: Path):
+    SRL_OUTPUT_PATH = batch_path.parent.parent
+
     ipcluster = LeonhardIPCluster()
     ipcluster.start()
     ipcluster.connect()
@@ -134,8 +138,8 @@ def run_from_batch(batch_path: Path, SRL_OUTPUT_PATH: Path, SRL_MODEL_PATH: Path
     ipcluster.stop()
 
 
-def srl_output_path(DOCUMENTS_PATH: Path) -> Path:
-    return DOCUMENTS_PATH.with_name(DOCUMENTS_PATH.name + "_output")
+def srl_output_path(DOCUMENTS_PATH: Path, suffix: str) -> Path:
+    return DOCUMENTS_PATH.with_name(DOCUMENTS_PATH.name + suffix)
 
 
 if __name__ == "__main__":
@@ -147,49 +151,62 @@ if __name__ == "__main__":
         choices=["split", "run"],
         required=True,
     )
-    parser.add_argument(
-        "-d", "--documents_path", help="input documents path with csv", required=True,
-    )
-    parser.add_argument(
-        "-s",
-        "--srl_model_path",
-        help="SRL model path if the mode choice is run ",
+    group1 = parser.add_argument_group("split", "--mode split")
+    group1.add_argument(
+        "-d",
+        "--documents_path",
+        help="input documents folder path with csv",
         default="",
     )
-    parser.add_argument(
-        "-b",
-        "--batch_path",
-        help="input batch path if the mode choice is run",
-        default="",
+    group1.add_argument(
+        "-o",
+        "--output_path_suffix",
+        help="output folder suffix for srl. It is appended to the documents_path. Default = '_output'",
+        default="_output",
     )
-    parser.add_argument(
+
+    group2 = parser.add_argument_group("run", "--mode run")
+
+    group2.add_argument(
+        "-s", "--srl_model_path", help="SRL model path", default="",
+    )
+    group2.add_argument(
+        "-b", "--batch_path", help="input batch path", default="",
+    )
+    group2.add_argument(
         "-g",
         "--glob_pattern",
-        help="input glob_pattern used for matching files if the mode choice is split",
+        help="input glob_pattern used for matching files",
         default="",
     )
 
     args = parser.parse_args()
 
-    DOCUMENTS_PATH = Path(args.documents_path).resolve()
-
-    if DOCUMENTS_PATH.exists() is False:
-        raise ValueError(f"{DOCUMENTS_PATH} does not exists")
-
-    srl_output_path(DOCUMENTS_PATH).mkdir(exist_ok=True)
-
-    SRL_MODEL_PATH = Path(args.srl_model_path).resolve()
-
     if args.mode == "split":
+        DOCUMENTS_PATH = Path(args.documents_path).resolve()
+        if args.documents_path == "" or DOCUMENTS_PATH.exists() is False:
+            raise ValueError(f"{DOCUMENTS_PATH} does not exists")
+
         if args.glob_pattern == "":
             raise ValueError()
-        batch_path, len_batches = split_in_batches(args.glob_pattern, DOCUMENTS_PATH)
+
+        SRL_OUTPUT_PATH = srl_output_path(
+            DOCUMENTS_PATH, suffix=args.output_path_suffix
+        )
+        SRL_OUTPUT_PATH.mkdir(exist_ok=True, parents=True)
+
+        batch_path, len_batches = split_in_batches(
+            args.glob_pattern, DOCUMENTS_PATH, SRL_OUTPUT_PATH
+        )
         print(str(batch_path), "\n", len_batches)
     elif args.mode == "run":
+
         batch_path = Path(args.batch_path)
+        SRL_MODEL_PATH = Path(args.srl_model_path).resolve()
+
         if args.batch_path == "" or batch_path.exists() is False:
             raise ValueError(f"{args.batch_path} does not exists")
         elif args.srl_model_path == "" or SRL_MODEL_PATH.exists() is False:
             raise ValueError(f"{args.srl_model_path} does not exists")
 
-        run_from_batch(batch_path, srl_output_path(DOCUMENTS_PATH), SRL_MODEL_PATH)
+        run_from_batch(batch_path, SRL_MODEL_PATH)
