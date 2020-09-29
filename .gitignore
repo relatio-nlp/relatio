@@ -1,0 +1,27 @@
+# Ignore Mac system files
+.DS_store
+
+~*
+
+*.tar.gz
+
+# Ignore .mypy_cache directory
+*.mypy_cache
+Notebooks/glove_2_word2vec.6B.300d.txt
+Notebooks/srl-model-2018.05.25.tar.gz
+Notebooks/cong_gpo_taxation_0_54.json
+Notebooks/nytimes_word2vec.model
+Notebooks/nytimes_word2vec.model.wv.vectors.npy
+Notebooks/nytimes_word2vec.model.trainables.syn1neg.npy
+Notebooks/use-4/
+*_to_delete*
+myNotebooks/
+
+*.pytest_cache
+*.lprof
+
+*.ipynb_checkpoints/
+
+*__pycache__/
+
+*.vscode/
