@@ -1,14 +1,14 @@
 import re
 import string
-from typing import Dict, List, NamedTuple, Optional
 import warnings
+from typing import Dict, List, NamedTuple, Optional
 
+import numpy as np
+import pandas as pd
 from nltk import pos_tag, word_tokenize
 from nltk.corpus import wordnet
 from nltk.stem import SnowballStemmer, WordNetLemmatizer
 from nltk.tokenize import sent_tokenize
-import numpy as np
-import pandas as pd
 
 
 def dict_concatenate(d_list, axis=0):
@@ -391,6 +391,11 @@ class DocumentTracker:
         _df["statement_end_index"] = (
             _df.squeeze().shift(-1, fill_value=sentence_index.size) - 1
         )
+
+        ## remove empty documents
+        empty_paths = _df["statement_start_index"] > _df["statement_end_index"]
+        _df = _df[~empty_paths]
+
         _df["number_of_sentences"] = (
             sentence_index[_df.loc[:, "statement_end_index"]]
             - sentence_index[_df.loc[:, "statement_start_index"]]
