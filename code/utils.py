@@ -444,7 +444,7 @@ class DocumentTracker:
         self.statement_df = df
 
     def find_statement(self, statement_index):
-        res = self.statement_df.loc[1885, :]
+        res = self.statement_df.loc[statement_index, :]
         with open(res.path) as json_file:
             srl_output = json.load(json_file)
         return srl_output[res.sentence_index_in_doc]["verbs"][
