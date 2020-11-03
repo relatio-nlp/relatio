@@ -1,3 +1,4 @@
+import json
 import re
 import string
 import warnings
@@ -412,3 +413,60 @@ class DocumentTracker:
             - self._sentence_index[res.loc[:, "statement_start_index"]]
         )
         return res
+
+    def build_statement_df(self):
+        df = self.doc.copy(deep=True)
+        df["statement"] = (
+            "range("
+            + df.statement_start_index.astype(str)
+            + ","
+            + (df.statement_end_index + 1).astype(str)
+            + ")"
+        ).map(eval)
+
+        df = df.explode("statement")
+
+        df = df.set_index("statement")
+        df["sentence_index"] = self._sentence_index
+
+        ## find which sentence in the corresponding document
+
+        df["sentence_index_in_doc"] = (
+            df.sentence_index.values
+            - df.loc[df.statement_start_index, "sentence_index"].values
+        )
+
+        ## make the object
+        df["statement_index_in_sentences"] = self.find_local_position(
+            df.sentence_index_in_doc
+        )
+
+        self.statement_df = df
+
+    def find_statement(self, statement_index):
+        res = self.statement_df.loc[1885, :]
+        with open(res.path) as json_file:
+            srl_output = json.load(json_file)
+        return srl_output[res.sentence_index_in_doc]["verbs"][
+            res.statement_index_in_sentences
+        ]["description"]
+
+    @staticmethod
+    def find_local_position(s: pd.Series):
+        ## find which local position has an element in case consecutive equal elements
+        ## from a series of indexes [0,1,1,2,2,2,3,4] we want [0,0,1,0,1,2,0,0]
+        ## we do this in 3 steps:
+        ## 1: identify consecutive equal elements by doing a shift difference so [0,1,1,2,2,2,3,4] -> [-1,1,0,]
+        ## 2: replace all null elements with 1 and the other ones with 0
+        ## 3: for each subarrays delimited by zeros do a cumsum
+
+        ## 1
+        a = (s - s.shift(fill_value=-1)).values
+
+        ## 2
+        a = np.where(a == 0, 1, 0)
+
+        ## 3
+        a = np.concatenate([np.cumsum(el) for el in np.split(a, np.where(a == 0)[0])])
+
+        return a
