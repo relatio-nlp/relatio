@@ -61,8 +61,10 @@ def do_all(filenames):
             srl_res = json.load(json_file)
 
         roles, sentence_index = extract_roles(
-            srl_res, start=0 if start_index == 0 else sentence_index[-1]
+            srl_res, start=0 if start_index == 0 else sentence_index_all[-1][-1]
         )
+        if sentence_index.size == 0:
+            continue
 
         postproc_roles = postprocess_roles(roles)
 
