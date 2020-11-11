@@ -447,9 +447,18 @@ class DocumentTracker:
         res = self.statement_df.loc[statement_index, :]
         with open(res.path) as json_file:
             srl_output = json.load(json_file)
-        return srl_output[res.sentence_index_in_doc]["verbs"][
-            res.statement_index_in_sentences
-        ]["description"]
+
+        ## Similar to extract_role_per_sentence from semantic_role_labeling.py
+        local_index = 0
+        for statement_dict in srl_output[res.sentence_index_in_doc]["verbs"]:
+            tag_list = statement_dict["tags"]
+            if any("ARG" in tag for tag in tag_list):
+                if local_index == res.statement_index_in_sentences:
+                    return statement_dict["description"]
+                else:
+                    local_index += 1
+            else:
+                continue
 
     @staticmethod
     def find_local_position(s: pd.Series):
