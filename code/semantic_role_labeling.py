@@ -168,6 +168,7 @@ def extract_role_per_sentence(sentence_dict, modals=True):
 
 def postprocess_roles(
     statements: List[Dict[str, List]],
+    max_length: Optional[int] = None,
     remove_punctuation: bool = True,
     remove_digits: bool = True,
     remove_chars: str = "",
@@ -175,8 +176,10 @@ def postprocess_roles(
     lowercase: bool = True,
     strip: bool = True,
     remove_whitespaces: bool = True,
-    lemmatize: bool = True,
+    lemmatize: bool = False,
     stem: bool = False,
+    tags_to_keep: Optional[List[str]] = None,
+    remove_n_letter_words: Optional[int] = None
 ) -> List[Dict[str, List]]:
     """
     For arguments see utils.preprocess .
@@ -188,18 +191,26 @@ def postprocess_roles(
                 res = [
                     preprocess(
                         [" ".join(tokens)],
-                        remove_punctuation=remove_punctuation,
-                        remove_digits=remove_digits,
-                        remove_chars=remove_chars,
-                        stop_words=stop_words,
-                        lowercase=lowercase,
-                        strip=strip,
-                        remove_whitespaces=remove_whitespaces,
-                        lemmatize=lemmatize,
-                        stem=stem,
+                        remove_punctuation = remove_punctuation,
+                        remove_digits = remove_digits,
+                        remove_chars = remove_chars,
+                        stop_words = stop_words,
+                        lowercase = lowercase,
+                        strip = strip,
+                        remove_whitespaces = remove_whitespaces,
+                        lemmatize = lemmatize,
+                        stem = stem,
+                        tags_to_keep = tags_to_keep,
+                        remove_n_letter_words = remove_n_letter_words
                     )[0].split()
                 ][0]
-                roles_copy[i][role] = res
+                if max_length is not None:
+                    if len(res) <= max_length: 
+                        roles_copy[i][role] = res
+                    else :
+                        roles_copy[i][role] = []
+                else:
+                    roles_copy[i][role] = res
             elif isinstance(tokens, bool):
                 pass
             else:

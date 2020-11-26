@@ -7,6 +7,7 @@
 
 # Ignore .mypy_cache directory
 *.mypy_cache
+glove_2_word2vec.6B.300d.txt
 Notebooks/glove_2_word2vec.6B.300d.txt
 Notebooks/srl-model-2018.05.25.tar.gz
 Notebooks/cong_gpo_taxation_0_54.json
