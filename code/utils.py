@@ -1,14 +1,14 @@
 import re
 import string
-from typing import Dict, List, NamedTuple, Optional
 import warnings
+from typing import Dict, List, NamedTuple, Optional
 
+import numpy as np
+import pandas as pd
 from nltk import pos_tag, word_tokenize
 from nltk.corpus import wordnet
 from nltk.stem import SnowballStemmer, WordNetLemmatizer
 from nltk.tokenize import sent_tokenize
-import numpy as np
-import pandas as pd
 
 
 def dict_concatenate(d_list, axis=0):
@@ -172,16 +172,14 @@ def group_sentences_in_batches(
 
 
 def _get_wordnet_pos(word):
-    """Map POS tag to first character lemmatize() accepts"""
+    """Get POS tag"""
     tag = pos_tag([word])[0][1][0].upper()
-    tag_dict = {
-        "J": wordnet.ADJ,
-        "N": wordnet.NOUN,
-        "V": wordnet.VERB,
-        "R": wordnet.ADV,
-    }
 
-    return tag_dict.get(tag, wordnet.NOUN)
+    return tag
+
+
+wnl = WordNetLemmatizer()
+f_lemmatize = wnl.lemmatize
 
 
 def preprocess(
@@ -195,6 +193,8 @@ def preprocess(
     remove_whitespaces: bool = True,
     lemmatize: bool = False,
     stem: bool = False,
+    tags_to_keep: Optional[List[str]] = None,
+    remove_n_letter_words: Optional[int] = None,
 ) -> List[str]:
     """
     Preprocess a list of sentences for word embedding.
@@ -210,6 +210,8 @@ def preprocess(
         remove_whitespaces: whether to remove superfluous whitespaceing by " ".join(str.split(())
         lemmatize: whether to lemmatize using nltk.WordNetLemmatizer
         stem: whether to stem using nltk.SnowballStemmer("english")
+        tags_to_keep: list of grammatical tags to keep (common tags: ['V', 'N', 'J'])
+        remove_n_letter_words: drop words lesser or equal to n letters (default is None)
     Returns:
         Processed list of sentences
 
@@ -230,6 +232,10 @@ def preprocess(
         ['learn is useful']
         >>> preprocess(['A1b c\\n\\nde \\t fg\\rkl\\r\\n m+n'])
         ['ab c de fg kl mn']
+        >>> preprocess(['This is a sentence with verbs and nice adjectives.'], tags_to_keep = ['V', 'J'])
+        ['is nice']
+        >>> preprocess(['This is a sentence with one and two letter words.'], remove_n_letter_words = 2)
+        ['this sentence with one and two letter words']
     """
     if lemmatize is True and stem is True:
         raise ValueError("lemmatize and stemming cannot be both True")
@@ -237,12 +243,12 @@ def preprocess(
         raise ValueError("remove stop words make sense only for lowercase")
 
     # remove chars
-    if remove_punctuation is True:
+    if remove_punctuation:
         remove_chars += string.punctuation
-    if remove_digits is True:
+    if remove_digits:
         remove_chars += string.digits
     if remove_chars:
-        sentences = [re.sub(f"[{remove_chars}]", "", sent) for sent in sentences]
+        sentences = [re.sub(f"[{remove_chars}]", "", str(sent)) for sent in sentences]
 
     # lowercase, strip and remove superfluous white spaces
     if lowercase:
@@ -252,17 +258,43 @@ def preprocess(
     if remove_whitespaces:
         sentences = [" ".join(sent.split()) for sent in sentences]
 
+    # lemmatize
     if lemmatize:
-        wnl = WordNetLemmatizer()
-        f_lemmatize = wnl.lemmatize
+
+        tag_dict = {
+            "J": wordnet.ADJ,
+            "N": wordnet.NOUN,
+            "V": wordnet.VERB,
+            "R": wordnet.ADV,
+        }
 
         sentences = [
             " ".join(
-                [f_lemmatize(word, _get_wordnet_pos(word)) for word in sent.split()]
+                [
+                    f_lemmatize(
+                        word, tag_dict.get(_get_wordnet_pos(word), wordnet.NOUN)
+                    )
+                    for word in sent.split()
+                ]
             )
             for sent in sentences
         ]
 
+    # keep specific nltk tags
+    # this step should be performed before stemming, but may be performed after lemmatization
+    if tags_to_keep is not None:
+        sentences = [
+            " ".join(
+                [
+                    word
+                    for word in sent.split()
+                    if _get_wordnet_pos(word) in tags_to_keep
+                ]
+            )
+            for sent in sentences
+        ]
+
+    # stem
     if stem:
         stemmer = SnowballStemmer("english")
         f_stem = stemmer.stem
@@ -270,13 +302,23 @@ def preprocess(
         sentences = [
             " ".join([f_stem(word) for word in sent.split()]) for sent in sentences
         ]
+
+    # drop stopwords
+    # stopwords are dropped after the bulk of preprocessing steps, so they should also be preprocessed with the same standards
     if stop_words is not None:
         sentences = [
             " ".join([word for word in sent.split() if word not in stop_words])
             for sent in sentences
         ]
-    # TODO ignore stopwords
-    # TODO input singledispatch
+
+    # remove short words < n
+    if remove_n_letter_words is not None:
+        sentences = [
+            " ".join(
+                [word for word in sent.split() if len(word) > remove_n_letter_words]
+            )
+            for sent in sentences
+        ]
 
     return sentences
 

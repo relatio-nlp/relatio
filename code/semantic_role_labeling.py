@@ -91,7 +91,8 @@ class SRL:
                 res_batch = self._predictor.predict_batch_json(sentences_json)
             except RuntimeError as err:
                 warnings.warn(
-                    f"empty result {err}", RuntimeWarning,
+                    f"empty result {err}",
+                    RuntimeWarning,
                 )
                 res = [None]
                 break
@@ -168,6 +169,7 @@ def extract_role_per_sentence(sentence_dict, modals=True):
 
 def postprocess_roles(
     statements: List[Dict[str, List]],
+    max_length: Optional[int] = None,
     remove_punctuation: bool = True,
     remove_digits: bool = True,
     remove_chars: str = "",
@@ -175,11 +177,14 @@ def postprocess_roles(
     lowercase: bool = True,
     strip: bool = True,
     remove_whitespaces: bool = True,
-    lemmatize: bool = True,
+    lemmatize: bool = False,
     stem: bool = False,
+    tags_to_keep: Optional[List[str]] = None,
+    remove_n_letter_words: Optional[int] = None,
 ) -> List[Dict[str, List]]:
     """
-    For arguments see utils.preprocess .
+    max_length = remove roles of more than n tokens (NB: very long roles tend to be uninformative in our context)
+    For other arguments see utils.preprocess .
     """
     roles_copy = deepcopy(statements)
     for i, statement in enumerate(statements):
@@ -197,9 +202,17 @@ def postprocess_roles(
                         remove_whitespaces=remove_whitespaces,
                         lemmatize=lemmatize,
                         stem=stem,
+                        tags_to_keep=tags_to_keep,
+                        remove_n_letter_words=remove_n_letter_words,
                     )[0].split()
                 ][0]
-                roles_copy[i][role] = res
+                if max_length is not None:
+                    if len(res) <= max_length:
+                        roles_copy[i][role] = res
+                    else:
+                        roles_copy[i][role] = []
+                else:
+                    roles_copy[i][role] = res
             elif isinstance(tokens, bool):
                 pass
             else:
@@ -210,7 +223,7 @@ def postprocess_roles(
 def estimate_time(char_length: int, device: str = "RTX2080Ti") -> float:
     """
     Estimate time to solution for SRL done on a given device.
-    
+
     """
 
     if device == "RTX2080Ti":
@@ -228,4 +241,3 @@ def estimate_time(char_length: int, device: str = "RTX2080Ti") -> float:
 
 def output_file(filepath: pathlib.Path, parent_path: pathlib.Path) -> pathlib.Path:
     return (parent_path / filepath.name).with_suffix(".json")
-
