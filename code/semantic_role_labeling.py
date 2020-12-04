@@ -182,7 +182,8 @@ def postprocess_roles(
     remove_n_letter_words: Optional[int] = None
 ) -> List[Dict[str, List]]:
     """
-    For arguments see utils.preprocess .
+    max_length = remove roles of more than n tokens (NB: very long roles tend to be uninformative in our context)
+    For other arguments see utils.preprocess .
     """
     roles_copy = deepcopy(statements)
     for i, statement in enumerate(statements):
