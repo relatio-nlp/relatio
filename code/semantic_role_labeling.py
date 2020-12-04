@@ -91,7 +91,8 @@ class SRL:
                 res_batch = self._predictor.predict_batch_json(sentences_json)
             except RuntimeError as err:
                 warnings.warn(
-                    f"empty result {err}", RuntimeWarning,
+                    f"empty result {err}",
+                    RuntimeWarning,
                 )
                 res = [None]
                 break
@@ -179,7 +180,7 @@ def postprocess_roles(
     lemmatize: bool = False,
     stem: bool = False,
     tags_to_keep: Optional[List[str]] = None,
-    remove_n_letter_words: Optional[int] = None
+    remove_n_letter_words: Optional[int] = None,
 ) -> List[Dict[str, List]]:
     """
     max_length = remove roles of more than n tokens (NB: very long roles tend to be uninformative in our context)
@@ -192,23 +193,23 @@ def postprocess_roles(
                 res = [
                     preprocess(
                         [" ".join(tokens)],
-                        remove_punctuation = remove_punctuation,
-                        remove_digits = remove_digits,
-                        remove_chars = remove_chars,
-                        stop_words = stop_words,
-                        lowercase = lowercase,
-                        strip = strip,
-                        remove_whitespaces = remove_whitespaces,
-                        lemmatize = lemmatize,
-                        stem = stem,
-                        tags_to_keep = tags_to_keep,
-                        remove_n_letter_words = remove_n_letter_words
+                        remove_punctuation=remove_punctuation,
+                        remove_digits=remove_digits,
+                        remove_chars=remove_chars,
+                        stop_words=stop_words,
+                        lowercase=lowercase,
+                        strip=strip,
+                        remove_whitespaces=remove_whitespaces,
+                        lemmatize=lemmatize,
+                        stem=stem,
+                        tags_to_keep=tags_to_keep,
+                        remove_n_letter_words=remove_n_letter_words,
                     )[0].split()
                 ][0]
                 if max_length is not None:
-                    if len(res) <= max_length: 
+                    if len(res) <= max_length:
                         roles_copy[i][role] = res
-                    else :
+                    else:
                         roles_copy[i][role] = []
                 else:
                     roles_copy[i][role] = res
@@ -222,7 +223,7 @@ def postprocess_roles(
 def estimate_time(char_length: int, device: str = "RTX2080Ti") -> float:
     """
     Estimate time to solution for SRL done on a given device.
-    
+
     """
 
     if device == "RTX2080Ti":
@@ -240,4 +241,3 @@ def estimate_time(char_length: int, device: str = "RTX2080Ti") -> float:
 
 def output_file(filepath: pathlib.Path, parent_path: pathlib.Path) -> pathlib.Path:
     return (parent_path / filepath.name).with_suffix(".json")
-
