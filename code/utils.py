@@ -386,7 +386,7 @@ class Document(NamedTuple):
 
 
 class DocumentTracker:
-    def __init__(self, documents, sentence_index):
+    def __init__(self, documents, sentence_index, build_statement_df: bool = True):
         self._sentence_index = sentence_index
         _df = pd.DataFrame(documents).set_index("path")
         _df["statement_end_index"] = (
@@ -402,6 +402,11 @@ class DocumentTracker:
             - sentence_index[_df.loc[:, "statement_start_index"]]
         ) + 1
         self.doc = _df.reset_index()
+
+        if build_statement_df:
+            self.build_statement_df()
+        else:
+            self.__has_statement_df = False
 
     def find_doc(self, statement_index):
         mask = (self.doc.loc[:, "statement_start_index"] <= statement_index) & (
@@ -442,8 +447,11 @@ class DocumentTracker:
         )
 
         self.statement_df = df
+        self.__has_statement_df = True
 
     def find_statement(self, statement_index):
+        if not self.__has_statement_df:
+            raise ValueError("you have to call first build_statement_df() method")
         res = self.statement_df.loc[statement_index, :]
         with open(res.path) as json_file:
             srl_output = json.load(json_file)
