@@ -11,29 +11,29 @@
 import glob
 import json
 
+# %%
+import sys
+
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-# %%
-import sys
-
 sys.path.append("../code")
 
+from clustering import Clustering, label_clusters, label_clusters_most_freq
+from cooccurrence import CoOccurrence, build_df
+from semantic_role_labeling import SRL, extract_roles, postprocess_roles
+from sklearn.cluster import KMeans
 from utils import (
-    tokenize_into_sentences,
+    Document,
+    DocumentTracker,
+    UsedRoles,
+    dict_concatenate,
     filter_sentences,
     preprocess,
-    UsedRoles,
-    Document,
-    dict_concatenate,
-    DocumentTracker,
+    tokenize_into_sentences,
 )
-from word_embedding import run_word2vec, compute_embedding, USE, SIF_Word2Vec
-from semantic_role_labeling import SRL, extract_roles, postprocess_roles
-from clustering import Clustering, label_clusters, label_clusters_most_freq
-from sklearn.cluster import KMeans
-from cooccurrence import build_df, CoOccurrence
+from word_embedding import USE, SIF_Word2Vec, compute_embedding, run_word2vec
 
 used_roles = UsedRoles()
 used_roles["ARG2"] = True
@@ -61,8 +61,10 @@ def do_all(filenames):
             srl_res = json.load(json_file)
 
         roles, sentence_index = extract_roles(
-            srl_res, start=0 if start_index == 0 else sentence_index[-1]
+            srl_res, start=0 if start_index == 0 else sentence_index_all[-1][-1] + 1
         )
+        if sentence_index.size == 0:
+            continue
 
         postproc_roles = postprocess_roles(roles)
 
@@ -134,7 +136,12 @@ df
 # %% Find Document
 doc_tracker = DocumentTracker(documents_all, sentence_index_all)
 
-doc_tracker.find_doc(1886)
+doc_tracker.find_doc(1885)
+
+# %% Find Statent in original input
+doc_tracker.build_statement_df()
+print(doc_tracker.find_statement(1885))
+doc_tracker.statement_df.head()
 # %%
 # Write df, labels and previously used roles to files for future work
 

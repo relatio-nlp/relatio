@@ -1,3 +1,4 @@
+import json
 import re
 import string
 import warnings
@@ -427,17 +428,27 @@ class Document(NamedTuple):
 
 
 class DocumentTracker:
-    def __init__(self, documents, sentence_index):
+    def __init__(self, documents, sentence_index, build_statement_df: bool = True):
         self._sentence_index = sentence_index
         _df = pd.DataFrame(documents).set_index("path")
         _df["statement_end_index"] = (
             _df.squeeze().shift(-1, fill_value=sentence_index.size) - 1
         )
+
+        ## remove empty documents
+        empty_paths = _df["statement_start_index"] > _df["statement_end_index"]
+        _df = _df[~empty_paths]
+
         _df["number_of_sentences"] = (
             sentence_index[_df.loc[:, "statement_end_index"]]
             - sentence_index[_df.loc[:, "statement_start_index"]]
         ) + 1
         self.doc = _df.reset_index()
+
+        if build_statement_df:
+            self.build_statement_df()
+        else:
+            self.__has_statement_df = False
 
     def find_doc(self, statement_index):
         mask = (self.doc.loc[:, "statement_start_index"] <= statement_index) & (
@@ -449,3 +460,72 @@ class DocumentTracker:
             - self._sentence_index[res.loc[:, "statement_start_index"]]
         )
         return res
+
+    def build_statement_df(self):
+        df = self.doc.copy(deep=True)
+        df["statement"] = (
+            "range("
+            + df.statement_start_index.astype(str)
+            + ","
+            + (df.statement_end_index + 1).astype(str)
+            + ")"
+        ).map(eval)
+
+        df = df.explode("statement")
+
+        df = df.set_index("statement")
+        df["sentence_index"] = self._sentence_index
+
+        ## find which sentence in the corresponding document
+
+        df["sentence_index_in_doc"] = (
+            df.sentence_index.values
+            - df.loc[df.statement_start_index, "sentence_index"].values
+        )
+
+        ## make the object
+        df["statement_index_in_sentences"] = self.find_local_position(
+            df.sentence_index_in_doc
+        )
+
+        self.statement_df = df
+        self.__has_statement_df = True
+
+    def find_statement(self, statement_index):
+        if not self.__has_statement_df:
+            raise ValueError("you have to call first build_statement_df() method")
+        res = self.statement_df.loc[statement_index, :]
+        with open(res.path) as json_file:
+            srl_output = json.load(json_file)
+
+        ## Similar to extract_role_per_sentence from semantic_role_labeling.py
+        local_index = 0
+        for statement_dict in srl_output[res.sentence_index_in_doc]["verbs"]:
+            tag_list = statement_dict["tags"]
+            if any("ARG" in tag for tag in tag_list):
+                if local_index == res.statement_index_in_sentences:
+                    return statement_dict["description"]
+                else:
+                    local_index += 1
+            else:
+                continue
+
+    @staticmethod
+    def find_local_position(s: pd.Series):
+        ## find which local position has an element in case consecutive equal elements
+        ## from a series of indexes [0,1,1,2,2,2,3,4] we want [0,0,1,0,1,2,0,0]
+        ## we do this in 3 steps:
+        ## 1: identify consecutive equal elements by doing a shift difference so [0,1,1,2,2,2,3,4] -> [-1,1,0,]
+        ## 2: replace all null elements with 1 and the other ones with 0
+        ## 3: for each subarrays delimited by zeros do a cumsum
+
+        ## 1
+        a = (s - s.shift(fill_value=-1)).values
+
+        ## 2
+        a = np.where(a == 0, 1, 0)
+
+        ## 3
+        a = np.concatenate([np.cumsum(el) for el in np.split(a, np.where(a == 0)[0])])
+
+        return a
