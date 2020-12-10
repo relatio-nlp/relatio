@@ -403,8 +403,8 @@ def find_antonyms(verb: str) -> List[str]:
         a list of antonyms
 
     Example:
-        >>> find_antonyms('increase')
-        ['decrease']
+        >>> find_antonyms('break')
+        ['promote', 'make', 'keep', 'repair', 'conform_to']
 
     """
     antonyms = []
