@@ -10,6 +10,7 @@ from nltk.corpus import wordnet
 from nltk.stem import SnowballStemmer, WordNetLemmatizer
 from nltk.tokenize import sent_tokenize
 
+from copy import deepcopy
 from tqdm import tqdm
 
 
@@ -428,46 +429,37 @@ def clean_verbs(statements: List[dict], verb_counts: dict) -> List[dict]:
 
     Returns:
         a list of dictionaries of postprocessed semantic roles with replaced verbs (same format as statements)
+        
+    Example:
+        >>> test = [{'B-V': ['increase'], 'B-ARGM-NEG': True},{'B-V': ['decrease']},{'B-V': ['decrease']}]
+        >>> verb_counts = get_role_counts(test, roles = ['B-V'])
+        >>> clean_verbs(test, verb_counts = verb_counts)
+        [{'B-V': ['decrease']}, {'B-V': ['decrease']}, {'B-V': ['decrease']}]
 
     """
 
     new_roles_all = []
 
     for roles in tqdm(statements):
-        new_roles = roles.copy()
+        new_roles = deepcopy(roles)
         if "B-V" in roles:
             verb = " ".join(new_roles["B-V"])
             if "B-ARGM-NEG" in roles:
                 antonyms = find_antonyms(verb)
                 temp = list(set(antonyms))
+                temp.append(verb)
 
                 freq = 0
-                most_freq_verb = None
-
+                most_freq_verb = verb
                 for candidate in temp:
                     if candidate in verb_counts:
-                        if verb_counts[candidate] >= freq:
+                        if verb_counts[candidate] > freq:
                             freq = verb_counts[candidate]
                             most_freq_verb = candidate
 
-                if most_freq_verb is not None:
+                if most_freq_verb != verb:
                     new_roles["B-V"] = [most_freq_verb]
                     del new_roles["B-ARGM-NEG"]
-
-                else:
-                    synonyms = find_synonyms(verb)
-                    temp = list(set(synonyms))
-                    temp.append(verb)
-
-                    freq = 0
-                    most_freq_verb = verb
-                    for candidate in temp:
-                        if candidate in verb_counts:
-                            if verb_counts[candidate] >= freq:
-                                freq = verb_counts[candidate]
-                                most_freq_verb = candidate
-
-                    new_roles["B-V"] = [most_freq_verb]
 
             else:
                 synonyms = find_synonyms(verb)
@@ -478,7 +470,7 @@ def clean_verbs(statements: List[dict], verb_counts: dict) -> List[dict]:
                 most_freq_verb = verb
                 for candidate in temp:
                     if candidate in verb_counts:
-                        if verb_counts[candidate] >= freq:
+                        if verb_counts[candidate] > freq:
                             freq = verb_counts[candidate]
                             most_freq_verb = candidate
 
