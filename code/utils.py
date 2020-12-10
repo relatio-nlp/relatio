@@ -10,6 +10,8 @@ from nltk.corpus import wordnet
 from nltk.stem import SnowballStemmer, WordNetLemmatizer
 from nltk.tokenize import sent_tokenize
 
+from tqdm import tqdm
+
 
 def dict_concatenate(d_list, axis=0):
     d_non_empty = [d for d in d_list if d]
@@ -321,6 +323,170 @@ def preprocess(
         ]
 
     return sentences
+
+
+def get_role_counts(
+    statements: List[dict],
+    roles_considered: Optional[list] = ["B-V", "ARGO", "ARG1", "ARG2"],
+) -> dict:
+    """
+
+    Get role frequency within the corpus from preprocessed semantic roles. Roles considered are specified by the user.
+
+    Args:
+        statements: list of dictionaries of postprocessed semantic roles
+        roles: list of roles considered
+
+    Returns:
+        Dictionary in which postprocessed semantic roles are keys and their frequency within the corpus are values
+        (e.g. d['verb'] = count)
+
+    """
+
+    counts = {}
+
+    for statement in tqdm(statements):
+        for key in statement.keys():
+            if key in roles_considered:
+                temp = " ".join(statement[key])
+                if temp in counts:
+                    counts[temp] += 1
+                else:
+                    counts[temp] = 1
+
+    return counts
+
+
+def find_synonyms(verb: str) -> List[str]:
+    """
+
+    Find synonyms of a given word based on wordnet.
+
+    Args:
+        verb: a verb
+
+    Returns:
+        a list of synonyms
+
+    Example:
+        >>> find_synonyms('fight')
+        ['campaign',
+         'struggle',
+         'press',
+         'fight_back',
+         'contend',
+         'fight_down',
+         'defend',
+         'crusade',
+         'agitate',
+         'oppose',
+         'push',
+         'fight']
+
+    """
+    synonyms = []
+    for syn in wordnet.synsets(verb, pos=wordnet.VERB):
+        for l in syn.lemmas():
+            synonyms.append(l.name())
+    return list(set(synonyms))
+
+
+def find_antonyms(verb: str) -> List[str]:
+    """
+
+    Find antonyms of a given word based on wordnet.
+
+    Args:
+        verb: a verb
+
+    Returns:
+        a list of antonyms
+
+    Example:
+        >>> find_antonyms('increase')
+        ['decrease']
+
+    """
+    antonyms = []
+    for syn in wordnet.synsets(verb, pos=wordnet.VERB):
+        for l in syn.lemmas():
+            if l.antonyms():
+                antonyms.append(l.antonyms()[0].name())
+    return list(set(antonyms))
+
+
+def clean_verbs(statements: List[dict], verb_counts: dict) -> List[dict]:
+    """
+
+    Replace verbs by their most frequent synonym or antonym.
+    If a verb is combined with a negation in the statement (e.g. 'not increase'),
+    it is replaced by its most frequent antonym and the negation is removed (e.g. "decrease").
+
+    Args:
+        statements: a list of dictionaries of postprocessed semantic roles
+        verb_counts: a dictionary of verb counts (e.g. d['verb'] = count)
+
+    Returns:
+        a list of dictionaries of postprocessed semantic roles with replaced verbs
+
+    """
+
+    new_roles_all = []
+
+    for roles in tqdm(statements):
+        new_roles = roles.copy()
+        if "B-V" in roles:
+            verb = " ".join(new_roles["B-V"])
+            if "B-ARGM-NEG" in roles:
+                antonyms = find_antonyms(verb)
+                temp = list(set(antonyms))
+
+                freq = 0
+                most_freq_verb = None
+
+                for candidate in temp:
+                    if candidate in verb_counts:
+                        if verb_counts[candidate] >= freq:
+                            freq = verb_counts[candidate]
+                            most_freq_verb = candidate
+
+                if most_freq_verb is not None:
+                    new_roles["B-V"] = [most_freq_verb]
+                    del new_roles["B-ARGM-NEG"]
+
+                else:
+                    synonyms = find_synonyms(verb)
+                    temp = list(set(synonyms))
+                    temp.append(verb)
+
+                    freq = 0
+                    most_freq_verb = verb
+                    for candidate in temp:
+                        if candidate in verb_counts:
+                            if verb_counts[candidate] >= freq:
+                                freq = verb_counts[candidate]
+                                most_freq_verb = candidate
+
+                    new_roles["B-V"] = [most_freq_verb]
+
+            else:
+                synonyms = find_synonyms(verb)
+                temp = list(set(synonyms))
+                temp.append(verb)
+
+                freq = 0
+                most_freq_verb = verb
+                for candidate in temp:
+                    if candidate in verb_counts:
+                        if verb_counts[candidate] >= freq:
+                            freq = verb_counts[candidate]
+                            most_freq_verb = candidate
+
+                new_roles["B-V"] = [most_freq_verb]
+
+        new_roles_all.append(new_roles)
+
+    return new_roles_all
 
 
 class UsedRoles:
