@@ -327,7 +327,7 @@ def preprocess(
 
 def get_role_counts(
     statements: List[dict],
-    roles_considered: Optional[list] = ["B-V", "ARGO", "ARG1", "ARG2"],
+    roles: Optional[list] = ["B-V", "ARGO", "ARG1", "ARG2"],
 ) -> dict:
     """
 
@@ -347,7 +347,7 @@ def get_role_counts(
 
     for statement in tqdm(statements):
         for key in statement.keys():
-            if key in roles_considered:
+            if key in roles:
                 temp = " ".join(statement[key])
                 if temp in counts:
                     counts[temp] += 1
@@ -427,7 +427,7 @@ def clean_verbs(statements: List[dict], verb_counts: dict) -> List[dict]:
         verb_counts: a dictionary of verb counts (e.g. d['verb'] = count)
 
     Returns:
-        a list of dictionaries of postprocessed semantic roles with replaced verbs
+        a list of dictionaries of postprocessed semantic roles with replaced verbs (same format as statements)
 
     """
 
