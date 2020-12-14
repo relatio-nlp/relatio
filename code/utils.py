@@ -394,7 +394,7 @@ def find_synonyms(verb: str) -> List[str]:
     for syn in wordnet.synsets(verb, pos=wordnet.VERB):
         for l in syn.lemmas():
             synonyms.append(l.name())
-    return list(set(synonyms))
+    return synonyms
 
 
 def find_antonyms(verb: str) -> List[str]:
@@ -418,7 +418,7 @@ def find_antonyms(verb: str) -> List[str]:
         for l in syn.lemmas():
             if l.antonyms():
                 antonyms.append(l.antonyms()[0].name())
-    return list(set(antonyms))
+    return antonyms
 
 
 def get_most_frequent(tokens: List[str], token_counts: dict) -> str:
