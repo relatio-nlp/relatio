@@ -10,7 +10,6 @@ from allennlp.predictors.predictor import Predictor
 
 from utils import filter_sentences, group_sentences_in_batches, preprocess
 
-
 class SRL:
     def __init__(
         self,
