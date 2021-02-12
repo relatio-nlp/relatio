@@ -14,7 +14,6 @@ from nltk.tokenize import sent_tokenize
 from copy import deepcopy
 from tqdm import tqdm
 
-
 def dict_concatenate(d_list, axis=0):
     d_non_empty = [d for d in d_list if d]
     res = {}
