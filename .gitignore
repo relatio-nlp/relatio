@@ -18,8 +18,7 @@ Notebooks/use-4/
 *_to_delete*
 myNotebooks/
 
-./Tutorial/srl_res.json
-./Tutorial/narrative_model.pk
+Tutorial/ignorable/*
 
 srl-model-2018.05.25.tar.gz
 
