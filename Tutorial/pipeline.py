@@ -41,7 +41,9 @@ from tqdm import tqdm
 
 
 def split_into_sentences(
-    dataframe, save_to_disk: Optional[str] = None, progress_bar: Optional[bool] = False,
+    dataframe,
+    save_to_disk: Optional[str] = None,
+    progress_bar: Optional[bool] = False,
 ):
 
     """
@@ -505,7 +507,8 @@ class SRL:
                 res_batch = self._predictor.predict_batch_json(sentences_json)
             except RuntimeError as err:
                 warnings.warn(
-                    f"empty result {err}", RuntimeWarning,
+                    f"empty result {err}",
+                    RuntimeWarning,
                 )
                 res = [None]
                 break
