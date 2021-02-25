@@ -735,7 +735,7 @@ def mine_entities(
         sentences = tqdm(sentences)
 
     for sentence in sentences:
-        sentence = nlp(sentence)
+        sentence = nlp(str(sentence))
         for ent in sentence.ents:
             if ent.label_ in ent_labels:
                 entity = [ent.text]
@@ -1351,14 +1351,18 @@ def build_narratives(
 
     if filter_complete_narratives:
         list_for_filter = [
-            arg
-            for arg in narrative_format
+            arg for arg in narrative_format
             if arg not in ["ARG2-RAW", "B-ARGM-NEG-RAW", "B-ARGM-MOD-RAW"]
         ]
         final_statements = final_statements.dropna(subset=list_for_filter)
 
     final_statements = final_statements.replace({np.NaN: ""})
     final_statements = final_statements.replace({True: "not"})
+    
+    # Check if all columns exist
+    for role in narrative_format:
+        if role not in final_statements.columns:
+            final_statements[role] = ''
 
     final_statements["narrative-RAW"] = final_statements[narrative_format].agg(
         " ".join, axis=1
@@ -1407,9 +1411,18 @@ def build_narratives(
             columns = columns + [role]
         elif role == "B-ARGM-MOD":
             columns = columns + [str(role + "-RAW")]
-        else:
-            columns = columns + [str(role + "-RAW")]
-            columns = columns + [str(role + "-CLEANED")]
+        elif role == "B-V":
+            if narrative_model['dimension_reduce_verbs'] == True:
+                columns = columns + [str(role + "-RAW")]
+                columns = columns + [str(role + "-CLEANED")]
+            else:
+                columns = columns + [str(role + "-RAW")]
+        elif role == "B-ARGM-NEG":
+            if narrative_model['dimension_reduce_verbs'] == True:
+                columns = columns + [str(role + "-RAW")]
+                columns = columns + [str(role + "-CLEANED")]
+            else:
+                columns = columns + [str(role + "-RAW")]                       
 
     final_statements = final_statements[columns]
 
