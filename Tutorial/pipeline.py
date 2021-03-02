@@ -15,6 +15,8 @@ import numpy as np
 from copy import deepcopy
 
 import gensim.downloader as api
+from gensim.models import Word2Vec
+import tensorflow_hub as hub
 
 import warnings
 import torch
@@ -34,6 +36,8 @@ from nltk.corpus import stopwords
 
 from copy import deepcopy
 from tqdm import tqdm
+
+import gc
 
 # Utils
 # ..................................................................................................................
@@ -690,6 +694,28 @@ def postprocess_roles(
     return roles_copy
 
 
+def get_raw_arguments(statements: List[dict], progress_bar: Optional[bool] = False):
+
+    roles_copy = deepcopy(statements)
+
+    if progress_bar == True:
+        print("Processing raw arguments...")
+        time.sleep(1)
+        statements = tqdm(statements)
+
+    final_statements = []
+    for i, statement in enumerate(statements):
+        for role, tokens in statement.items():
+            name = role + "-RAW"
+            roles_copy[i][name] = roles_copy[i].pop(role)
+            if type(tokens) != bool:
+                roles_copy[i][name] = " ".join(tokens)
+            else:
+                roles_copy[i][name] = tokens
+
+    return roles_copy
+
+
 # Named Entity Recognition
 # ..................................................................................................................
 # ..................................................................................................................
@@ -816,7 +842,7 @@ def is_subsequence(v2: list, v1: list) -> bool:
     return all(c in it for c in v2)
 
 
-def map_entities(
+def map_entities(  # the output could be a list of dictionaries (for consistency with the rest of the pipeline)
     statements: List[dict],
     entities: list,
     UsedRoles: List[str],
@@ -945,7 +971,9 @@ def get_most_frequent(tokens: List[str], token_counts: dict) -> str:
     return most_freq_token
 
 
-def clean_verbs(statements: List[dict], verb_counts: dict) -> List[dict]:
+def clean_verbs(
+    statements: List[dict], verb_counts: dict, progress_bar: Optional[bool] = False
+) -> List[dict]:
 
     """
 
@@ -968,8 +996,15 @@ def clean_verbs(statements: List[dict], verb_counts: dict) -> List[dict]:
 
     new_roles_all = []
 
-    for roles in statements:
-        new_roles = deepcopy(roles)
+    roles_copy = deepcopy(statements)
+
+    if progress_bar == True:
+        print("Cleaning verbs...")
+        time.sleep(1)
+        statements = tqdm(statements)
+
+    for i, roles in enumerate(statements):
+        new_roles = roles_copy[i]
         new_roles = {
             str(k + "-CLEANED"): v
             for k, v in new_roles.items()
@@ -1050,6 +1085,8 @@ def compute_sif_weights(word_count_dict: dict, alpha: Optional[float] = 0.001) -
     return sif_dict
 
 
+# I did not change this code, but I cannot get USE running on the cluster.
+# Path used for test: /cluster/work/lawecon/Work/models/use-4
 class USE:
     def __init__(self, path: str):
         self._embed = hub.load(path)
@@ -1191,14 +1228,13 @@ def train_cluster_model(
 
     role_counts = [role.split() for role in list(role_counts)]
 
-    vecs = None
+    vecs = []
     for role in role_counts:
-        if vecs is None:
-            vecs = get_vector(role, model)
-        else:
-            temp = get_vector(role, model)
-            if temp is not None:
-                vecs = np.concatenate((vecs, temp), axis=0)
+        vec = get_vector(role, model)
+        if vec is not None:
+            vecs.append(vec)
+
+    vecs = np.concatenate(vecs)
 
     kmeans = KMeans(
         n_clusters=n_clusters, random_state=random_state, verbose=verbose
@@ -1231,24 +1267,26 @@ def get_clusters(
 
     """
 
-    clustering_res = []
+    roles_copy = deepcopy(postproc_roles)
 
     if progress_bar == True:
         print("Assigning clusters to roles...")
         time.sleep(1)
         postproc_roles = tqdm(postproc_roles)
 
-    for statement in postproc_roles:
-        temp = {}
+    for i, statement in enumerate(postproc_roles):
         for role, tokens in statement.items():
             if role in UsedRoles:
                 vec = get_vector(tokens, model)
                 if vec is not None:
                     clu = kmeans.predict(vec)
-                    temp[role] = int(clu)
-        clustering_res = clustering_res + [temp]
+                    roles_copy[i][role] = int(clu)
+                else:
+                    roles_copy[i].pop(role, None)
+            else:
+                roles_copy[i].pop(role, None)
 
-    return clustering_res
+    return roles_copy
 
 
 def label_clusters_most_freq(
@@ -1321,7 +1359,7 @@ def label_clusters_most_similar(kmeans, model) -> dict:
 # ..................................................................................................................
 
 
-def build_narratives(
+def build_narratives(  # to be considered as very preliminary
     final_statements,
     narrative_model: dict,
     filter_complete_narratives: Optional[bool] = True,
@@ -1351,18 +1389,19 @@ def build_narratives(
 
     if filter_complete_narratives:
         list_for_filter = [
-            arg for arg in narrative_format
+            arg
+            for arg in narrative_format
             if arg not in ["ARG2-RAW", "B-ARGM-NEG-RAW", "B-ARGM-MOD-RAW"]
         ]
         final_statements = final_statements.dropna(subset=list_for_filter)
 
     final_statements = final_statements.replace({np.NaN: ""})
     final_statements = final_statements.replace({True: "not"})
-    
+
     # Check if all columns exist
     for role in narrative_format:
         if role not in final_statements.columns:
-            final_statements[role] = ''
+            final_statements[role] = ""
 
     final_statements["narrative-RAW"] = final_statements[narrative_format].agg(
         " ".join, axis=1
@@ -1412,17 +1451,17 @@ def build_narratives(
         elif role == "B-ARGM-MOD":
             columns = columns + [str(role + "-RAW")]
         elif role == "B-V":
-            if narrative_model['dimension_reduce_verbs'] == True:
+            if narrative_model["dimension_reduce_verbs"] == True:
                 columns = columns + [str(role + "-RAW")]
                 columns = columns + [str(role + "-CLEANED")]
             else:
                 columns = columns + [str(role + "-RAW")]
         elif role == "B-ARGM-NEG":
-            if narrative_model['dimension_reduce_verbs'] == True:
+            if narrative_model["dimension_reduce_verbs"] == True:
                 columns = columns + [str(role + "-RAW")]
                 columns = columns + [str(role + "-CLEANED")]
             else:
-                columns = columns + [str(role + "-RAW")]                       
+                columns = columns + [str(role + "-RAW")]
 
     final_statements = final_statements[columns]
 
@@ -1469,7 +1508,7 @@ def run_srl(
     return srl_res
 
 
-def build_narrative_model(
+def build_narrative_model(  # save output along the way?
     srl_res: List[dict],
     sentences: List[str],
     roles_considered: Optional[List[str]] = [
@@ -1507,7 +1546,7 @@ def build_narrative_model(
 
     """
 
-    A wrapper function to build the narrative model from a sample of of the corpus.
+    A wrapper function to build the narrative model from a sample of the corpus.
 
     Args:
         srl_res: sentences labeled with their semantic roles
@@ -1641,6 +1680,7 @@ def build_narrative_model(
             UsedRoles=roles_with_entities,
             progress_bar=progress_bar,
         )
+
         narrative_model["entities"] = entities
 
     # Embeddings and clustering
@@ -1742,8 +1782,6 @@ def get_narratives(
 
     """
 
-    final_statements = []
-
     # Sanity checks
     if cluster_labeling not in ["most_similar", "most_frequent"]:
         raise ValueError("cluster_labeling is either most_similar or most_frequent.")
@@ -1752,7 +1790,7 @@ def get_narratives(
         narrative_model["embeddings_model"], USE
     ):
         raise ValueError(
-            "most_similar option is not implemented for Universal Sentence Encoders.Consider switching to other ebedding types."
+            "most_similar option is not implemented for Universal Sentence Encoders. Consider switching to other embedding types."
         )
 
     # Process SRL
@@ -1779,19 +1817,13 @@ def get_narratives(
         progress_bar=progress_bar,
     )
 
-    for statement in postproc_roles:
-        temp = {}
-        for role, tokens in statement.items():
-            name = role + "-RAW"
-            if type(tokens) != bool:
-                temp[name] = " ".join(tokens)
-            else:
-                temp[name] = tokens
-        final_statements = final_statements + [temp]
+    final_statements = get_raw_arguments(postproc_roles, progress_bar)
 
     # Dimension reduction of verbs
     if narrative_model["dimension_reduce_verbs"]:
-        cleaned_verbs = clean_verbs(postproc_roles, narrative_model["verb_counts"])
+        cleaned_verbs = clean_verbs(
+            postproc_roles, narrative_model["verb_counts"], progress_bar
+        )
 
         for i, statement in enumerate(cleaned_verbs):
             for role, value in statement.items():
