@@ -1,0 +1,8 @@
+ipyparallel
+pandas
+nltk
+gensim
+scikit-learn
+allennlp
+tensorflow
+tensorflow-hub

@@ -1,18 +1,16 @@
 name: narrative-nlp
 channels:
-  - defaults
   - conda-forge
+  - defaults
 dependencies:
-  - python=3.7
+  - python>=3.7
   - ipyparallel
-  - jupyter
+  - jupyterlab
   - pandas
   - nltk
   - gensim
   - scikit-learn
   - pytorch # pytorch is needed by allennlp and from pip not working on macOS
-  - pip
-  - pip:
-      - allennlp==0.9
-      - tensorflow
-      - tensorflow-hub
+  - allennlp
+  - tensorflow>=2
+  - tensorflow-hub
