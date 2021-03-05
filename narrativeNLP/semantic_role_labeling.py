@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from allennlp.predictors.predictor import Predictor
 
-from utils import filter_sentences, group_sentences_in_batches, preprocess
+from .utils import filter_sentences, group_sentences_in_batches, preprocess
 
 
 class SRL:

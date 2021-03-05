@@ -2,6 +2,7 @@ import json
 import re
 import string
 import warnings
+from copy import deepcopy
 from typing import Dict, List, NamedTuple, Optional
 
 import numpy as np
@@ -10,8 +11,6 @@ from nltk import pos_tag, word_tokenize
 from nltk.corpus import wordnet
 from nltk.stem import SnowballStemmer, WordNetLemmatizer
 from nltk.tokenize import sent_tokenize
-
-from copy import deepcopy
 from tqdm import tqdm
 
 

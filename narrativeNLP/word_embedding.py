@@ -1,11 +1,11 @@
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from numpy.linalg import norm
-
 import tensorflow_hub as hub
 from gensim.models import KeyedVectors, Word2Vec
-from utils import UsedRoles
+from numpy.linalg import norm
+
+from .utils import UsedRoles
 
 
 class USE:
