@@ -1,3 +1,4 @@
+pip>0.21
 ipyparallel
 pandas
 nltk
