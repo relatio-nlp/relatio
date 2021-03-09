@@ -1,7 +1,21 @@
 # narrative-nlp
 code base for constructing narrative statements from text
 
-## Installation using Conda
+## Installation using pip
+```bash
+# clone the project
+git clone git@github.com:elliottash/narrative-nlp.git
+
+# go in the main directory
+cd narrative-nlp
+
+# install it
+python -m pip install -e .
+```
+
+In case you want to use Jupyter make sure that you have it installed in the current environment.
+
+## DEPRECATED - Installation using Conda
 
 ### Only for Windows10
 One can use conda native for Windows10 or a Linux-like experience via Windows Subsystems for Linux. For compatibility reasons the second option is the recommended. 
