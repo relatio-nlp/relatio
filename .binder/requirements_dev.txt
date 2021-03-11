@@ -1,0 +1,10 @@
+pip>=0.21
+pytest>=6
+coverage>5
+pytest-cov>2
+tox>=3
+mypy
+pylint
+flake8
+pydocstyle
+pre-commit

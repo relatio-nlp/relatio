@@ -1,0 +1,4 @@
+pip>=0.21
+pytest>=6
+coverage>5
+pytest-cov>2

@@ -1,6 +1,5 @@
 # Ignore Mac system files
 .DS_store
-
 ~*
 
 *.tar.gz
@@ -19,6 +18,8 @@ Notebooks/use-4/
 myNotebooks/
 
 *.pytest_cache
+*.coverage
+*.tox/
 *.lprof
 
 *.ipynb_checkpoints/

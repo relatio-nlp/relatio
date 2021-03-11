@@ -341,7 +341,7 @@ def get_role_counts(
     Returns:
         Dictionary in which postprocessed semantic roles are keys and their frequency within the corpus are values
         (e.g. d['verb'] = count)
-        
+
     Example:
         >>> test = [{'B-V': ['increase'], 'B-ARGM-NEG': True},{'B-V': ['decrease']},{'B-V': ['decrease']}]\n
         ... verb_counts = get_role_counts(test, roles = ['B-V'])
@@ -412,26 +412,26 @@ def find_antonyms(verb: str) -> List[str]:
 
 def get_most_frequent(tokens: List[str], token_counts: dict) -> str:
     """
-    
-    Find most frequent token in a list of tokens. 
-    
+
+    Find most frequent token in a list of tokens.
+
     Args:
         tokens: a list of tokens
         token_counts: a dictionary of token frequencies
 
     Returns:
         the most frequent token in the list of tokens
-    
+
     """
-    
+
     freq = 0
     for candidate in tokens:
         if candidate in token_counts:
             if token_counts[candidate] > freq:
                 freq = token_counts[candidate]
-                most_freq_verb = candidate            
+                most_freq_verb = candidate
     return most_freq_verb
-    
+
 
 def clean_verbs(statements: List[dict], verb_counts: dict) -> List[dict]:
     """
@@ -446,7 +446,7 @@ def clean_verbs(statements: List[dict], verb_counts: dict) -> List[dict]:
 
     Returns:
         a list of dictionaries of postprocessed semantic roles with replaced verbs (same format as statements)
-        
+
     Example:
         >>> test = [{'B-V': ['increase'], 'B-ARGM-NEG': True},{'B-V': ['decrease']},{'B-V': ['decrease']}]\n
         ... verb_counts = get_role_counts(test, roles = ['B-V'])\n
@@ -462,13 +462,17 @@ def clean_verbs(statements: List[dict], verb_counts: dict) -> List[dict]:
             verb = " ".join(new_roles["B-V"])
             if "B-ARGM-NEG" in roles:
                 verbs = find_antonyms(verb) + [verb]
-                most_freq_verb = get_most_frequent(tokens = verbs, token_counts = verb_counts)
+                most_freq_verb = get_most_frequent(
+                    tokens=verbs, token_counts=verb_counts
+                )
                 if most_freq_verb != verb:
                     new_roles["B-V"] = [most_freq_verb]
                     del new_roles["B-ARGM-NEG"]
             else:
                 verbs = find_synonyms(verb) + [verb]
-                most_freq_verb = get_most_frequent(tokens = verbs, token_counts = verb_counts)
+                most_freq_verb = get_most_frequent(
+                    tokens=verbs, token_counts=verb_counts
+                )
                 new_roles["B-V"] = [most_freq_verb]
         new_roles_all.append(new_roles)
     return new_roles_all
