@@ -1,7 +1,8 @@
 # narrative-nlp
 code base for constructing narrative statements from text
 
-## Installation using pip
+## Installation
+
 ```bash
 # clone the project
 git clone git@github.com:elliottash/narrative-nlp.git
@@ -14,6 +15,42 @@ python -m pip install -e .
 ```
 
 In case you want to use Jupyter make sure that you have it installed in the current environment.
+
+## Development
+
+### Prepare the development environment
+You need `python3.7` and `git`.  
+[tox](https://tox.readthedocs.io/en/latest/) is desired.
+
+```bash
+# clone the project
+$ git clone git@github.com:elliottash/narrative-nlp.git
+
+# go in the main directory
+$ cd narrative-nlp
+
+# create the development environment
+$ tox -e dev
+# in case you do not have tox use directly .binder/requirements_dev.txt
+
+# activate the development environment
+$ source .tox/dev/bin/activate
+
+# install the hooks
+(dev)$ pre-commit install
+```
+
+### Testing
+
+You can easily test using `tox` on `python3.7`, `python3.8`, and `python3.9`. 
+
+```bash
+(dev) $ tox -e py37 # python3.7
+(dev) $ tox -e py38 # python3.8
+(dev) $ tox -e py39 # python3.9
+```
+
+So far it works only with `python3.7` probably due to implications from `allennlp <1` requirement.
 
 ## DEPRECATED - Installation using Conda
 
