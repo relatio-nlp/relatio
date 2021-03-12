@@ -45,9 +45,9 @@ $ source .tox/dev/bin/activate
 You can easily test using `tox` on `python3.7`, `python3.8`, and `python3.9`. 
 
 ```bash
-(dev) $ tox -e py37 # python3.7
-(dev) $ tox -e py38 # python3.8
-(dev) $ tox -e py39 # python3.9
+(dev)$ tox -e py37 # python3.7 required
+(dev)$ tox -e py38 # python3.8 required
+(dev)$ tox -e py39 # python3.9 required
 ```
 
 So far it works only with `python3.7` probably due to implications from `allennlp <1` requirement.
