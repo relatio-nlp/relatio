@@ -38,6 +38,9 @@ $ source .tox/dev/bin/activate
 
 # install the hooks
 (dev)$ pre-commit install
+
+# OPTIONAL: make your IPython kernel in one env available to Jupyter in a different env
+(dev)$ python -m ipykernel install --user --name py37_narrativeNLP --display-name "Python 3.7 (narrativeNLP)"
 ```
 
 ### Testing
