@@ -98,7 +98,7 @@ class IPCluster:
     def assign_cuda_device(self, use_gpu: bool = True) -> List[int]:
         """
         At most one device is assigned per engine (worker).
-        
+
         """
         if use_gpu is False:
             cuda_devices = [-1] * len(self.rc.ids)
@@ -128,5 +128,10 @@ class LeonhardIPCluster(IPCluster):
         location = "$(hostname)"
         engines = "MPI"
         super().__init__(
-            profile=profile, n=n, init=init, ip=ip, location=location, engines=engines,
+            profile=profile,
+            n=n,
+            init=init,
+            ip=ip,
+            location=location,
+            engines=engines,
         )

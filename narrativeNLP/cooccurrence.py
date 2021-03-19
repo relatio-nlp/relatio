@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import numpy as np
 import pandas as pd
 
-from utils import UsedRoles
+from .utils import UsedRoles
 
 
 def build_df(
@@ -32,7 +32,8 @@ def build_df(
                     _res = statement[role]
                     if len(_res) == 0:
                         warnings.warn(
-                            f"No labels in statement {i}", RuntimeWarning,
+                            f"No labels in statement {i}",
+                            RuntimeWarning,
                         )
                         continue
                     elif len(_res) > 1:
@@ -151,7 +152,7 @@ def unique_counts(
 ) -> Dict[Tuple[Any], int]:
     """
     Count the unique elements of the List.
-    
+
     Examples:
     >>> unique_counts([])
     {}

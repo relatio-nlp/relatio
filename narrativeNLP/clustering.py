@@ -4,13 +4,13 @@ from itertools import groupby
 from typing import Dict, Union
 
 import numpy as np
+from gensim.models import Word2Vec
 from sklearn.base import clone
 from sklearn.cluster import KMeans
 from sklearn.utils import resample
 
-from gensim.models import Word2Vec
-from utils import UsedRoles
-from word_embedding import SIF_Word2Vec
+from .utils import UsedRoles
+from .word_embedding import SIF_Word2Vec
 
 
 class Clustering:
@@ -137,7 +137,10 @@ def label_clusters(
             dist = np.ma.MaskedArray(distance[role], clustering != cluster_id)
             argsorts = dist.argsort()[:top]
             labels[role][cluster_id] = [
-                ("_".join(postproc_roles[statement_index[role][i]][role]), dist[i],)
+                (
+                    "_".join(postproc_roles[statement_index[role][i]][role]),
+                    dist[i],
+                )
                 for i in argsorts
             ]
             if top == 1:
@@ -150,7 +153,11 @@ def label_clusters(
 
 
 def label_clusters_most_freq(
-    *, clustering_res, postproc_roles, statement_index, clustering_mask=True,
+    *,
+    clustering_res,
+    postproc_roles,
+    statement_index,
+    clustering_mask=True,
 ):
     labels = {}
     for role, clustering in clustering_res.items():

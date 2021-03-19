@@ -1,0 +1,11 @@
+repos:
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        language: python
+        language_version: python3 # Should be a command that runs python3.6+
+        entry: black --check
+        minimum_pre_commit_version: 2.9.2
+        require_serial: true
+        types_or: [python, pyi]

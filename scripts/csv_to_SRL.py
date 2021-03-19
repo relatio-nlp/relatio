@@ -162,10 +162,16 @@ if __name__ == "__main__":
     group2 = parser.add_argument_group("run", "--mode run")
 
     group2.add_argument(
-        "-s", "--srl_model_path", help="SRL model path", default="",
+        "-s",
+        "--srl_model_path",
+        help="SRL model path",
+        default="",
     )
     group2.add_argument(
-        "-b", "--batch_path", help="input batch path", default="",
+        "-b",
+        "--batch_path",
+        help="input batch path",
+        default="",
     )
     group2.add_argument(
         "-g",
