@@ -23,7 +23,7 @@ split_sentences = split_into_sentences(
 from narrativeNLP.wrappers import run_srl
 
 srl_res = run_srl(
-    path="/home/germain/Desktop/research/narratives/openie-model.2020.03.26.tar.gz",
+    path="https://storage.googleapis.com/allennlp-public-models/openie-model.2020.03.26.tar.gz",
     sentences=split_sentences[1],
     save_to_disk="srl_res.json",
     batch_size=20,
