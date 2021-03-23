@@ -1,5 +1,5 @@
-# narrative-nlp
-code base for constructing narrative statements from text
+# narrativeNLP
+A Python package to extract narrative statements from text.
 
 ## Installation
 
@@ -12,6 +12,10 @@ cd narrative-nlp
 
 # install it
 python -m pip install -e .
+
+# download SpaCy and NLTK additional resources
+python -m spacy download en_core_web_sm
+python -m nltk.downloader punkt wordnet stopwords averaged_perceptron_tagger
 ```
 
 In case you want to use Jupyter make sure that you have it installed in the current environment.
@@ -20,7 +24,7 @@ In case you want to use Jupyter make sure that you have it installed in the curr
 
 ### Prepare the development environment
 You need `python3.7`, `git` and [tox](https://tox.readthedocs.io/en/latest/).  
-A recent version of `wheel` and `pip>0.21` are desired for the python versions that you want to use.
+A recent version of `wheel` and `pip>21.0` are desired for the python versions that you want to use.
 
 ```bash
 # clone the project
@@ -36,6 +40,10 @@ $ tox -e dev
 # activate the development environment
 $ source .tox/dev/bin/activate
 
+# download SpaCy and NLTK additional resources
+(dev)$ python -m spacy download en_core_web_sm
+(dev)$ python -m nltk.downloader punkt wordnet stopwords averaged_perceptron_tagger
+
 # install the hooks
 (dev)$ pre-commit install
 
@@ -45,7 +53,7 @@ $ source .tox/dev/bin/activate
 
 ### Testing
 
-You can easily test using `tox` on `python3.7`, `python3.8`, and `python3.9`. 
+You can easily test using `tox` on `python3.7`, `python3.8`, and `python3.9`.
 
 ```bash
 $ tox -e py37 # python3.7 required
@@ -58,7 +66,7 @@ So far it works only with `python3.7` probably due to implications from `allennl
 ## DEPRECATED - Installation using Conda
 
 ### Only for Windows10
-One can use conda native for Windows10 or a Linux-like experience via Windows Subsystems for Linux. For compatibility reasons the second option is the recommended. 
+One can use conda native for Windows10 or a Linux-like experience via Windows Subsystems for Linux. For compatibility reasons the second option is the recommended.
 
 #### Recommended - WSL and Conda
 - [Install Windows Subsystems for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10#install-the-windows-subsystem-for-linux)
@@ -75,7 +83,7 @@ One can use conda native for Windows10 or a Linux-like experience via Windows Su
  `cd /cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/Andrei`  
  If you don't have your folder create one.
  - make sure that you are in the folder that you expect run `pwd` and it should be `/cluster/work/...`
-- download `wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh` 
+- download `wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh`
 - install it `bash Miniconda3-latest-Linux-x86_64.sh -p ${PWD}/miniconda3`
     - after you accept the license pay attention at the **location:** where miniconda is going to be installed. It should be miniconda3 folder inside your folder from `/cluster/work/...`
     - I recommend to run conda init
@@ -125,7 +133,7 @@ In case you need more resources ask for them (see [here](https://scicomp.ethz.ch
 - activate the desired conda environment: `conda activate narrative-nlp`
 - just once: `pip install pycuda mpi4py`
 - only for ipyparallel: `ipcluster start --ip="*" --location=$(hostname) --engines=MPI -n 6 &`
-- start jupyter notebook without browser: `jupyter notebook --no-browser --ip $(hostname -i)` . 
+- start jupyter notebook without browser: `jupyter notebook --no-browser --ip $(hostname -i)` .
 Pay attention at the remote_ip, remote_port and token, e.g. `http://remote_ip:remote_port/?token=token` . The remote_is is not `127.0.0.1`
 
 **On your PC (WSL for windows)**
@@ -134,7 +142,7 @@ Pay attention at the remote_ip, remote_port and token, e.g. `http://remote_ip:re
 - In your favourite browser open `http://localhost:port_local`. You might need the token.
 - Once you are done press on `Quit` in jupyter notebook and close your terminal (`Ctrl+C`), stop ipcluster `ipcluster stop` and `exit` from the interactive session (**on Leonhard**)
 ### Example
-See [Example.ipynb](./Notebooks/Example.ipynb). 
+See [Example.ipynb](./Notebooks/Example.ipynb).
 In your python script or Jupyter Notebook add to the path `narrative-nlp/code` and use any module as desired
 ```python
 import sys
@@ -152,7 +160,7 @@ python -m pip install black pytest mypy bandit pylint flake8 pydocstyle line_pro
 ```
 
 ### Tools
-- Auto-formatter: 
+- Auto-formatter:
     - [black](https://black.readthedocs.io/en/stable/) that might break the [79 characters maximum line length](https://www.python.org/dev/peps/pep-0008/#maximum-line-length) from PEP8 (see [here](https://github.com/psf/black#line-length))
     - [isort](https://timothycrosley.github.io/isort/): "isort your imports, so you don't have to." . Used with black line length and trailing comma `-l 88 -tc`
 - Testing via [pytest](https://docs.pytest.org/en/latest/) with `--doctest-modules` enabled (see [doctest](http://doc.pytest.org/en/latest/doctest.html))

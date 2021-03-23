@@ -1,0 +1,108 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+
+<style type="text/css">
+
+        #mynetwork {
+            width: 1000px;
+            height: 1000px;
+            background-color: #ffffff;
+            border: 1px solid lightgray;
+            position: relative;
+            float: left;
+        }
+
+        
+
+        
+
+        
+</style>
+
+</head>
+
+<body>
+<div id = "mynetwork"></div>
+
+
+<script type="text/javascript">
+
+    // initialize global variables.
+    var edges;
+    var nodes;
+    var network; 
+    var container;
+    var options, data;
+
+    
+    // This method is responsible for drawing the graph, returns the drawn network
+    function drawGraph() {
+        var container = document.getElementById('mynetwork');
+        
+        
+
+        // parsing and collecting nodes and edges from the python
+        nodes = new vis.DataSet([{"hidden": false, "id": "you", "label": "you", "shape": "dot", "size": 10, "title": " "}, {"hidden": false, "id": "dems", "label": "dems", "shape": "dot", "size": 10, "title": " "}, {"hidden": false, "id": "america", "label": "america", "shape": "dot", "size": 10, "title": " "}, {"hidden": false, "id": "", "label": "", "shape": "dot", "size": 10, "title": " "}, {"hidden": false, "id": "democrat", "label": "democrat", "shape": "dot", "size": 10, "title": " "}, {"hidden": false, "id": "country", "label": "country", "shape": "dot", "size": 10, "title": " "}]);
+        edges = new vis.DataSet([{"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "do", "title": " ", "to": "you", "weight": 1038}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "have", "title": " ", "to": "you", "weight": 695}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "get", "title": " ", "to": "you", "weight": 415}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "make", "title": " ", "to": "you", "weight": 376}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "want", "title": " ", "to": "you", "weight": 356}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "need", "title": " ", "to": "you", "weight": 254}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "take", "title": " ", "to": "you", "weight": 252}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "know", "title": " ", "to": "you", "weight": 214}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "say", "title": " ", "to": "you", "weight": 198}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "look", "title": " ", "to": "you", "weight": 195}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "love", "title": " ", "to": "you", "weight": 171}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "give", "title": " ", "to": "you", "weight": 163}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "see", "title": " ", "to": "you", "weight": 138}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "lose", "title": " ", "to": "you", "weight": 131}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "use", "title": " ", "to": "you", "weight": 95}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "think", "title": " ", "to": "you", "weight": 94}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "keep", "title": " ", "to": "you", "weight": 89}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "pay", "title": " ", "to": "you", "weight": 77}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "put", "title": " ", "to": "you", "weight": 77}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "win", "title": " ", "to": "you", "weight": 75}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "protect", "title": " ", "to": "you", "weight": 72}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "stop", "title": " ", "to": "you", "weight": 72}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "call", "title": " ", "to": "you", "weight": 70}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "bring", "title": " ", "to": "you", "weight": 69}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "like", "title": " ", "to": "you", "weight": 68}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "support", "title": " ", "to": "you", "weight": 66}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "run", "title": " ", "to": "you", "weight": 65}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "change", "title": " ", "to": "you", "weight": 62}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "hit", "title": " ", "to": "you", "weight": 57}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "raise", "title": " ", "to": "you", "weight": 55}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "believe", "title": " ", "to": "you", "weight": 52}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "talk", "title": " ", "to": "you", "weight": 50}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "let", "title": " ", "to": "you", "weight": 50}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "show", "title": " ", "to": "you", "weight": 47}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "help", "title": " ", "to": "you", "weight": 47}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "vote", "title": " ", "to": "you", "weight": 47}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "kill", "title": " ", "to": "you", "weight": 47}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "build", "title": " ", "to": "you", "weight": 45}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "create", "title": " ", "to": "you", "weight": 43}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "ask", "title": " ", "to": "you", "weight": 43}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "try", "title": " ", "to": "you", "weight": 42}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "work", "title": " ", "to": "you", "weight": 42}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "cut", "title": " ", "to": "you", "weight": 41}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "save", "title": " ", "to": "you", "weight": 40}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "start", "title": " ", "to": "you", "weight": 40}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "won", "title": " ", "to": "you", "weight": 39}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "play", "title": " ", "to": "you", "weight": 39}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "send", "title": " ", "to": "you", "weight": 38}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "thank", "title": " ", "to": "you", "weight": 36}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "find", "title": " ", "to": "you", "weight": 36}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "fix", "title": " ", "to": "you", "weight": 34}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "cover", "title": " ", "to": "you", "weight": 34}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "set", "title": " ", "to": "you", "weight": 33}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "report", "title": " ", "to": "you", "weight": 33}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "write", "title": " ", "to": "you", "weight": 33}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "re", "title": " ", "to": "you", "weight": 33}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "mean", "title": " ", "to": "you", "weight": 32}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "knew", "title": " ", "to": "you", "weight": 32}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "can", "title": " ", "to": "you", "weight": 31}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "waste", "title": " ", "to": "you", "weight": 30}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "read", "title": " ", "to": "you", "weight": 30}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "continue", "title": " ", "to": "you", "weight": 30}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "treat", "title": " ", "to": "you", "weight": 28}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "defend", "title": " ", "to": "you", "weight": 27}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "secure", "title": " ", "to": "you", "weight": 27}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "watch", "title": " ", "to": "you", "weight": 27}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "have", "title": " ", "to": "dems", "weight": 158}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "make", "title": " ", "to": "dems", "weight": 75}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "want", "title": " ", "to": "dems", "weight": 64}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "get", "title": " ", "to": "dems", "weight": 61}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "do", "title": " ", "to": "dems", "weight": 51}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "take", "title": " ", "to": "dems", "weight": 45}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "need", "title": " ", "to": "dems", "weight": 43}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "say", "title": " ", "to": "dems", "weight": 42}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "give", "title": " ", "to": "dems", "weight": 38}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "love", "title": " ", "to": "dems", "weight": 34}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "look", "title": " ", "to": "dems", "weight": 32}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "see", "title": " ", "to": "dems", "weight": 31}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "win", "title": " ", "to": "dems", "weight": 27}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "make", "title": " ", "to": "america", "weight": 145}, {"arrows": "to", "color": null, "from": "you", "hidden": false, "label": "love", "title": " ", "to": "country", "weight": 32}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "do", "title": " ", "to": "you", "weight": 198}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "have", "title": " ", "to": "you", "weight": 175}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "get", "title": " ", "to": "you", "weight": 98}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "make", "title": " ", "to": "you", "weight": 86}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "take", "title": " ", "to": "you", "weight": 79}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "give", "title": " ", "to": "you", "weight": 66}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "want", "title": " ", "to": "you", "weight": 58}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "run", "title": " ", "to": "you", "weight": 51}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "lose", "title": " ", "to": "you", "weight": 40}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "say", "title": " ", "to": "you", "weight": 40}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "call", "title": " ", "to": "you", "weight": 40}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "look", "title": " ", "to": "you", "weight": 38}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "know", "title": " ", "to": "you", "weight": 27}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "have", "title": " ", "to": "dems", "weight": 54}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "want", "title": " ", "to": "dems", "weight": 27}, {"arrows": "to", "color": null, "from": "", "hidden": false, "label": "do", "title": " ", "to": "you", "weight": 65}, {"arrows": "to", "color": null, "from": "", "hidden": false, "label": "have", "title": " ", "to": "you", "weight": 44}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "do", "title": " ", "to": "you", "weight": 51}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "want", "title": " ", "to": "you", "weight": 27}]);
+
+        // adding nodes and edges to the graph
+        data = {nodes: nodes, edges: edges};
+
+        var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+        
+        
+
+        
+
+        network = new vis.Network(container, data, options);
+	 
+        
+
+
+        
+
+        return network;
+
+    }
+
+    drawGraph();
+
+</script>
+</body>
+</html>

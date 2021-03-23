@@ -1,192 +1,355 @@
-import warnings
+# Vectors and Clustering
+# ..................................................................................................................
+# ..................................................................................................................
+
+from typing import Dict, List, NamedTuple, Optional, Tuple, Union, Any
+from copy import deepcopy
 from collections import Counter
-from itertools import groupby
-from typing import Dict, Union
-
 import numpy as np
-from gensim.models import Word2Vec
-from sklearn.base import clone
+from tqdm import tqdm
 from sklearn.cluster import KMeans
-from sklearn.utils import resample
+from numpy.linalg import norm
+import gensim.downloader as api
+from gensim.models import Word2Vec
+import time
 
-from .utils import UsedRoles
-from .word_embedding import SIF_Word2Vec
+from .semantic_role_labeling import get_role_counts
 
 
-class Clustering:
-    def __init__(self, cluster, n_clusters, used_roles: UsedRoles, sample_seed=123):
-        self._embed_roles = used_roles.embeddable
-        if not isinstance(cluster, dict):
-            self._cluster = {el: clone(cluster) for el in self._embed_roles}
-        else:
-            self._cluster = cluster
-        if not isinstance(n_clusters, dict):
-            self._n_clusters = {el: n_clusters for el in self._embed_roles}
-        else:
-            self._n_clusters = n_clusters
+def count_words(sentences: List[str]) -> dict:
 
-        self._dtype = {}
-        for el, value in self._n_clusters.items():
-            self._dtype[el] = np.uint8
-            if value > np.iinfo(np.uint8).max:
-                self._dtype[el] = np.uint16
-            elif value > np.iinfo(np.uint16).max:
-                self._dtype[el] = np.uint32
-            elif value > np.iinfo(np.uint32).max:
-                raise ValueError(f"m_clusters for {el} > {np.iinfo(np.uint32).max}")
+    """
 
-        for el in self._embed_roles:
-            self._cluster[el].n_clusters = self._n_clusters[el]
+    A function that computes word frequencies in a list of sentences.
 
-    def resample(
+    Args:
+        sentences: list of sentences
+
+    Returns:
+        A dictionary {"word": frequency}
+
+    """
+
+    words = []
+
+    for sentence in sentences:
+        words = words + str(sentence).split()
+
+    word_count_dict = dict(Counter(words))
+
+    return word_count_dict
+
+
+def compute_sif_weights(word_count_dict: dict, alpha: Optional[float] = 0.001) -> dict:
+
+    """
+
+    A function that computes SIF weights based on word frequencies.
+
+    Args:
+        word_count_dict: a dictionary {"word": frequency}
+        alpha: regularization parameter (see original paper)
+
+    Returns:
+        A dictionary {"word": SIF weight}
+
+    """
+
+    sif_dict = {}
+
+    for word, count in word_count_dict.items():
+        sif_dict[word] = alpha / (alpha + count)
+
+    return sif_dict
+
+
+# I did not change this code, but I cannot get USE running on the cluster.
+# Path used for test: /cluster/work/lawecon/Work/models/use-4
+class USE:
+    def __init__(self, path: str):
+        self._embed = hub.load(path)
+
+    def __call__(self, tokens: List[str]) -> np.ndarray:
+        return self._embed([" ".join(tokens)]).numpy()[0]
+
+
+class SIF_word2vec:
+    def __init__(
         self,
-        vectors,
-        sample_size: Union[int, float, Dict[str, Union[int, float]]] = 1,
-        random_state: Union[int, Dict[str, int]] = 0,
+        path: str,
+        sentences=List[str],
+        alpha: Optional[float] = 0.001,
+        normalize: bool = True,
     ):
-        if not isinstance(random_state, dict):
-            random_state = {el: random_state for el in self._embed_roles}
-        else:
-            random_state = random_state
 
-        if not isinstance(sample_size, dict):
-            sample_size = {el: sample_size for el in self._embed_roles}
-        else:
-            sample_size = sample_size
+        self._model = Word2Vec.load(path)
 
-        sample_vectors = {}
-        for el in self._embed_roles:
-            if sample_size[el] in [1, 1.0]:
-                sample_vectors[el] = vectors[el]
-            else:
-                _size = vectors[el].shape[0]
-                _sample_size = sample_size[el]
-                _n_samples = (
-                    _sample_size
-                    if isinstance(_sample_size, int)
-                    else int(_size * _sample_size)
-                )
-                sample_vectors[el] = resample(
-                    vectors[el],
-                    n_samples=_n_samples,
-                    replace=False,
-                    random_state=random_state[el],
-                )
-        return sample_vectors
+        self._word_count_dict = count_words(sentences)
 
-    def __getitem__(self, role_name):
-        return self._cluster[role_name]
+        self._sif_dict = compute_sif_weights(self._word_count_dict, alpha)
 
-    def fit(self, vectors):
-        for el in self._embed_roles:
-            self._cluster[el] = self._cluster[el].fit(vectors[el])
+        self._vocab = self._model.wv.vocab
 
-    def predict(self, vectors):
-        res = {}
-        for el in self._embed_roles:
-            res[el] = np.asarray(
-                self._cluster[el].predict(vectors[el]), dtype=self._dtype[el]
-            )
+        self._normalize = normalize
+
+    def __call__(self, tokens: List[str]):
+        res = np.mean(
+            [self._sif_dict[token] * self._model.wv[token] for token in tokens], axis=0
+        )
+        if self._normalize:
+            res = res / norm(res)
         return res
 
-    def compute_distance(self, vectors, predicted_cluster):
-        res = {}
-        for el in self._embed_roles:
-            res[el] = self._cluster[el].transform(vectors[el])[
-                np.arange(predicted_cluster[el].size), predicted_cluster[el]
-            ]
+    def most_similar(self, v):
+        return self._model.wv.most_similar(positive=[v], topn=1)[0]
+
+
+class SIF_keyed_vectors:
+    def __init__(
+        self,
+        path: str,
+        sentences=List[str],
+        alpha: Optional[float] = 0.001,
+        normalize: bool = True,
+    ):
+
+        self._model = api.load(path)
+
+        self._word_count_dict = count_words(sentences)
+
+        self._sif_dict = compute_sif_weights(self._word_count_dict, alpha)
+
+        self._vocab = self._model.vocab
+
+        self._normalize = normalize
+
+    def __call__(self, tokens: List[str]):
+        res = np.mean(
+            [self._sif_dict[token] * self._model[token] for token in tokens], axis=0
+        )
+        if self._normalize:
+            res = res / norm(res)
         return res
 
-    def distance_mask(self, distance, threshold: Union[float, Dict[str, float]] = 2.0):
-        if not isinstance(threshold, dict):
-            threshold = {el: threshold for el in self._embed_roles}
+    def most_similar(self, v):
+        return self._model.most_similar(positive=[v], topn=1)[0]
+
+
+def get_vector(tokens: List[str], model: Union[USE, SIF_word2vec, SIF_keyed_vectors]):
+
+    """
+
+    A function that computes an embedding vector for a list of tokens.
+
+    Args:
+        tokens: list of string tokens to embed
+        model: trained embedding model
+        (e.g. either Universal Sentence Encoders, a full gensim Word2Vec model or gensim Keyed Vectors)
+
+    Returns:
+        A two-dimensional numpy array (1,dimension of the embedding space)
+
+    """
+
+    if not isinstance(model, (USE, SIF_word2vec, SIF_keyed_vectors)):
+        raise TypeError("Union[USE, SIF_Word2Vec, SIF_keyed_vectors]")
+
+    if isinstance(model, SIF_word2vec) or isinstance(model, SIF_keyed_vectors):
+        if not tokens:
+            res = None
+        elif any(token not in model._sif_dict for token in tokens):
+            res = None
+        elif any(token not in model._vocab for token in tokens):
+            res = None
         else:
-            threshold = threshold
+            res = model(tokens)
+            res = np.array(
+                [res]
+            )  # correct format to feed the vectors to sklearn clustering methods
+    else:
+        res = model(tokens)
+        res = np.array(
+            [res]
+        )  # correct format to feed the vectors to sklearn clustering methods
 
-        res = {}
-        for el in self._embed_roles:
-            res[el] = distance[el] <= threshold[el]
-        return res
-
-    def label_most_similar_in_w2v(self, word2vec: SIF_Word2Vec):
-        labels = {}
-        for el in self._embed_roles:
-            labels[el] = {}
-            for i, vec in enumerate(self._cluster[el].cluster_centers_):
-                labels[el][i] = list(word2vec.most_similar(vec))
-        return labels
-
-    def normalise_centroids(self):
-        # TODO
-        pass
+    return res
 
 
-def label_clusters(
-    *,
-    clustering_res,
-    distance,
+def get_vectors(
     postproc_roles,
-    statement_index,
-    top: int = 1,
-    drop_duplicates: bool = True,
+    model: Union[USE, SIF_word2vec, SIF_keyed_vectors],
+    UsedRoles=List[str],
 ):
-    labels = {}
-    for role, clustering in clustering_res.items():
-        labels[role] = {}
-        for cluster_id in np.unique(clustering):
-            dist = np.ma.MaskedArray(distance[role], clustering != cluster_id)
-            argsorts = dist.argsort()[:top]
-            labels[role][cluster_id] = [
-                (
-                    "_".join(postproc_roles[statement_index[role][i]][role]),
-                    dist[i],
-                )
-                for i in argsorts
-            ]
-            if top == 1:
-                labels[role][cluster_id] = list(labels[role][cluster_id][0])
-            elif drop_duplicates:
-                labels[role][cluster_id] = sorted(
-                    list(set(labels[role][cluster_id])), key=lambda x: x[1]
-                )
-    return labels
+
+    """
+
+    A function to train a kmeans model on the corpus.
+
+    Args:
+        postproc_roles: list of statements
+        model: trained embedding model
+        (e.g. either Universal Sentence Encoders, a full gensim Word2Vec model or gensim Keyed Vectors)
+        UsedRoles: list of roles
+
+    Returns:
+        A list of vectors
+
+    """
+
+    role_counts = get_role_counts(postproc_roles, roles=UsedRoles)
+
+    role_counts = [role.split() for role in list(role_counts)]
+
+    vecs = []
+    for role in role_counts:
+        vec = get_vector(role, model)
+        if vec is not None:
+            vecs.append(vec)
+
+    vecs = np.concatenate(vecs)
+
+    return vecs
+
+
+def train_cluster_model(
+    vecs,
+    model: Union[USE, SIF_word2vec, SIF_keyed_vectors],
+    n_clusters,
+    random_state: Optional[int] = 0,
+    verbose: Optional[int] = 0,
+):
+
+    """
+
+    Train a kmeans model on the corpus.
+
+    Args:
+        vecs: list of vectors
+        model: trained embedding model
+        (e.g. either Universal Sentence Encoders, a full gensim Word2Vec model or gensim Keyed Vectors)
+        n_clusters: number of clusters
+        random_state: seed for replication (default is 0)
+        verbose: see Scikit-learn documentation for details
+
+    Returns:
+        A sklearn kmeans model
+
+    """
+
+    kmeans = KMeans(
+        n_clusters=n_clusters, random_state=random_state, verbose=verbose
+    ).fit(vecs)
+
+    return kmeans
+
+
+def get_clusters(
+    postproc_roles: List[dict],
+    model: Union[USE, SIF_word2vec, SIF_keyed_vectors],
+    kmeans,
+    UsedRoles=List[str],
+    progress_bar: Optional[bool] = False,
+) -> List[dict]:
+
+    """
+
+    Predict clusters based on a pre-trained kmeans model.
+
+    Args:
+        postproc_roles: list of statements
+        model: trained embedding model
+        (e.g. either Universal Sentence Encoders, a full gensim Word2Vec model or gensim Keyed Vectors)
+        kmeans = a pre-trained sklearn kmeans model
+        UsedRoles: list of roles
+        progress_bar: print a progress bar (default is False)
+
+    Returns:
+        A list of dictionaries with the predicted cluster for each role
+
+    """
+
+    roles_copy = deepcopy(postproc_roles)
+
+    if progress_bar == True:
+        print("Assigning clusters to roles...")
+        time.sleep(1)
+        postproc_roles = tqdm(postproc_roles)
+
+    for i, statement in enumerate(postproc_roles):
+        for role, tokens in statement.items():
+            if role in UsedRoles:
+                vec = get_vector(tokens, model)
+                if vec is not None:
+                    clu = kmeans.predict(vec)
+                    roles_copy[i][role] = int(clu)
+                else:
+                    roles_copy[i].pop(role, None)
+            else:
+                roles_copy[i].pop(role, None)
+
+    return roles_copy
 
 
 def label_clusters_most_freq(
-    *,
-    clustering_res,
-    postproc_roles,
-    statement_index,
-    clustering_mask=True,
-):
+    clustering_res: List[dict], postproc_roles: List[dict]
+) -> dict:
+
+    """
+
+    A function which labels clusters by their most frequent term.
+
+    Args:
+        clustering_res: list of dictionaries with the predicted cluster for each role
+        postproc_roles: list of statements
+
+    Returns:
+        A dictionary associating to each cluster number a label (e.g. the most frequent term in this cluster)
+
+    """
+
+    temp = {}
     labels = {}
-    for role, clustering in clustering_res.items():
-        labels[role] = {}
-        grouped_data = groupby(
-            sorted(
-                (
-                    (
-                        int(value),
-                        "_".join(postproc_roles[statement_index[role][i]][role]),
-                    )
-                    for i, value in enumerate(clustering)
-                    if clustering_mask is True or clustering_mask[role][i]
-                ),
-                key=lambda x: x[0],
-            ),
-            key=lambda x: x[0],
-        )
 
-        labels[role] = {
-            k: Counter(el[1] for el in ngrams).most_common(2)
-            for k, ngrams in grouped_data
-        }
+    for i, statement in enumerate(clustering_res):
+        for role, cluster in statement.items():
+            tokens = " ".join(postproc_roles[i][role])
+            cluster_num = cluster
+            if cluster_num not in temp:
+                temp[cluster_num] = [tokens]
+            else:
+                temp[cluster_num] = temp[cluster_num] + [tokens]
 
-        for k, v in labels[role].items():
-            if len(v) > 1 and (v[0][1] == v[1][1]):
-                warnings.warn(
-                    f"Multiple labels - 2 shown: \n  labels[{role}][{k}]={v}. First one is picked.",
-                    RuntimeWarning,
-                )
-            labels[role][k] = list(v[0])
+    for cluster_num, tokens in temp.items():
+        token_counts = Counter(tokens)
+        token_freq = sorted(token_counts.items(), key=lambda x: x[1], reverse=True)
+        most_freq_token = token_freq[0][0]
+        labels[cluster_num] = most_freq_token
+
+    return labels
+
+
+def label_clusters_most_similar(kmeans, model) -> dict:
+
+    """
+
+    A function which labels clusters by the term closest to the centroid in the embedding
+    (i.e. distance is cosine similarity)
+
+    Args:
+        kmeans: the trained kmeans model
+        model: trained embedding model
+        (e.g. a full gensim Word2Vec model or gensim Keyed Vectors)
+
+    Returns:
+        A dictionary associating to each cluster number a label
+        (e.g. the most similar term to cluster's centroid)
+
+    """
+
+    labels = {}
+
+    for i, vec in enumerate(kmeans.cluster_centers_):
+        most_similar_term = model.most_similar(vec)
+        labels[i] = most_similar_term[0]
+
     return labels

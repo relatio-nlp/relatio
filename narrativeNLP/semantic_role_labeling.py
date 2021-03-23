@@ -1,14 +1,150 @@
-import pathlib
-import time
-import warnings
-from copy import deepcopy
-from typing import Any, Dict, List, Optional, Tuple
+# Semantic Role Labeling
+# ..................................................................................................................
+# ..................................................................................................................
 
+# link to choose the SRL model
+# https://storage.googleapis.com/allennlp-public-models/YOUR-PREFERRED-MODEL
+
+from typing import Dict, List, NamedTuple, Optional, Tuple, Union, Any
+from copy import deepcopy
 import numpy as np
+import warnings
 import torch
 from allennlp.predictors.predictor import Predictor
+from tqdm import tqdm
+import json
+import time
 
-from .utils import filter_sentences, group_sentences_in_batches, preprocess
+from .utils import preprocess
+
+
+def filter_sentences(
+    sentences: List[str],
+    max_sentence_length: Optional[int] = None,
+    max_number_words: Optional[int] = None,
+) -> List[str]:
+
+    """
+
+    Filter list of sentences based on the number of characters length.
+    Args:
+        max_sentence_length: Keep only sentences with a a number of character lower or equal to max_sentence_length. For max_number_words = max_sentence_length = -1 all sentences are kept.
+        max_number_words: Keep only sentences with a a number of words lower or equal to max_number_words. For max_number_words = max_sentence_length = -1 all sentences are kept.
+    Returns:
+        Filtered list of sentences.
+    Examples:
+        >>> filter_sentences(['This is a house'])
+        ['This is a house']
+        >>> filter_sentences(['This is a house'], max_sentence_length=15)
+        ['This is a house']
+        >>> filter_sentences(['This is a house'], max_sentence_length=14)
+        []
+        >>> filter_sentences(['This is a house'], max_number_words=4)
+        ['This is a house']
+        >>> filter_sentences(['This is a house'], max_number_words=3)
+        []
+        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=18)
+        ['This is a house', 'It is a nice house']
+        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=4, max_sentence_length=18)
+        ['This is a house']
+        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=17)
+        ['This is a house']
+        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=0, max_sentence_length=18)
+        []
+        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=0)
+        []
+        >>> filter_sentences(['This is a house', 'It is a nice house'])
+        ['This is a house', 'It is a nice house']
+        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=4)
+        ['This is a house']
+
+    """
+
+    if max_sentence_length is None and max_number_words is None:
+        pass
+    elif max_sentence_length == 0 or max_number_words == 0:
+        sentences = []
+    else:
+        if max_sentence_length is not None:
+            sentences = [sent for sent in sentences if len(sent) <= max_sentence_length]
+
+            def filter_funct(sent):
+                return len(sent) <= max_sentence_length
+
+        if max_number_words is not None:
+            sentences = [
+                sent for sent in sentences if len(sent.split()) <= max_number_words
+            ]
+
+    return sentences
+
+
+def group_sentences_in_batches(
+    sentences: List[str],
+    max_batch_char_length: Optional[int] = None,
+    batch_size: Optional[int] = None,
+) -> List[List[str]]:
+
+    """
+
+    Group sentences in batches of given total character length.
+    Args:
+        sentences: List of sentences
+        max_batch_char_length: maximum char length for a batch
+    Returns:
+        List of batches (list) of sentences.
+    Examples:
+        >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=15)
+        [['This is a house'], ['This is a house']]
+        >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=14)
+        []
+        >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=29)
+        [['This is a house'], ['This is a house']]
+        >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=30)
+        [['This is a house', 'This is a house']]
+        >>> group_sentences_in_batches(['This is a house','This is a house'])
+        [['This is a house', 'This is a house']]
+        >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], max_batch_char_length=29)
+        [['This is a house'], ['This is a house'], ['This is a house']]
+        >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], batch_size=2)
+        [['This is a house', 'This is a house'], ['This is a house']]
+
+    """
+
+    batches: List[List[str]] = []
+
+    if max_batch_char_length is None and batch_size is None:
+        batches = [sentences]
+    elif max_batch_char_length is not None and batch_size is not None:
+        raise ValueError("max_batch_char_length and batch_size are mutual exclusive.")
+    elif batch_size is not None:
+        batches = [
+            sentences[i : i + batch_size] for i in range(0, len(sentences), batch_size)
+        ]
+    else:
+        batch_char_length = 0
+        batch: List[str] = []
+
+        for el in sentences:
+            length = len(el)
+            batch_char_length += length
+            if length > max_batch_char_length:
+                warnings.warn(
+                    f"The length of the sentence = {length} > max_batch_length={max_batch_char_length}. The following sentence is skipped: \n > {el}",
+                    RuntimeWarning,
+                )
+                continue
+            if batch_char_length > max_batch_char_length:
+                batches.append(batch)
+                batch = [el]
+                batch_char_length = length
+            else:
+                batch.append(el)
+
+        if batch:
+            batches.append(batch)
+
+    return batches
 
 
 class SRL:
@@ -47,6 +183,7 @@ class SRL:
         max_number_words: Optional[int] = None,
         cuda_empty_cache: bool = None,
         cuda_sleep: float = None,
+        progress_bar: Optional[bool] = False,
     ):
         max_batch_char_length = (
             max_batch_char_length
@@ -85,6 +222,12 @@ class SRL:
         )
 
         res = []
+
+        if progress_bar == True:
+            print("Running SRL...")
+            time.sleep(1)
+            batches = tqdm(batches)
+
         for batch in batches:
             sentences_json = [{"sentence": sent} for sent in batch]
             try:
@@ -106,64 +249,106 @@ class SRL:
 
 
 def extract_roles(
-    srl: List[Dict[str, Any]], modals=True, start: int = 0
+    srl: List[Dict[str, Any]],
+    UsedRoles: List[str],
+    progress_bar: Optional[bool] = False,
 ) -> Tuple[List[Dict[str, List]], List[int]]:
-    # TODO use UsedRoles instead of modals
+
+    """
+
+    A function that extracts semantic roles from the SRL output.
+
+    Args:
+        srl: srl output
+        UsedRoles: list of roles
+        progress_bar: print a progress bar (default is False)
+
+    Returns:
+        List of statements and numpy array of sentence indices (to keep track of sentences)
+
+    """
+
     statements_role_list: List[Dict[str, List]] = []
     sentence_index: List[int] = []
-    for i, sentence_dict in enumerate(srl, start=start):
-        role_per_sentence = extract_role_per_sentence(sentence_dict, modals)
+
+    if progress_bar == True:
+        print("Processing SRL...")
+        time.sleep(1)
+        srl = tqdm(srl)
+
+    for i, sentence_dict in enumerate(srl):
+        role_per_sentence = extract_role_per_sentence(sentence_dict, UsedRoles)
         sentence_index.extend([i] * len(role_per_sentence))
         statements_role_list.extend(role_per_sentence)
 
     return statements_role_list, np.asarray(sentence_index, dtype=np.uint32)
 
 
-def extract_role_per_sentence(sentence_dict, modals=True):
-    # TODO Refactor
-    # TODO use UsedRoles instead of modals
+def extract_role_per_sentence(sentence_dict: dict, UsedRoles: List[str]) -> List[dict]:
+
+    """
+
+    A function that extracts the semantic roles for a given sentence.
+
+    Args:
+        srl: srl output
+        UsedRoles: list of roles
+
+    Returns:
+        List of statements with their associated roles for a given sentence
+
+    """
 
     word_list = sentence_dict["words"]
     sentence_role_list = []
+
     for statement_dict in sentence_dict["verbs"]:
         tag_list = statement_dict["tags"]
 
-        if any("ARG" in tag for tag in tag_list):
-            statement_role_dict = {}
+        statement_role_dict = {}
 
+        if "ARGO" in UsedRoles:
             indices_agent = [i for i, tok in enumerate(tag_list) if "ARG0" in tok]
-            indices_patient = [i for i, tok in enumerate(tag_list) if "ARG1" in tok]
-            indices_attribute = [i for i, tok in enumerate(tag_list) if "ARG2" in tok]
-            indices_verb = [i for i, tok in enumerate(tag_list) if "B-V" in tok]
             agent = [tok for i, tok in enumerate(word_list) if i in indices_agent]
+            statement_role_dict["ARGO"] = agent
+
+        if "ARG1" in UsedRoles:
+            indices_patient = [i for i, tok in enumerate(tag_list) if "ARG1" in tok]
             patient = [tok for i, tok in enumerate(word_list) if i in indices_patient]
+            statement_role_dict["ARG1"] = patient
+
+        if "ARG2" in UsedRoles:
+            indices_attribute = [i for i, tok in enumerate(tag_list) if "ARG2" in tok]
             attribute = [
                 tok for i, tok in enumerate(word_list) if i in indices_attribute
             ]
-            verb = [tok for i, tok in enumerate(word_list) if i in indices_verb]
-            if modals is True:
-                indices_modal = [
-                    i for i, tok in enumerate(tag_list) if "B-ARGM-MOD" in tok
-                ]
-                modal = [tok for i, tok in enumerate(word_list) if i in indices_modal]
-                statement_role_dict["B-ARGM-MOD"] = modal
-
-            role_negation_value = any("B-ARGM-NEG" in tag for tag in tag_list)
-
-            statement_role_dict["ARGO"] = agent
-            statement_role_dict["ARG1"] = patient
             statement_role_dict["ARG2"] = attribute
+
+        if "B-V" in UsedRoles:
+            indices_verb = [i for i, tok in enumerate(tag_list) if "B-V" in tok]
+            verb = [tok for i, tok in enumerate(word_list) if i in indices_verb]
             statement_role_dict["B-V"] = verb
+
+        if "B-ARGM-MOD" in UsedRoles:
+            indices_modal = [i for i, tok in enumerate(tag_list) if "B-ARGM-MOD" in tok]
+            modal = [tok for i, tok in enumerate(word_list) if i in indices_modal]
+            statement_role_dict["B-ARGM-MOD"] = modal
+
+        if "B-ARGM-NEG" in UsedRoles:
+            role_negation_value = any("B-ARGM-NEG" in tag for tag in tag_list)
             statement_role_dict["B-ARGM-NEG"] = role_negation_value
-            key_to_delete = []
-            for key, value in statement_role_dict.items():
-                if not value:
-                    key_to_delete.append(key)
-            for key in key_to_delete:
-                del statement_role_dict[key]
-            sentence_role_list.append(statement_role_dict)
+
+        key_to_delete = []
+        for key, value in statement_role_dict.items():
+            if not value:
+                key_to_delete.append(key)
+        for key in key_to_delete:
+            del statement_role_dict[key]
+        sentence_role_list.append(statement_role_dict)
+
     if not sentence_role_list:
         sentence_role_list = [{}]
+
     return sentence_role_list
 
 
@@ -181,14 +366,26 @@ def postprocess_roles(
     stem: bool = False,
     tags_to_keep: Optional[List[str]] = None,
     remove_n_letter_words: Optional[int] = None,
+    progress_bar: Optional[bool] = False,
 ) -> List[Dict[str, List]]:
+
     """
+
     max_length = remove roles of more than n tokens (NB: very long roles tend to be uninformative in our context)
-    For other arguments see utils.preprocess .
+    progress_bar: print a progress bar (default is False)
+    For other arguments see utils.preprocess.
+
     """
+
     roles_copy = deepcopy(statements)
+
+    if progress_bar == True:
+        print("Cleaning SRL...")
+        time.sleep(1)
+        statements = tqdm(statements)
+
     for i, statement in enumerate(statements):
-        for role, tokens in statements[i].items():
+        for role, tokens in roles_copy[i].items():
             if isinstance(tokens, list):
                 res = [
                     preprocess(
@@ -217,27 +414,71 @@ def postprocess_roles(
                 pass
             else:
                 raise ValueError(f"{tokens}")
+
     return roles_copy
 
 
-def estimate_time(char_length: int, device: str = "RTX2080Ti") -> float:
-    """
-    Estimate time to solution for SRL done on a given device.
+def get_raw_arguments(statements: List[dict], progress_bar: Optional[bool] = False):
+
+    roles_copy = deepcopy(statements)
+
+    if progress_bar == True:
+        print("Processing raw arguments...")
+        time.sleep(1)
+        statements = tqdm(statements)
+
+    final_statements = []
+    for i, statement in enumerate(statements):
+        for role, tokens in statement.items():
+            name = role + "-RAW"
+            roles_copy[i][name] = roles_copy[i].pop(role)
+            if type(tokens) != bool:
+                roles_copy[i][name] = " ".join(tokens)
+            else:
+                roles_copy[i][name] = tokens
+
+    return roles_copy
+
+
+def get_role_counts(
+    statements: List[dict],
+    roles: Optional[list] = ["B-V", "ARGO", "ARG1", "ARG2"],
+    progress_bar: Optional[bool] = False,
+) -> dict:
 
     """
 
-    if device == "RTX2080Ti":
-        if char_length > 10_000:
-            res = char_length * 0.3 / 1_000
-        elif char_length > 2_000:
-            res = char_length * 0.6 / 1_000
-        else:
-            res = 1.0
-    else:
-        raise ValueError("{device} not estimated.")
+    Get role frequency within the corpus from preprocessed semantic roles. Roles considered are specified by the user.
+    Args:
+        statements: list of dictionaries of postprocessed semantic roles
+        roles: list of roles considered
+        progress_bar: print a progress bar (default is False)
 
-    return res
+    Returns:
+        Dictionary in which postprocessed semantic roles are keys and their frequency within the corpus are values
+        (e.g. d['verb'] = count)
 
+    Example:
+        >>> test = [{'B-V': ['increase'], 'B-ARGM-NEG': True},{'B-V': ['decrease']},{'B-V': ['decrease']}]\n
+        ... verb_counts = get_role_counts(test, roles = ['B-V'])
+        {'increase': 1, 'decrease': 2}
 
-def output_file(filepath: pathlib.Path, parent_path: pathlib.Path) -> pathlib.Path:
-    return (parent_path / filepath.name).with_suffix(".json")
+    """
+
+    counts = {}
+
+    if progress_bar == True:
+        print("Computing role frequencies...")
+        time.sleep(1)
+        statements = tqdm(statements)
+
+    for statement in statements:
+        for key in statement.keys():
+            if key in roles:
+                temp = " ".join(statement[key])
+                if temp in counts:
+                    counts[temp] += 1
+                else:
+                    counts[temp] = 1
+
+    return counts
