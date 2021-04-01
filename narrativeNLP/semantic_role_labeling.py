@@ -38,42 +38,45 @@ def filter_sentences(
         >>> filter_sentences(['This is a house'], max_sentence_length=15)
         ['This is a house']
         >>> filter_sentences(['This is a house'], max_sentence_length=14)
-        []
+        ['']
         >>> filter_sentences(['This is a house'], max_number_words=4)
         ['This is a house']
         >>> filter_sentences(['This is a house'], max_number_words=3)
-        []
+        ['']
         >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=18)
         ['This is a house', 'It is a nice house']
         >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=4, max_sentence_length=18)
-        ['This is a house']
+        ['This is a house', '']
         >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=17)
-        ['This is a house']
+        ['This is a house', '']
         >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=0, max_sentence_length=18)
-        []
+        ['', '']
         >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=0)
-        []
+        ['', '']
         >>> filter_sentences(['This is a house', 'It is a nice house'])
         ['This is a house', 'It is a nice house']
         >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=4)
-        ['This is a house']
+        ['This is a house', '']
 
     """
 
     if max_sentence_length is None and max_number_words is None:
         pass
-    elif max_sentence_length == 0 or max_number_words == 0:
-        sentences = []
+    # elif max_sentence_length == 0 or max_number_words == 0:
+    # sentences = []
     else:
         if max_sentence_length is not None:
-            sentences = [sent for sent in sentences if len(sent) <= max_sentence_length]
+            sentences = [
+                "" if (len(sent) > max_sentence_length) else sent for sent in sentences
+            ]
 
             def filter_funct(sent):
                 return len(sent) <= max_sentence_length
 
         if max_number_words is not None:
             sentences = [
-                sent for sent in sentences if len(sent.split()) <= max_number_words
+                "" if (len(sent.split()) > max_number_words) else sent
+                for sent in sentences
             ]
 
     return sentences
@@ -116,7 +119,7 @@ def group_sentences_in_batches(
     if max_batch_char_length is None and batch_size is None:
         batches = [sentences]
     elif max_batch_char_length is not None and batch_size is not None:
-        raise ValueError("max_batch_char_length and batch_size are mutual exclusive.")
+        raise ValueError("max_batch_char_length and batch_size are mutually exclusive.")
     elif batch_size is not None:
         batches = [
             sentences[i : i + batch_size] for i in range(0, len(sentences), batch_size)
@@ -237,7 +240,7 @@ class SRL:
                     f"empty result {err}",
                     RuntimeWarning,
                 )
-                res = [None]
+                res = {"words": [], "verbs": []}
                 break
             except:
                 raise
