@@ -35,8 +35,8 @@ from .clustering import (
 def run_srl(
     path: str,
     sentences: List[str],
-    max_batch_char_length: Optional[int] = None,
     batch_size: Optional[int] = 1,
+    cuda_device: Optional[int] = -1,
     max_sentence_length: Optional[int] = None,
     max_number_words: Optional[int] = None,
     cuda_empty_cache: bool = None,
@@ -61,9 +61,20 @@ def run_srl(
 
     """
 
-    srl = SRL(path=path)
+    srl = SRL(
+        path=path,
+        cuda_device = cuda_device
+    )
 
-    srl_res = srl(sentences=sentences, batch_size=batch_size, progress_bar=progress_bar)
+    srl_res = srl(
+        sentences = sentences,
+        batch_size = batch_size,
+        max_sentence_length = max_sentence_length,
+        max_number_words = max_number_words,
+        cuda_empty_cache = cuda_empty_cache,
+        cuda_sleep = cuda_sleep,
+        progress_bar = progress_bar
+    )
 
     if save_to_disk is not None:
         with open(save_to_disk, "w") as json_file:
