@@ -27,7 +27,7 @@ In case you want to use Jupyter make sure that you have it installed in the curr
 
 ```bash
 ## start an interactive
-$ bsub -n 1 -Is -W 1:00 -R "rusage[mem=10000]" bash
+$ bsub -n 1 -Is -W 2:00 -R "rusage[mem=10000,ngpus_excl_p=1] select[gpu_model0==GeForceRTX2080Ti]" bash
 
 ## wait until you get the requested resources <<Waiting for dispatch ...>>
 
