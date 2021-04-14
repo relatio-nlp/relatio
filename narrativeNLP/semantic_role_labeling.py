@@ -100,7 +100,9 @@ def group_sentences_in_batches(
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=15)
         [['This is a house'], ['This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=14)
-        []
+        [[''], ['']]
+        >>> group_sentences_in_batches(['This is a house','This is a house', 'This is not a house'], max_batch_char_length=15)
+        [['This is a house'], ['This is a house'], ['']]
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=29)
         [['This is a house'], ['This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=30)
@@ -109,6 +111,8 @@ def group_sentences_in_batches(
         [['This is a house', 'This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], max_batch_char_length=29)
         [['This is a house'], ['This is a house'], ['This is a house']]
+        >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], max_batch_char_length=30)
+        [['This is a house', 'This is a house'], ['This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], batch_size=2)
         [['This is a house', 'This is a house'], ['This is a house']]
 
@@ -132,13 +136,10 @@ def group_sentences_in_batches(
             length = len(el)
             batch_char_length += length
             if length > max_batch_char_length:
-                warnings.warn(
-                    f"The length of the sentence = {length} > max_batch_length={max_batch_char_length}. The following sentence is skipped: \n > {el}",
-                    RuntimeWarning,
-                )
-                continue
+                el = ""
             if batch_char_length > max_batch_char_length:
-                batches.append(batch)
+                if batch:
+                    batches.append(batch)
                 batch = [el]
                 batch_char_length = length
             else:

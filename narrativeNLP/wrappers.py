@@ -61,19 +61,16 @@ def run_srl(
 
     """
 
-    srl = SRL(
-        path=path,
-        cuda_device = cuda_device
-    )
+    srl = SRL(path=path, cuda_device=cuda_device)
 
     srl_res = srl(
-        sentences = sentences,
-        batch_size = batch_size,
-        max_sentence_length = max_sentence_length,
-        max_number_words = max_number_words,
-        cuda_empty_cache = cuda_empty_cache,
-        cuda_sleep = cuda_sleep,
-        progress_bar = progress_bar
+        sentences=sentences,
+        batch_size=batch_size,
+        max_sentence_length=max_sentence_length,
+        max_number_words=max_number_words,
+        cuda_empty_cache=cuda_empty_cache,
+        cuda_sleep=cuda_sleep,
+        progress_bar=progress_bar,
     )
 
     if save_to_disk is not None:
