@@ -241,7 +241,7 @@ class SRL:
                     f"empty result {err}",
                     RuntimeWarning,
                 )
-                res = {"words": [], "verbs": []}
+                res = [{"words": [], "verbs": []}] * len(batch)
                 break
             except:
                 raise
