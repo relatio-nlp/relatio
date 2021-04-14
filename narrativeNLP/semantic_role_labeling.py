@@ -18,7 +18,7 @@ import time
 from .utils import preprocess
 
 
-def filter_sentences(
+def replace_sentences(
     sentences: List[str],
     max_sentence_length: Optional[int] = None,
     max_number_words: Optional[int] = None,
@@ -26,36 +26,36 @@ def filter_sentences(
 
     """
 
-    Filter list of sentences based on the number of characters length.
+    Replace long sentences in list of sentences by empty strings.
     Args:
         max_sentence_length: Keep only sentences with a a number of character lower or equal to max_sentence_length. For max_number_words = max_sentence_length = -1 all sentences are kept.
         max_number_words: Keep only sentences with a a number of words lower or equal to max_number_words. For max_number_words = max_sentence_length = -1 all sentences are kept.
     Returns:
-        Filtered list of sentences.
+        Replaced list of sentences.
     Examples:
-        >>> filter_sentences(['This is a house'])
+        >>> replace_sentences(['This is a house'])
         ['This is a house']
-        >>> filter_sentences(['This is a house'], max_sentence_length=15)
+        >>> replace_sentences(['This is a house'], max_sentence_length=15)
         ['This is a house']
-        >>> filter_sentences(['This is a house'], max_sentence_length=14)
+        >>> replace_sentences(['This is a house'], max_sentence_length=14)
         ['']
-        >>> filter_sentences(['This is a house'], max_number_words=4)
+        >>> replace_sentences(['This is a house'], max_number_words=4)
         ['This is a house']
-        >>> filter_sentences(['This is a house'], max_number_words=3)
+        >>> replace_sentences(['This is a house'], max_number_words=3)
         ['']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=18)
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=18)
         ['This is a house', 'It is a nice house']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=4, max_sentence_length=18)
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=4, max_sentence_length=18)
         ['This is a house', '']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=17)
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=17)
         ['This is a house', '']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=0, max_sentence_length=18)
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=0, max_sentence_length=18)
         ['', '']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=0)
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=0)
         ['', '']
-        >>> filter_sentences(['This is a house', 'It is a nice house'])
+        >>> replace_sentences(['This is a house', 'It is a nice house'])
         ['This is a house', 'It is a nice house']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=4)
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=4)
         ['This is a house', '']
 
     """
@@ -100,7 +100,9 @@ def group_sentences_in_batches(
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=15)
         [['This is a house'], ['This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=14)
-        []
+        [[''], ['']]
+        >>> group_sentences_in_batches(['This is a house','This is a house', 'This is not a house'], max_batch_char_length=15)
+        [['This is a house'], ['This is a house'], ['']]
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=29)
         [['This is a house'], ['This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=30)
@@ -109,6 +111,8 @@ def group_sentences_in_batches(
         [['This is a house', 'This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], max_batch_char_length=29)
         [['This is a house'], ['This is a house'], ['This is a house']]
+        >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], max_batch_char_length=30)
+        [['This is a house', 'This is a house'], ['This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], batch_size=2)
         [['This is a house', 'This is a house'], ['This is a house']]
 
@@ -132,13 +136,10 @@ def group_sentences_in_batches(
             length = len(el)
             batch_char_length += length
             if length > max_batch_char_length:
-                warnings.warn(
-                    f"The length of the sentence = {length} > max_batch_length={max_batch_char_length}. The following sentence is skipped: \n > {el}",
-                    RuntimeWarning,
-                )
-                continue
+                el = ""
             if batch_char_length > max_batch_char_length:
-                batches.append(batch)
+                if batch:
+                    batches.append(batch)
                 batch = [el]
                 batch_char_length = length
             else:
@@ -212,7 +213,7 @@ class SRL:
 
         cuda_sleep = cuda_sleep if cuda_sleep is not None else self._cuda_sleep
 
-        sentences = filter_sentences(
+        sentences = replace_sentences(
             sentences,
             max_sentence_length=max_sentence_length,
             max_number_words=max_number_words,
@@ -232,7 +233,7 @@ class SRL:
             batches = tqdm(batches)
 
         for batch in batches:
-            sentences_json = [{"sentence": str(sent)} for sent in batch]
+            sentences_json = [{"sentence": sent} for sent in batch]
             try:
                 res_batch = self._predictor.predict_batch_json(sentences_json)
             except RuntimeError as err:
@@ -240,7 +241,7 @@ class SRL:
                     f"empty result {err}",
                     RuntimeWarning,
                 )
-                res = {"words": [], "verbs": []}
+                res = [{"words": [], "verbs": []}] * len(batch)
                 break
             except:
                 raise
