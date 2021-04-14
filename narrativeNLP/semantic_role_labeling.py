@@ -233,7 +233,7 @@ class SRL:
             batches = tqdm(batches)
 
         for batch in batches:
-            sentences_json = [{"sentence": str(sent)} for sent in batch]
+            sentences_json = [{"sentence": sent} for sent in batch]
             try:
                 res_batch = self._predictor.predict_batch_json(sentences_json)
             except RuntimeError as err:
