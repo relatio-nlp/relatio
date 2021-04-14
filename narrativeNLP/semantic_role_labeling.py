@@ -18,7 +18,7 @@ import time
 from .utils import preprocess
 
 
-def filter_sentences(
+def replace_sentences(
     sentences: List[str],
     max_sentence_length: Optional[int] = None,
     max_number_words: Optional[int] = None,
@@ -33,29 +33,29 @@ def filter_sentences(
     Returns:
         Filtered list of sentences.
     Examples:
-        >>> filter_sentences(['This is a house'])
+        >>> replace_sentences(['This is a house'])
         ['This is a house']
-        >>> filter_sentences(['This is a house'], max_sentence_length=15)
+        >>> replace_sentences(['This is a house'], max_sentence_length=15)
         ['This is a house']
-        >>> filter_sentences(['This is a house'], max_sentence_length=14)
+        >>> replace_sentences(['This is a house'], max_sentence_length=14)
         ['']
-        >>> filter_sentences(['This is a house'], max_number_words=4)
+        >>> replace_sentences(['This is a house'], max_number_words=4)
         ['This is a house']
-        >>> filter_sentences(['This is a house'], max_number_words=3)
+        >>> replace_sentences(['This is a house'], max_number_words=3)
         ['']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=18)
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=18)
         ['This is a house', 'It is a nice house']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=4, max_sentence_length=18)
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=4, max_sentence_length=18)
         ['This is a house', '']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=17)
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=17)
         ['This is a house', '']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=0, max_sentence_length=18)
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=0, max_sentence_length=18)
         ['', '']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=0)
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=0)
         ['', '']
-        >>> filter_sentences(['This is a house', 'It is a nice house'])
+        >>> replace_sentences(['This is a house', 'It is a nice house'])
         ['This is a house', 'It is a nice house']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=4)
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=4)
         ['This is a house', '']
 
     """
@@ -213,7 +213,7 @@ class SRL:
 
         cuda_sleep = cuda_sleep if cuda_sleep is not None else self._cuda_sleep
 
-        sentences = filter_sentences(
+        sentences = replace_sentences(
             sentences,
             max_sentence_length=max_sentence_length,
             max_number_words=max_number_words,
