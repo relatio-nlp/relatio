@@ -26,12 +26,12 @@ def replace_sentences(
 
     """
 
-    Filter list of sentences based on the number of characters length.
+    Replace long sentences in list of sentences by empty strings.
     Args:
         max_sentence_length: Keep only sentences with a a number of character lower or equal to max_sentence_length. For max_number_words = max_sentence_length = -1 all sentences are kept.
         max_number_words: Keep only sentences with a a number of words lower or equal to max_number_words. For max_number_words = max_sentence_length = -1 all sentences are kept.
     Returns:
-        Filtered list of sentences.
+        Replaced list of sentences.
     Examples:
         >>> replace_sentences(['This is a house'])
         ['This is a house']
