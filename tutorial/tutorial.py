@@ -15,7 +15,7 @@ df = load_trump_data("raw")
 from narrativeNLP.utils import split_into_sentences
 
 split_sentences = split_into_sentences(
-    df.iloc[0:100], save_to_disk="split_sentences.pk", progress_bar=True
+    df.iloc[0:100], save_to_disk=None, progress_bar=True
 )
 
 # Run SRL (example on a 100 tweets)
@@ -25,7 +25,7 @@ from narrativeNLP.wrappers import run_srl
 srl_res = run_srl(
     path="https://storage.googleapis.com/allennlp-public-models/openie-model.2020.03.26.tar.gz",
     sentences=split_sentences[1],
-    save_to_disk="srl_res.json",
+    save_to_disk=None,
     batch_size=20,
     progress_bar=True,
 )
@@ -41,8 +41,8 @@ srl_res = load_trump_data("srl_res")
 from narrativeNLP.wrappers import build_narrative_model
 
 narrative_model = build_narrative_model(
-    srl_res=srl_res,
-    sentences=split_sentences[1],  # list of sentences
+    srl_res=srl_res[0:1000],
+    sentences=split_sentences[1][0:1000],  # list of sentences
     roles_considered=["ARGO", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"],
     roles_with_embeddings=[["ARGO", "ARG1", "ARG2"]],
     embeddings_type="gensim_keyed_vectors",  # see documentation for a list of supported types
@@ -73,8 +73,8 @@ narrative_model = build_narrative_model(
 from narrativeNLP.wrappers import get_narratives
 
 final_statements = get_narratives(
-    srl_res=srl_res,
-    doc_index=split_sentences[0],  # doc names
+    srl_res=srl_res[0:1000],
+    doc_index=split_sentences[0][0:1000],  # doc names
     narrative_model=narrative_model,
     save_to_disk=None,
     n_clusters=[0],  # pick model with 10 clusters
@@ -84,9 +84,9 @@ final_statements = get_narratives(
 
 # Build narrative statements (preliminary)
 
-from narrativeNLP.wrappers import build_narratives
+from narrativeNLP.wrappers import prettify_narratives
 
-final_statements = build_narratives(
+final_statements = prettify_narratives(
     final_statements, narrative_model, filter_complete_narratives=True
 )
 

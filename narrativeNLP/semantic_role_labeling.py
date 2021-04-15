@@ -15,140 +15,7 @@ from tqdm import tqdm
 import json
 import time
 
-from .utils import preprocess
-
-
-def replace_sentences(
-    sentences: List[str],
-    max_sentence_length: Optional[int] = None,
-    max_number_words: Optional[int] = None,
-) -> List[str]:
-
-    """
-
-    Replace long sentences in list of sentences by empty strings.
-    Args:
-        max_sentence_length: Keep only sentences with a a number of character lower or equal to max_sentence_length. For max_number_words = max_sentence_length = -1 all sentences are kept.
-        max_number_words: Keep only sentences with a a number of words lower or equal to max_number_words. For max_number_words = max_sentence_length = -1 all sentences are kept.
-    Returns:
-        Replaced list of sentences.
-    Examples:
-        >>> replace_sentences(['This is a house'])
-        ['This is a house']
-        >>> replace_sentences(['This is a house'], max_sentence_length=15)
-        ['This is a house']
-        >>> replace_sentences(['This is a house'], max_sentence_length=14)
-        ['']
-        >>> replace_sentences(['This is a house'], max_number_words=4)
-        ['This is a house']
-        >>> replace_sentences(['This is a house'], max_number_words=3)
-        ['']
-        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=18)
-        ['This is a house', 'It is a nice house']
-        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=4, max_sentence_length=18)
-        ['This is a house', '']
-        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=17)
-        ['This is a house', '']
-        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=0, max_sentence_length=18)
-        ['', '']
-        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=0)
-        ['', '']
-        >>> replace_sentences(['This is a house', 'It is a nice house'])
-        ['This is a house', 'It is a nice house']
-        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=4)
-        ['This is a house', '']
-
-    """
-
-    if max_sentence_length is None and max_number_words is None:
-        pass
-    # elif max_sentence_length == 0 or max_number_words == 0:
-    # sentences = []
-    else:
-        if max_sentence_length is not None:
-            sentences = [
-                "" if (len(sent) > max_sentence_length) else sent for sent in sentences
-            ]
-
-            def filter_funct(sent):
-                return len(sent) <= max_sentence_length
-
-        if max_number_words is not None:
-            sentences = [
-                "" if (len(sent.split()) > max_number_words) else sent
-                for sent in sentences
-            ]
-
-    return sentences
-
-
-def group_sentences_in_batches(
-    sentences: List[str],
-    max_batch_char_length: Optional[int] = None,
-    batch_size: Optional[int] = None,
-) -> List[List[str]]:
-
-    """
-
-    Group sentences in batches of given total character length.
-    Args:
-        sentences: List of sentences
-        max_batch_char_length: maximum char length for a batch
-    Returns:
-        List of batches (list) of sentences.
-    Examples:
-        >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=15)
-        [['This is a house'], ['This is a house']]
-        >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=14)
-        [[''], ['']]
-        >>> group_sentences_in_batches(['This is a house','This is a house', 'This is not a house'], max_batch_char_length=15)
-        [['This is a house'], ['This is a house'], ['']]
-        >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=29)
-        [['This is a house'], ['This is a house']]
-        >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=30)
-        [['This is a house', 'This is a house']]
-        >>> group_sentences_in_batches(['This is a house','This is a house'])
-        [['This is a house', 'This is a house']]
-        >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], max_batch_char_length=29)
-        [['This is a house'], ['This is a house'], ['This is a house']]
-        >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], max_batch_char_length=30)
-        [['This is a house', 'This is a house'], ['This is a house']]
-        >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], batch_size=2)
-        [['This is a house', 'This is a house'], ['This is a house']]
-
-    """
-
-    batches: List[List[str]] = []
-
-    if max_batch_char_length is None and batch_size is None:
-        batches = [sentences]
-    elif max_batch_char_length is not None and batch_size is not None:
-        raise ValueError("max_batch_char_length and batch_size are mutually exclusive.")
-    elif batch_size is not None:
-        batches = [
-            sentences[i : i + batch_size] for i in range(0, len(sentences), batch_size)
-        ]
-    else:
-        batch_char_length = 0
-        batch: List[str] = []
-
-        for el in sentences:
-            length = len(el)
-            batch_char_length += length
-            if length > max_batch_char_length:
-                el = ""
-            if batch_char_length > max_batch_char_length:
-                if batch:
-                    batches.append(batch)
-                batch = [el]
-                batch_char_length = length
-            else:
-                batch.append(el)
-
-        if batch:
-            batches.append(batch)
-
-    return batches
+from .utils import clean_text, replace_sentences, group_sentences_in_batches
 
 
 class SRL:
@@ -377,7 +244,7 @@ def postprocess_roles(
 
     max_length = remove roles of more than n tokens (NB: very long roles tend to be uninformative in our context)
     progress_bar: print a progress bar (default is False)
-    For other arguments see utils.preprocess.
+    For other arguments see utils.clean_text.
 
     """
 
@@ -392,7 +259,7 @@ def postprocess_roles(
         for role, tokens in roles_copy[i].items():
             if isinstance(tokens, list):
                 res = [
-                    preprocess(
+                    clean_text(
                         [" ".join(tokens)],
                         remove_punctuation=remove_punctuation,
                         remove_digits=remove_digits,
@@ -452,7 +319,7 @@ def get_role_counts(
 
     """
 
-    Get role frequency within the corpus from preprocessed semantic roles. Roles considered are specified by the user.
+    Get role frequency within the corpus from cleaned semantic roles. Roles considered are specified by the user.
     Args:
         statements: list of dictionaries of postprocessed semantic roles
         roles: list of roles considered

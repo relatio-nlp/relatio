@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import os
 
-from .utils import preprocess, is_subsequence, remove_extra_whitespaces
+from .utils import clean_text, is_subsequence, remove_extra_whitespaces
 from .semantic_role_labeling import (
     SRL,
     extract_roles,
@@ -126,7 +126,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
         sentences: list of sentences
         roles_considered: list of semantic roles to consider
         save_to_disk: path to save the narrative model (default is None, which means no saving to disk)
-        preprocessing_options: see preprocess() function
+        preprocessing_options: see clean_text() function
         roles_with_embeddings: list of lists of semantic roles to embed and cluster
         (i.e. each list represents semantic roles that should be clustered together)
         embeddings_type: whether the user wants to use USE / Keyed Vectors or a custom pre-trained Word2Vec
@@ -170,9 +170,9 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
                 raise ValueError(
                     "each list in roles_with_embeddings should be a subset of roles_considered."
                 )
-            if ["B-ARGM-NEG", "B-ARGM-MOD"] in roles:
+            if ["B-ARGM-NEG", "B-ARGM-MOD", "B-V"] in roles:
                 raise ValueError(
-                    "Negations and modals cannot be embedded and clustered."
+                    "Negations, verbs and modals cannot be embedded and clustered."
                 )
 
     if roles_with_embeddings is not None:
@@ -340,7 +340,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
 
     # Embeddings and clustering
     if roles_with_embeddings is not None:
-        sentences = preprocess(
+        sentences = clean_text(
             sentences,
             remove_punctuation,
             remove_digits,
@@ -354,6 +354,9 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
             tags_to_keep,
             remove_n_letter_words,
         )
+
+        if progress_bar:
+            print('Loading embeddings model...')
 
         if embeddings_type == "gensim_keyed_vectors":
             model = SIF_keyed_vectors(path=embeddings_path, sentences=sentences)
@@ -568,7 +571,7 @@ def get_narratives(
     return final_statements
 
 
-def build_narratives(  # to be considered as very preliminary
+def prettify_narratives(  # to be considered as very preliminary
     final_statements,
     narrative_model: dict,
     filter_complete_narratives: Optional[bool] = False,

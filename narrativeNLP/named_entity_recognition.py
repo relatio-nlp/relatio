@@ -12,7 +12,7 @@ import spacy
 nlp = spacy.load("en_core_web_sm")
 import time
 
-from .utils import preprocess, is_subsequence
+from .utils import clean_text, is_subsequence
 
 
 def mine_entities(
@@ -40,7 +40,7 @@ def mine_entities(
         sentences: list of sentences
         ent_labels: list of entity labels to be considered (see SPaCy documentation)
         progress_bar: print a progress bar (default is False)
-        For other arguments see utils.preprocess.
+        For other arguments see utils.clean_text.
 
     Returns:
         List of tuples with the named entity and its associated frequency on the corpus
@@ -61,7 +61,7 @@ def mine_entities(
                 entity = [ent.text]
                 entities_all = entity + entities_all
 
-    entities_all = preprocess(
+    entities_all = clean_text(
         entities_all,
         remove_punctuation,
         remove_digits,
