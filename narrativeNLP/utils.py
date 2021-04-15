@@ -2,26 +2,28 @@
 # ..................................................................................................................
 # ..................................................................................................................
 
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union, Any
-from tqdm import tqdm
 import json
 import re
 import string
-import spacy
+import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-nlp = spacy.load("en_core_web_sm")
-from nltk import pos_tag, word_tokenize
+import pandas as pd
+import spacy
+from nltk import pos_tag
 from nltk.corpus import wordnet
 from nltk.stem import SnowballStemmer, WordNetLemmatizer
-from nltk.corpus import stopwords
-import time
+from tqdm import tqdm
+
+nlp = spacy.load("en_core_web_sm")
 
 
 def split_into_sentences(
-    dataframe,
-    save_to_disk: Optional[str] = None,
-    progress_bar: Optional[bool] = False,
-):
+    dataframe: pd.DataFrame,
+    output_path: Union[Path, None, str] = None,
+    progress_bar: bool = False,
+) -> Tuple[List[str], List[str]]:
 
     """
 
@@ -32,28 +34,27 @@ def split_into_sentences(
         progress_bar: print a progress bar (default is False)
 
     Returns:
-        List of document ids and list of sentences
+        Tuple with the list of document indices and list of sentences
 
     """
 
-    list_of_docs = dataframe.to_dict(orient="records")
+    docs = dataframe.to_dict(orient="records")
 
-    sentences = []
-    doc_indices = []
+    sentences: List[str] = []
+    doc_indices: List[str] = []
 
-    if progress_bar == True:
+    if progress_bar:
         print("Splitting into sentences...")
         time.sleep(1)
-        list_of_docs = tqdm(list_of_docs)
+        docs = tqdm(docs)
 
-    for doc_info in list_of_docs:
-        for sent in nlp(doc_info["doc"]).sents:
-            sent = str(sent)
-            sentences = sentences + [sent]
-            doc_indices = doc_indices + [doc_info["id"]]
+    for doc in docs:
+        for sent in nlp(doc["doc"], disable=["tagger", "ner"]).sents:
+            sentences.append(str(sent))
+            doc_indices = doc_indices + [doc["id"]]
 
-    if save_to_disk is not None:
-        with open(save_to_disk, "w") as f:
+    if output_path is not None:
+        with open(output_path, "w") as f:
             json.dump((doc_indices, sentences), f)
 
     return (doc_indices, sentences)
@@ -101,24 +102,15 @@ def replace_sentences(
 
     """
 
-    if max_sentence_length is None and max_number_words is None:
-        pass
-    # elif max_sentence_length == 0 or max_number_words == 0:
-    # sentences = []
-    else:
-        if max_sentence_length is not None:
-            sentences = [
-                "" if (len(sent) > max_sentence_length) else sent for sent in sentences
-            ]
+    if max_sentence_length is not None:
+        sentences = [
+            "" if (len(sent) > max_sentence_length) else sent for sent in sentences
+        ]
 
-            def filter_funct(sent):
-                return len(sent) <= max_sentence_length
-
-        if max_number_words is not None:
-            sentences = [
-                "" if (len(sent.split()) > max_number_words) else sent
-                for sent in sentences
-            ]
+    if max_number_words is not None:
+        sentences = [
+            "" if (len(sent.split()) > max_number_words) else sent for sent in sentences
+        ]
 
     return sentences
 
@@ -131,19 +123,23 @@ def group_sentences_in_batches(
 
     """
 
-    Group sentences in batches of given total character length.
+    Group sentences in batches of given total character length or size (number of sentences).
+
+    In case a sentence is longer than max_batch_char_length it is replaced with an empty string.
+
     Args:
         sentences: List of sentences
         max_batch_char_length: maximum char length for a batch
+        batch_size: number of sentences
     Returns:
         List of batches (list) of sentences.
     Examples:
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=15)
         [['This is a house'], ['This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=14)
-        [[''], ['']]
+        [['', '']]
         >>> group_sentences_in_batches(['This is a house','This is a house', 'This is not a house'], max_batch_char_length=15)
-        [['This is a house'], ['This is a house'], ['']]
+        [['This is a house'], ['This is a house', '']]
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=29)
         [['This is a house'], ['This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=30)
@@ -161,26 +157,22 @@ def group_sentences_in_batches(
 
     batches: List[List[str]] = []
 
-    if max_batch_char_length is None and batch_size is None:
-        batches = [sentences]
-    elif max_batch_char_length is not None and batch_size is not None:
+    if max_batch_char_length is not None and batch_size is not None:
         raise ValueError("max_batch_char_length and batch_size are mutually exclusive.")
-    elif batch_size is not None:
-        batches = [
-            sentences[i : i + batch_size] for i in range(0, len(sentences), batch_size)
-        ]
-    else:
+    elif max_batch_char_length is not None:
+
+        # longer sentences are replaced with an empty string
+        sentences = replace_sentences(
+            sentences, max_sentence_length=max_batch_char_length
+        )
         batch_char_length = 0
         batch: List[str] = []
 
         for el in sentences:
             length = len(el)
             batch_char_length += length
-            if length > max_batch_char_length:
-                el = ""
             if batch_char_length > max_batch_char_length:
-                if batch:
-                    batches.append(batch)
+                batches.append(batch)
                 batch = [el]
                 batch_char_length = length
             else:
@@ -189,14 +181,14 @@ def group_sentences_in_batches(
         if batch:
             batches.append(batch)
 
+    elif batch_size is not None:
+        batches = [
+            sentences[i : i + batch_size] for i in range(0, len(sentences), batch_size)
+        ]
+    else:
+        batches = [sentences]
+
     return batches
-
-
-def remove_extra_whitespaces(s: str) -> str:
-
-    res = " ".join(s.split())
-
-    return res
 
 
 def _get_wordnet_pos(word):
@@ -357,17 +349,17 @@ def is_subsequence(v2: list, v1: list) -> bool:
     Check whether v2 is a subsequence of v1.
 
     Args:
-        v2/v1: lists of elements
+        v2: lists of elements
+        v1: list of elements
 
     Returns:
         a boolean
 
     Example:
-        >>> v1 = ['the', 'united', 'states', 'of', 'america']\n
-        ... v2 = ['united', 'states', 'of', 'europe']\n
-        ... is_subsequence(v2,v1)
+        >>> is_subsequence(['the', 'united', 'states', 'of', 'america'],['united', 'states', 'of', 'europe'])
         False
-
+        >>> is_subsequence(['the', 'united', 'states', 'of', 'america'],['united', 'states', 'of'])
+        False
     """
     it = iter(v1)
     return all(c in it for c in v2)
