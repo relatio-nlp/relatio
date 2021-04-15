@@ -342,24 +342,24 @@ def clean_text(
     return sentences
 
 
-def is_subsequence(v2: list, v1: list) -> bool:
+def is_subsequence(v1: list, v2: list) -> bool:
 
     """
 
-    Check whether v2 is a subsequence of v1.
+    Check whether v1 is a subsequence of v2.
 
     Args:
-        v2: lists of elements
-        v1: list of elements
+        v1: lists of elements
+        v2: list of elements
 
     Returns:
         a boolean
 
     Example:
-        >>> is_subsequence(['the', 'united', 'states', 'of', 'america'],['united', 'states', 'of', 'europe'])
+        >>> is_subsequence(['united', 'states', 'of', 'europe'],['the', 'united', 'states', 'of', 'america'])
         False
-        >>> is_subsequence(['the', 'united', 'states', 'of', 'america'],['united', 'states', 'of'])
-        False
+        >>> is_subsequence(['united', 'states', 'of'],['the', 'united', 'states', 'of', 'america'])
+        True
     """
     it = iter(v1)
     return all(c in it for c in v2)
