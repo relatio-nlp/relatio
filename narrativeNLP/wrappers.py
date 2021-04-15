@@ -356,7 +356,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
         )
 
         if progress_bar:
-            print('Loading embeddings model...')
+            print("Loading embeddings model...")
 
         if embeddings_type == "gensim_keyed_vectors":
             model = SIF_keyed_vectors(path=embeddings_path, sentences=sentences)
