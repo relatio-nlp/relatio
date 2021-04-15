@@ -218,26 +218,3 @@ def postprocess_roles(
             else:
                 raise ValueError(f"{tokens}")
     return roles_copy
-
-
-def estimate_time(char_length: int, device: str = "RTX2080Ti") -> float:
-    """
-    Estimate time to solution for SRL done on a given device.
-
-    """
-
-    if device == "RTX2080Ti":
-        if char_length > 10_000:
-            res = char_length * 0.3 / 1_000
-        elif char_length > 2_000:
-            res = char_length * 0.6 / 1_000
-        else:
-            res = 1.0
-    else:
-        raise ValueError("{device} not estimated.")
-
-    return res
-
-
-def output_file(filepath: pathlib.Path, parent_path: pathlib.Path) -> pathlib.Path:
-    return (parent_path / filepath.name).with_suffix(".json")
