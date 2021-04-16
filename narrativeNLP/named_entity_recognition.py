@@ -2,12 +2,13 @@
 # ..................................................................................................................
 # ..................................................................................................................
 
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union, Any
 from collections import Counter
-import numpy as np
 from copy import deepcopy
-from tqdm import tqdm
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+
+import numpy as np
 import spacy
+from tqdm import tqdm
 
 nlp = spacy.load("en_core_web_sm")
 import time
@@ -116,7 +117,7 @@ def pick_top_entities(
 def map_entities(  # the output could be a list of dictionaries (for consistency with the rest of the pipeline)
     statements: List[dict],
     entities: list,
-    UsedRoles: List[str],
+    used_roles: List[str],
     progress_bar: Optional[bool] = False,
 ) -> Tuple[dict, List[dict]]:
 
@@ -128,7 +129,7 @@ def map_entities(  # the output could be a list of dictionaries (for consistency
         statements: list of dictionaries of postprocessed semantic roles
         entities: user-defined list of named entities
         roles: a list of roles with named entities (default = ARG0 and ARG1)
-        UsedRoles: list of roles for named entity recognition
+        used_roles: list of roles for named entity recognition
         progress_bar: print a progress bar (default is False)
 
     Returns:
@@ -139,7 +140,7 @@ def map_entities(  # the output could be a list of dictionaries (for consistency
 
     entity_index = {
         role: {entity: np.asarray([], dtype=int) for entity in entities}
-        for role in UsedRoles
+        for role in used_roles
     }
 
     roles_copy = deepcopy(statements)
@@ -151,7 +152,7 @@ def map_entities(  # the output could be a list of dictionaries (for consistency
 
     for i, statement in enumerate(statements):
         for role, tokens in roles_copy[i].items():
-            if role in UsedRoles:
+            if role in used_roles:
                 for entity in entities:
                     if is_subsequence(entity.split(), tokens) == True:
                         entity_index[role][entity] = np.append(

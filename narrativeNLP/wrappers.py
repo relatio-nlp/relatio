@@ -211,7 +211,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
 
     # Process SRL
     roles, sentence_index = extract_roles(
-        srl_res, UsedRoles=roles_considered, progress_bar=progress_bar
+        srl_res, used_roles=roles_considered, progress_bar=progress_bar
     )
 
     if save_to_disk is not None:
@@ -332,7 +332,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
         entity_index, postproc_roles = map_entities(
             statements=postproc_roles,
             entities=entities,
-            UsedRoles=roles_with_entities,
+            used_roles=roles_with_entities,
             progress_bar=progress_bar,
         )
 
@@ -377,7 +377,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
             l2 = []
             l3 = []
 
-            vecs = get_vectors(postproc_roles, model, UsedRoles=roles)
+            vecs = get_vectors(postproc_roles, model, used_roles=roles)
 
             for num in n_clusters[i]:
 
@@ -413,7 +413,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
                     )
 
                 clustering_res = get_clusters(
-                    postproc_roles, model, kmeans, UsedRoles=roles
+                    postproc_roles, model, kmeans, used_roles=roles
                 )
 
                 labels_most_freq = label_clusters_most_freq(
@@ -482,7 +482,7 @@ def get_narratives(
     # Process SRL
     roles, sentence_index = extract_roles(
         srl_res,
-        UsedRoles=narrative_model["roles_considered"],
+        used_roles=narrative_model["roles_considered"],
         progress_bar=progress_bar,
     )
 
@@ -520,7 +520,7 @@ def get_narratives(
         entity_index, postproc_roles = map_entities(
             statements=postproc_roles,
             entities=narrative_model["entities"],
-            UsedRoles=narrative_model["roles_with_entities"],
+            used_roles=narrative_model["roles_with_entities"],
             progress_bar=progress_bar,
         )
 
@@ -538,7 +538,7 @@ def get_narratives(
                 postproc_roles,
                 narrative_model["embeddings_model"],
                 narrative_model["cluster_model"][l][n_clusters[l]],
-                UsedRoles=roles,
+                used_roles=roles,
                 progress_bar=progress_bar,
             )
 

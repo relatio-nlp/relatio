@@ -2,16 +2,17 @@
 # ..................................................................................................................
 # ..................................................................................................................
 
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union, Any
-from copy import deepcopy
-from collections import Counter
-import numpy as np
-from tqdm import tqdm
-from sklearn.cluster import KMeans
-from numpy.linalg import norm
-import gensim.downloader as api
-from gensim.models import Word2Vec
 import time
+from collections import Counter
+from copy import deepcopy
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+
+import gensim.downloader as api
+import numpy as np
+from gensim.models import Word2Vec
+from numpy.linalg import norm
+from sklearn.cluster import KMeans
+from tqdm import tqdm
 
 from .semantic_role_labeling import get_role_counts
 
@@ -178,7 +179,7 @@ def get_vector(tokens: List[str], model: Union[USE, SIF_word2vec, SIF_keyed_vect
 def get_vectors(
     postproc_roles,
     model: Union[USE, SIF_word2vec, SIF_keyed_vectors],
-    UsedRoles=List[str],
+    used_roles=List[str],
 ):
 
     """
@@ -189,14 +190,14 @@ def get_vectors(
         postproc_roles: list of statements
         model: trained embedding model
         (e.g. either Universal Sentence Encoders, a full gensim Word2Vec model or gensim Keyed Vectors)
-        UsedRoles: list of roles
+        used_roles: list of roles
 
     Returns:
         A list of vectors
 
     """
 
-    role_counts = get_role_counts(postproc_roles, roles=UsedRoles)
+    role_counts = get_role_counts(postproc_roles, roles=used_roles)
 
     role_counts = [role.split() for role in list(role_counts)]
 
@@ -247,7 +248,7 @@ def get_clusters(
     postproc_roles: List[dict],
     model: Union[USE, SIF_word2vec, SIF_keyed_vectors],
     kmeans,
-    UsedRoles=List[str],
+    used_roles=List[str],
     progress_bar: Optional[bool] = False,
 ) -> List[dict]:
 
@@ -260,7 +261,7 @@ def get_clusters(
         model: trained embedding model
         (e.g. either Universal Sentence Encoders, a full gensim Word2Vec model or gensim Keyed Vectors)
         kmeans = a pre-trained sklearn kmeans model
-        UsedRoles: list of roles
+        used_roles: list of roles
         progress_bar: print a progress bar (default is False)
 
     Returns:
@@ -277,7 +278,7 @@ def get_clusters(
 
     for i, statement in enumerate(postproc_roles):
         for role, tokens in statement.items():
-            if role in UsedRoles:
+            if role in used_roles:
                 vec = get_vector(tokens, model)
                 if vec is not None:
                     clu = kmeans.predict(vec)

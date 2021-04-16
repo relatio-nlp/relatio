@@ -5,17 +5,18 @@
 # link to choose the SRL model
 # https://storage.googleapis.com/allennlp-public-models/YOUR-PREFERRED-MODEL
 
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union, Any
-from copy import deepcopy
-import numpy as np
+import json
+import time
 import warnings
+from copy import deepcopy
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+
+import numpy as np
 import torch
 from allennlp.predictors.predictor import Predictor
 from tqdm import tqdm
-import json
-import time
 
-from .utils import clean_text, replace_sentences, group_sentences_in_batches
+from .utils import clean_text, group_sentences_in_batches, replace_sentences
 
 
 class SRL:
@@ -121,7 +122,7 @@ class SRL:
 
 def extract_roles(
     srl: List[Dict[str, Any]],
-    UsedRoles: List[str],
+    used_roles: List[str],
     progress_bar: Optional[bool] = False,
 ) -> Tuple[List[Dict[str, List]], List[int]]:
 
@@ -131,7 +132,7 @@ def extract_roles(
 
     Args:
         srl: srl output
-        UsedRoles: list of roles
+        used_roles: list of roles
         progress_bar: print a progress bar (default is False)
 
     Returns:
@@ -148,14 +149,14 @@ def extract_roles(
         srl = tqdm(srl)
 
     for i, sentence_dict in enumerate(srl):
-        role_per_sentence = extract_role_per_sentence(sentence_dict, UsedRoles)
+        role_per_sentence = extract_role_per_sentence(sentence_dict, used_roles)
         sentence_index.extend([i] * len(role_per_sentence))
         statements_role_list.extend(role_per_sentence)
 
     return statements_role_list, np.asarray(sentence_index, dtype=np.uint32)
 
 
-def extract_role_per_sentence(sentence_dict: dict, UsedRoles: List[str]) -> List[dict]:
+def extract_role_per_sentence(sentence_dict: dict, used_roles: List[str]) -> List[dict]:
 
     """
 
@@ -163,7 +164,7 @@ def extract_role_per_sentence(sentence_dict: dict, UsedRoles: List[str]) -> List
 
     Args:
         srl: srl output
-        UsedRoles: list of roles
+        used_roles: list of roles
 
     Returns:
         List of statements with their associated roles for a given sentence
@@ -178,34 +179,34 @@ def extract_role_per_sentence(sentence_dict: dict, UsedRoles: List[str]) -> List
 
         statement_role_dict = {}
 
-        if "ARGO" in UsedRoles:
+        if "ARGO" in used_roles:
             indices_agent = [i for i, tok in enumerate(tag_list) if "ARG0" in tok]
             agent = [tok for i, tok in enumerate(word_list) if i in indices_agent]
             statement_role_dict["ARGO"] = agent
 
-        if "ARG1" in UsedRoles:
+        if "ARG1" in used_roles:
             indices_patient = [i for i, tok in enumerate(tag_list) if "ARG1" in tok]
             patient = [tok for i, tok in enumerate(word_list) if i in indices_patient]
             statement_role_dict["ARG1"] = patient
 
-        if "ARG2" in UsedRoles:
+        if "ARG2" in used_roles:
             indices_attribute = [i for i, tok in enumerate(tag_list) if "ARG2" in tok]
             attribute = [
                 tok for i, tok in enumerate(word_list) if i in indices_attribute
             ]
             statement_role_dict["ARG2"] = attribute
 
-        if "B-V" in UsedRoles:
+        if "B-V" in used_roles:
             indices_verb = [i for i, tok in enumerate(tag_list) if "B-V" in tok]
             verb = [tok for i, tok in enumerate(word_list) if i in indices_verb]
             statement_role_dict["B-V"] = verb
 
-        if "B-ARGM-MOD" in UsedRoles:
+        if "B-ARGM-MOD" in used_roles:
             indices_modal = [i for i, tok in enumerate(tag_list) if "B-ARGM-MOD" in tok]
             modal = [tok for i, tok in enumerate(word_list) if i in indices_modal]
             statement_role_dict["B-ARGM-MOD"] = modal
 
-        if "B-ARGM-NEG" in UsedRoles:
+        if "B-ARGM-NEG" in used_roles:
             role_negation_value = any("B-ARGM-NEG" in tag for tag in tag_list)
             statement_role_dict["B-ARGM-NEG"] = role_negation_value
 
