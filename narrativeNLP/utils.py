@@ -7,7 +7,7 @@ import re
 import string
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import pandas as pd
 import spacy
@@ -21,7 +21,7 @@ nlp = spacy.load("en_core_web_sm")
 
 def split_into_sentences(
     dataframe: pd.DataFrame,
-    output_path: Union[Path, None, str] = None,
+    output_path: Union[Path, str, None] = None,
     progress_bar: bool = False,
 ) -> Tuple[List[str], List[str]]:
 
@@ -346,7 +346,7 @@ def is_subsequence(v1: list, v2: list) -> bool:
 
     """
 
-    Check whether v1 is a subsequence of v2.
+    Check whether v1 is a subset of v2.
 
     Args:
         v1: lists of elements
@@ -360,6 +360,7 @@ def is_subsequence(v1: list, v2: list) -> bool:
         False
         >>> is_subsequence(['united', 'states', 'of'],['the', 'united', 'states', 'of', 'america'])
         True
+
     """
-    it = iter(v1)
-    return all(c in it for c in v2)
+    # TODO: Check whether the order of elements matter, e.g. is_subsequence(["A","B"],["B","A"])
+    return set(v1).issubset(set(v2))
