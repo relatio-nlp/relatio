@@ -14,7 +14,7 @@ from numpy.linalg import norm
 from sklearn.cluster import KMeans
 from tqdm import tqdm
 
-from .semantic_role_labeling import get_role_counts
+from .utils import count_values
 
 
 def count_words(sentences: List[str]) -> dict:
@@ -197,7 +197,7 @@ def get_vectors(
 
     """
 
-    role_counts = get_role_counts(postproc_roles, roles=used_roles)
+    role_counts = count_values(postproc_roles, roles=used_roles)
 
     role_counts = [role.split() for role in list(role_counts)]
 

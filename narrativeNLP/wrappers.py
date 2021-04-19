@@ -2,34 +2,28 @@
 # ..................................................................................................................
 # ..................................................................................................................
 
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union, Any
-import pickle as pk
 import json
-import pandas as pd
-import numpy as np
 import os
+import pickle as pk
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
-from .utils import clean_text, is_subsequence, remove_extra_whitespaces
-from .semantic_role_labeling import (
-    SRL,
-    extract_roles,
-    postprocess_roles,
-    get_role_counts,
-    get_raw_arguments,
-)
+import numpy as np
+import pandas as pd
 
-from .named_entity_recognition import mine_entities, pick_top_entities, map_entities
-from .verbs import clean_verbs
 from .clustering import (
-    train_cluster_model,
-    get_vectors,
+    USE,
+    SIF_keyed_vectors,
+    SIF_word2vec,
     get_clusters,
+    get_vectors,
     label_clusters_most_freq,
     label_clusters_most_similar,
-    SIF_word2vec,
-    SIF_keyed_vectors,
-    USE,
+    train_cluster_model,
 )
+from .named_entity_recognition import map_entities, mine_entities, pick_top_entities
+from .semantic_role_labeling import SRL, extract_roles, get_raw_arguments, process_roles
+from .utils import clean_text, count_values, is_subsequence, remove_extra_whitespaces
+from .verbs import clean_verbs
 
 
 def run_srl(
@@ -146,6 +140,9 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
     """
 
     # Sanity checks
+    if len(srl_res) != len(sentences):
+        raise ValueError("srl_res should be the same length sentences.")
+
     if (
         is_subsequence(
             roles_considered,
@@ -220,7 +217,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
                 postproc_roles = json.load(f)
 
         else:
-            postproc_roles = postprocess_roles(
+            postproc_roles = process_roles(
                 roles,
                 max_length,
                 remove_punctuation,
@@ -241,7 +238,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
                 json.dump(postproc_roles, f)
 
     else:
-        postproc_roles = postprocess_roles(
+        postproc_roles = process_roles(
             roles,
             max_length,
             remove_punctuation,
@@ -267,14 +264,14 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
                     verb_counts = pk.load(f)
 
             else:
-                verb_counts = get_role_counts(
+                verb_counts = count_values(
                     postproc_roles, roles=["B-V"], progress_bar=progress_bar
                 )
 
                 with open("%sverb_counts.pk" % save_to_disk, "wb") as f:
                     pk.dump(verb_counts, f)
         else:
-            verb_counts = get_role_counts(
+            verb_counts = count_values(
                 postproc_roles, roles=["B-V"], progress_bar=progress_bar
             )
 
@@ -486,7 +483,7 @@ def get_narratives(
         progress_bar=progress_bar,
     )
 
-    postproc_roles = postprocess_roles(
+    postproc_roles = process_roles(
         roles,
         narrative_model["clean_text_options"]["max_length"],
         narrative_model["clean_text_options"]["remove_punctuation"],

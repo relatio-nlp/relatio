@@ -5,11 +5,10 @@
 # link to choose the SRL model
 # https://storage.googleapis.com/allennlp-public-models/YOUR-PREFERRED-MODEL
 
-import json
 import time
 import warnings
 from copy import deepcopy
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -55,7 +54,7 @@ class SRL:
         max_number_words: Optional[int] = None,
         cuda_empty_cache: bool = None,
         cuda_sleep: float = None,
-        progress_bar: Optional[bool] = False,
+        progress_bar: bool = False,
     ):
         max_batch_char_length = (
             max_batch_char_length
@@ -95,7 +94,7 @@ class SRL:
 
         res = []
 
-        if progress_bar == True:
+        if progress_bar:
             print("Running SRL...")
             time.sleep(1)
             batches = tqdm(batches)
@@ -123,8 +122,8 @@ class SRL:
 def extract_roles(
     srl: List[Dict[str, Any]],
     used_roles: List[str],
-    progress_bar: Optional[bool] = False,
-) -> Tuple[List[Dict[str, List]], List[int]]:
+    progress_bar: bool = False,
+) -> Tuple[List[Dict[str, Union[str, bool]]], List[int]]:
 
     """
 
@@ -140,10 +139,10 @@ def extract_roles(
 
     """
 
-    statements_role_list: List[Dict[str, List]] = []
+    statements_role_list: List[Dict[str, Union[str, bool]]] = []
     sentence_index: List[int] = []
 
-    if progress_bar == True:
+    if progress_bar:
         print("Processing SRL...")
         time.sleep(1)
         srl = tqdm(srl)
@@ -156,7 +155,9 @@ def extract_roles(
     return statements_role_list, np.asarray(sentence_index, dtype=np.uint32)
 
 
-def extract_role_per_sentence(sentence_dict: dict, used_roles: List[str]) -> List[dict]:
+def extract_role_per_sentence(
+    sentence_dict: dict, used_roles: List[str]
+) -> List[Dict[str, Union[str, bool]]]:
 
     """
 
@@ -177,34 +178,14 @@ def extract_role_per_sentence(sentence_dict: dict, used_roles: List[str]) -> Lis
     for statement_dict in sentence_dict["verbs"]:
         tag_list = statement_dict["tags"]
 
-        statement_role_dict = {}
-
-        if "ARGO" in used_roles:
-            indices_agent = [i for i, tok in enumerate(tag_list) if "ARG0" in tok]
-            agent = [tok for i, tok in enumerate(word_list) if i in indices_agent]
-            statement_role_dict["ARGO"] = agent
-
-        if "ARG1" in used_roles:
-            indices_patient = [i for i, tok in enumerate(tag_list) if "ARG1" in tok]
-            patient = [tok for i, tok in enumerate(word_list) if i in indices_patient]
-            statement_role_dict["ARG1"] = patient
-
-        if "ARG2" in used_roles:
-            indices_attribute = [i for i, tok in enumerate(tag_list) if "ARG2" in tok]
-            attribute = [
-                tok for i, tok in enumerate(word_list) if i in indices_attribute
-            ]
-            statement_role_dict["ARG2"] = attribute
-
-        if "B-V" in used_roles:
-            indices_verb = [i for i, tok in enumerate(tag_list) if "B-V" in tok]
-            verb = [tok for i, tok in enumerate(word_list) if i in indices_verb]
-            statement_role_dict["B-V"] = verb
-
-        if "B-ARGM-MOD" in used_roles:
-            indices_modal = [i for i, tok in enumerate(tag_list) if "B-ARGM-MOD" in tok]
-            modal = [tok for i, tok in enumerate(word_list) if i in indices_modal]
-            statement_role_dict["B-ARGM-MOD"] = modal
+        statement_role_dict: Dict[str, Union[str, bool]] = {}
+        for role in ["ARGO", "ARG1", "ARG2", "B-V", "B-ARGM-MOD"]:
+            if role in used_roles:
+                indices_role = [i for i, tok in enumerate(tag_list) if role in tok]
+                toks_role = [
+                    tok for i, tok in enumerate(word_list) if i in indices_role
+                ]
+                statement_role_dict[role] = " ".join(toks_role)
 
         if "B-ARGM-NEG" in used_roles:
             role_negation_value = any("B-ARGM-NEG" in tag for tag in tag_list)
@@ -224,7 +205,7 @@ def extract_role_per_sentence(sentence_dict: dict, used_roles: List[str]) -> Lis
     return sentence_role_list
 
 
-def postprocess_roles(
+def process_roles(
     statements: List[Dict[str, List]],
     max_length: Optional[int] = None,
     remove_punctuation: bool = True,
@@ -238,7 +219,7 @@ def postprocess_roles(
     stem: bool = False,
     tags_to_keep: Optional[List[str]] = None,
     remove_n_letter_words: Optional[int] = None,
-    progress_bar: Optional[bool] = False,
+    progress_bar: bool = False,
 ) -> List[Dict[str, List]]:
 
     """
@@ -251,106 +232,56 @@ def postprocess_roles(
 
     roles_copy = deepcopy(statements)
 
-    if progress_bar == True:
+    if progress_bar:
         print("Cleaning SRL...")
         time.sleep(1)
         statements = tqdm(statements)
 
     for i, statement in enumerate(statements):
-        for role, tokens in roles_copy[i].items():
-            if isinstance(tokens, list):
-                res = [
-                    clean_text(
-                        [" ".join(tokens)],
-                        remove_punctuation=remove_punctuation,
-                        remove_digits=remove_digits,
-                        remove_chars=remove_chars,
-                        stop_words=stop_words,
-                        lowercase=lowercase,
-                        strip=strip,
-                        remove_whitespaces=remove_whitespaces,
-                        lemmatize=lemmatize,
-                        stem=stem,
-                        tags_to_keep=tags_to_keep,
-                        remove_n_letter_words=remove_n_letter_words,
-                    )[0].split()
-                ][0]
+        for role, role_content in roles_copy[i].items():
+            if isinstance(role_content, str):
+                res = clean_text(
+                    [role_content],
+                    remove_punctuation=remove_punctuation,
+                    remove_digits=remove_digits,
+                    remove_chars=remove_chars,
+                    stop_words=stop_words,
+                    lowercase=lowercase,
+                    strip=strip,
+                    remove_whitespaces=remove_whitespaces,
+                    lemmatize=lemmatize,
+                    stem=stem,
+                    tags_to_keep=tags_to_keep,
+                    remove_n_letter_words=remove_n_letter_words,
+                )[0]
                 if max_length is not None:
                     if len(res) <= max_length:
                         roles_copy[i][role] = res
                     else:
-                        roles_copy[i][role] = []
+                        roles_copy[i][role] = ""
                 else:
                     roles_copy[i][role] = res
-            elif isinstance(tokens, bool):
+            elif isinstance(role_content, bool):
                 pass
             else:
-                raise ValueError(f"{tokens}")
+                raise ValueError(f"{role_content}")
 
     return roles_copy
 
 
-def get_raw_arguments(statements: List[dict], progress_bar: Optional[bool] = False):
+def get_raw_arguments(statements: List[dict], progress_bar: bool = False):
 
     roles_copy = deepcopy(statements)
 
-    if progress_bar == True:
+    if progress_bar:
         print("Processing raw arguments...")
         time.sleep(1)
         statements = tqdm(statements)
 
-    final_statements = []
     for i, statement in enumerate(statements):
-        for role, tokens in statement.items():
+        for role, role_content in statement.items():
             name = role + "-RAW"
             roles_copy[i][name] = roles_copy[i].pop(role)
-            if type(tokens) != bool:
-                roles_copy[i][name] = " ".join(tokens)
-            else:
-                roles_copy[i][name] = tokens
+            roles_copy[i][name] = role_content
 
     return roles_copy
-
-
-def get_role_counts(
-    statements: List[dict],
-    roles: Optional[list] = ["B-V", "ARGO", "ARG1", "ARG2"],
-    progress_bar: Optional[bool] = False,
-) -> dict:
-
-    """
-
-    Get role frequency within the corpus from cleaned semantic roles. Roles considered are specified by the user.
-    Args:
-        statements: list of dictionaries of postprocessed semantic roles
-        roles: list of roles considered
-        progress_bar: print a progress bar (default is False)
-
-    Returns:
-        Dictionary in which postprocessed semantic roles are keys and their frequency within the corpus are values
-        (e.g. d['verb'] = count)
-
-    Example:
-        >>> test = [{'B-V': ['increase'], 'B-ARGM-NEG': True},{'B-V': ['decrease']},{'B-V': ['decrease']}]\n
-        ... verb_counts = get_role_counts(test, roles = ['B-V'])
-        {'increase': 1, 'decrease': 2}
-
-    """
-
-    counts = {}
-
-    if progress_bar == True:
-        print("Computing role frequencies...")
-        time.sleep(1)
-        statements = tqdm(statements)
-
-    for statement in statements:
-        for key in statement.keys():
-            if key in roles:
-                temp = " ".join(statement[key])
-                if temp in counts:
-                    counts[temp] += 1
-                else:
-                    counts[temp] = 1
-
-    return counts

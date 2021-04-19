@@ -2,11 +2,12 @@
 # ..................................................................................................................
 # ..................................................................................................................
 
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union, Any
-from copy import deepcopy
-from tqdm import tqdm
-from nltk.corpus import wordnet
 import time
+from copy import deepcopy
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+
+from nltk.corpus import wordnet
+from tqdm import tqdm
 
 
 def find_synonyms(verb: str) -> List[str]:
@@ -104,7 +105,7 @@ def clean_verbs(
 
     Example:
         >>> test = [{'B-V': ['increase'], 'B-ARGM-NEG': True},{'B-V': ['decrease']},{'B-V': ['decrease']}]\n
-        ... verb_counts = get_role_counts(test, roles = ['B-V'])\n
+        ... verb_counts = count_values(test, roles = ['B-V'])\n
         ... clean_verbs(test, verb_counts = verb_counts)
         [{'B-V-CLEANED': 'decrease'}, {'B-V-CLEANED': 'decrease'}, {'B-V-CLEANED': 'decrease'}]
 

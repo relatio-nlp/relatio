@@ -6,8 +6,9 @@ import json
 import re
 import string
 import time
+from collections import Counter
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import spacy
@@ -364,3 +365,51 @@ def is_subsequence(v1: list, v2: list) -> bool:
     """
     # TODO: Check whether the order of elements matter, e.g. is_subsequence(["A","B"],["B","A"])
     return set(v1).issubset(set(v2))
+
+
+def count_values(
+    dicts: List[Dict],
+    keys: Optional[list] = None,
+    progress_bar: bool = False,
+) -> Counter:
+
+    """
+
+    Get a counter with the values of a list of dictionaries, with the conssidered keys given as argument.
+
+    Args:
+        dicts: list of dictionaries
+        keys: keys to consider
+        progress_bar: print a progress bar (default is False)
+
+    Returns:
+        Counter
+
+    Example:
+        >>> count_values([{'B-V': 'increase', 'B-ARGM-NEG': True},{'B-V': 'decrease'},{'B-V': 'decrease'}],keys = ['B-V'])
+        Counter({'decrease': 2, 'increase': 1})
+        >>> count_values([{'B-V': 'increase', 'B-ARGM-NEG': True},{'B-V': 'decrease'},{'B-V': 'decrease'}])
+        Counter()
+
+
+    """
+
+    counts: Dict[str, int] = {}
+
+    if progress_bar:
+        print("Computing role frequencies...")
+        time.sleep(1)
+        dicts = tqdm(dicts)
+
+    if keys is None:
+        return Counter()
+
+    for el in dicts:
+        for key, value in el.items():
+            if key in keys:
+                if value in counts:
+                    counts[value] += 1
+                else:
+                    counts[value] = 1
+
+    return Counter(counts)
