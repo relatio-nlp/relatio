@@ -1,7 +1,8 @@
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union, Any
-import requests
-import pandas as pd
+from ast import literal_eval
 from io import StringIO
+
+import pandas as pd
+import requests
 
 
 def list_datasets():
@@ -39,10 +40,10 @@ def load_trump_data(format: str):
         r = requests.get(
             "https://www.dropbox.com/s/coh4ergyrjeolen/split_sentences.json?dl=1"
         )
-        r = eval(r.text)
+        r = literal_eval(r.text)
     elif format == "srl_res":
         r = requests.get("https://www.dropbox.com/s/54lloy84ka8mycp/srl_res.json?dl=1")
-        r = eval(r.text)
+        r = literal_eval(r.text)
     else:
         raise ValueError(
             "file argument should either be raw, split_sentences or srl_res"
