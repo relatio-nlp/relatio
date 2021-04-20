@@ -249,7 +249,7 @@ def get_clusters(
     model: Union[USE, SIF_word2vec, SIF_keyed_vectors],
     kmeans,
     used_roles=List[str],
-    progress_bar: Optional[bool] = False,
+    progress_bar: bool = False,
 ) -> List[dict]:
 
     """
@@ -271,7 +271,7 @@ def get_clusters(
 
     roles_copy = deepcopy(postproc_roles)
 
-    if progress_bar == True:
+    if progress_bar:
         print("Assigning clusters to roles...")
         time.sleep(1)
         postproc_roles = tqdm(postproc_roles)

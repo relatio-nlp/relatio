@@ -20,7 +20,7 @@ from .clustering import (
     label_clusters_most_similar,
     train_cluster_model,
 )
-from .named_entity_recognition import map_entities, mine_entities, pick_top_entities
+from .named_entity_recognition import map_entities, mine_entities
 from .semantic_role_labeling import SRL, extract_roles, get_raw_arguments, process_roles
 from .utils import clean_text, count_values, is_subsequence, remove_extra_whitespaces
 from .verbs import clean_verbs
@@ -36,7 +36,7 @@ def run_srl(
     cuda_empty_cache: bool = None,
     cuda_sleep: float = None,
     save_to_disk: Optional[str] = None,
-    progress_bar: Optional[bool] = False,
+    progress_bar: bool = False,
 ):
 
     """
@@ -108,7 +108,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
     ent_labels: Optional[List[str]] = ["PERSON", "NORP", "ORG", "GPE", "EVENT"],
     top_n_entities: Optional[int] = 0,
     dimension_reduce_verbs: Optional[bool] = True,
-    progress_bar: Optional[bool] = False,
+    progress_bar: bool = False,
 ):
 
     """
@@ -281,12 +281,12 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
     if roles_with_entities is not None:
 
         if save_to_disk is not None:
-            if os.path.isfile("%sentities_sorted.pk" % save_to_disk):
-                with open("%sentities_sorted.pk" % save_to_disk, "rb") as f:
-                    entities_sorted = pk.load(f)
+            if os.path.isfile("%sentities.pk" % save_to_disk):
+                with open("%sentities.pk" % save_to_disk, "rb") as f:
+                    entities = pk.load(f)
 
             else:
-                entities_sorted = mine_entities(
+                entities = mine_entities(
                     sentences=sentences,
                     ent_labels=ent_labels,
                     remove_punctuation=remove_punctuation,
@@ -303,11 +303,11 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
                     progress_bar=progress_bar,
                 )
 
-                with open("%sentities_sorted.pk" % save_to_disk, "wb") as f:
-                    pk.dump(entities_sorted, f)
+                with open("%sentities.pk" % save_to_disk, "wb") as f:
+                    pk.dump(entities, f)
 
         else:
-            entities_sorted = mine_entities(
+            entities = mine_entities(
                 sentences=sentences,
                 ent_labels=ent_labels,
                 remove_punctuation=remove_punctuation,
@@ -324,12 +324,11 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
                 progress_bar=progress_bar,
             )
 
-        entities = pick_top_entities(entities_sorted, top_n_entities=top_n_entities)
-
         entity_index, postproc_roles = map_entities(
             statements=postproc_roles,
             entities=entities,
             used_roles=roles_with_entities,
+            top_n_entities=top_n_entities,
             progress_bar=progress_bar,
         )
 
@@ -443,7 +442,7 @@ def get_narratives(
     n_clusters: List[int],  # k means model you want to use
     save_to_disk: Optional[str] = None,
     cluster_labeling: Optional[str] = "most_frequent",
-    progress_bar: Optional[bool] = False,
+    progress_bar: bool = False,
 ):
 
     """

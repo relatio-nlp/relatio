@@ -86,7 +86,7 @@ def get_most_frequent(tokens: List[str], token_counts: dict) -> str:
 
 
 def clean_verbs(
-    statements: List[dict], verb_counts: dict, progress_bar: Optional[bool] = False
+    statements: List[dict], verb_counts: dict, progress_bar: bool = False
 ) -> List[dict]:
 
     """
@@ -115,7 +115,7 @@ def clean_verbs(
 
     roles_copy = deepcopy(statements)
 
-    if progress_bar == True:
+    if progress_bar:
         print("Cleaning verbs...")
         time.sleep(1)
         statements = tqdm(statements)

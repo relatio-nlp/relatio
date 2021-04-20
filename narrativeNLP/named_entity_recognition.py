@@ -2,18 +2,18 @@
 # ..................................................................................................................
 # ..................................................................................................................
 
+import time
 from collections import Counter
 from copy import deepcopy
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 import numpy as np
 import spacy
 from tqdm import tqdm
 
-nlp = spacy.load("en_core_web_sm")
-import time
-
 from .utils import clean_text, is_subsequence
+
+nlp = spacy.load("en_core_web_sm")
 
 
 def mine_entities(
@@ -30,8 +30,8 @@ def mine_entities(
     stem: bool = False,
     tags_to_keep: Optional[List[str]] = None,
     remove_n_letter_words: Optional[int] = None,
-    progress_bar: Optional[bool] = True,
-) -> List[Tuple[str, int]]:
+    progress_bar: bool = False,
+) -> Counter:
 
     """
 
@@ -44,23 +44,22 @@ def mine_entities(
         For other arguments see utils.clean_text.
 
     Returns:
-        List of tuples with the named entity and its associated frequency on the corpus
+        Counter with the named entity and its associated frequency on the corpus
 
     """
 
     entities_all = []
 
-    if progress_bar == True:
+    if progress_bar:
         print("Mining named entities...")
         time.sleep(1)
         sentences = tqdm(sentences)
 
     for sentence in sentences:
-        sentence = nlp(str(sentence))
+        sentence = nlp(sentence)
         for ent in sentence.ents:
             if ent.label_ in ent_labels:
-                entity = [ent.text]
-                entities_all = entity + entities_all
+                entities_all.append(ent.text)
 
     entities_all = clean_text(
         entities_all,
@@ -77,48 +76,20 @@ def mine_entities(
         remove_n_letter_words,
     )
 
-    entity_counts = Counter(entities_all)
-    entities_sorted = sorted(entity_counts.items(), key=lambda x: x[1], reverse=True)
-
     # forgetting to remove those will break the pipeline
-    entities_sorted = [entity for entity in entities_sorted if entity[0] != ""]
+    entities_all = [entity for entity in entities_all if entity != ""]
 
-    return entities_sorted
+    entity_counts = Counter(entities_all)
 
-
-def pick_top_entities(
-    entities_sorted: List[Tuple[str, int]], top_n_entities: Optional[int] = 0
-) -> List[str]:
-
-    """
-
-    A function that returns the top n most frequent named entities in the corpus.
-
-    Args:
-        entities_sorted: list of tuples (named_entity, frequency)
-        top_n_entities: number of named entities to keep (default is all and is specified with top_n = 0)
-
-    Returns:
-        List of most frequent named entities
-
-    """
-
-    entities = []
-
-    for entity in entities_sorted:
-        entities = entities + [entity[0]]
-
-    if top_n_entities == 0:
-        top_n_entities = len(entities_sorted)
-
-    return entities[0:top_n_entities]
+    return entity_counts
 
 
 def map_entities(  # the output could be a list of dictionaries (for consistency with the rest of the pipeline)
     statements: List[dict],
-    entities: list,
+    entities: Counter,
     used_roles: List[str],
-    progress_bar: Optional[bool] = False,
+    top_n_entities: Optional[int] = None,
+    progress_bar: bool = False,
 ) -> Tuple[dict, List[dict]]:
 
     """
@@ -128,7 +99,6 @@ def map_entities(  # the output could be a list of dictionaries (for consistency
     Args:
         statements: list of dictionaries of postprocessed semantic roles
         entities: user-defined list of named entities
-        roles: a list of roles with named entities (default = ARG0 and ARG1)
         used_roles: list of roles for named entity recognition
         progress_bar: print a progress bar (default is False)
 
@@ -138,26 +108,28 @@ def map_entities(  # the output could be a list of dictionaries (for consistency
 
     """
 
+    entities = entities.most_common(top_n_entities)
+
     entity_index = {
-        role: {entity: np.asarray([], dtype=int) for entity in entities}
+        role: {entity: np.asarray([], dtype=int) for entity in entities.keys()}
         for role in used_roles
     }
 
     roles_copy = deepcopy(statements)
 
-    if progress_bar == True:
+    if progress_bar:
         print("Mapping named entities...")
         time.sleep(1)
         statements = tqdm(statements)
 
     for i, statement in enumerate(statements):
-        for role, tokens in roles_copy[i].items():
+        for role, role_content in roles_copy[i].items():
             if role in used_roles:
                 for entity in entities:
-                    if is_subsequence(entity.split(), tokens) == True:
+                    if is_subsequence(entity.split(), role_content.split()) is True:
                         entity_index[role][entity] = np.append(
                             entity_index[role][entity], [i]
                         )
-                        roles_copy[i][role] = []
+                        roles_copy[i][role] = ""
 
     return entity_index, roles_copy
