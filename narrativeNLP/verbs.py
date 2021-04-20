@@ -4,7 +4,7 @@
 
 import time
 from copy import deepcopy
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import List, Optional
 
 from nltk.corpus import wordnet
 from tqdm import tqdm
@@ -28,8 +28,8 @@ def find_synonyms(verb: str) -> List[str]:
     synonyms = []
 
     for syn in wordnet.synsets(verb, pos=wordnet.VERB):
-        for l in syn.lemmas():
-            synonyms.append(l.name())
+        for lemma in syn.lemmas():
+            synonyms.append(lemma.name())
 
     return synonyms
 
@@ -52,14 +52,14 @@ def find_antonyms(verb: str) -> List[str]:
     antonyms = []
 
     for syn in wordnet.synsets(verb, pos=wordnet.VERB):
-        for l in syn.lemmas():
-            if l.antonyms():
-                antonyms.append(l.antonyms()[0].name())
+        for lemma in syn.lemmas():
+            if lemma.antonyms():
+                antonyms.append(lemma.antonyms()[0].name())
 
     return antonyms
 
 
-def get_most_frequent(tokens: List[str], token_counts: dict) -> str:
+def get_most_frequent(tokens: List[str], token_counts: dict) -> Optional[str]:
 
     """
 
