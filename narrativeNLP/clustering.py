@@ -3,52 +3,30 @@
 # ..................................................................................................................
 
 import time
+import warnings
 from collections import Counter
 from copy import deepcopy
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 import gensim.downloader as api
 import numpy as np
+import tensorflow_hub as hub
 from gensim.models import Word2Vec
 from numpy.linalg import norm
 from sklearn.cluster import KMeans
 from tqdm import tqdm
 
-from .utils import count_values
+from .utils import count_values, count_words
 
 
-def count_words(sentences: List[str]) -> dict:
-
-    """
-
-    A function that computes word frequencies in a list of sentences.
-
-    Args:
-        sentences: list of sentences
-
-    Returns:
-        A dictionary {"word": frequency}
-
-    """
-
-    words = []
-
-    for sentence in sentences:
-        words = words + str(sentence).split()
-
-    word_count_dict = dict(Counter(words))
-
-    return word_count_dict
-
-
-def compute_sif_weights(word_count_dict: dict, alpha: Optional[float] = 0.001) -> dict:
+def compute_sif_weights(words_counter: dict, alpha: Optional[float] = 0.001) -> dict:
 
     """
 
     A function that computes SIF weights based on word frequencies.
 
     Args:
-        word_count_dict: a dictionary {"word": frequency}
+        words_counter: a dictionary {"word": frequency}
         alpha: regularization parameter (see original paper)
 
     Returns:
@@ -58,14 +36,12 @@ def compute_sif_weights(word_count_dict: dict, alpha: Optional[float] = 0.001) -
 
     sif_dict = {}
 
-    for word, count in word_count_dict.items():
+    for word, count in words_counter.items():
         sif_dict[word] = alpha / (alpha + count)
 
     return sif_dict
 
 
-# I did not change this code, but I cannot get USE running on the cluster.
-# Path used for test: /cluster/work/lawecon/Work/models/use-4
 class USE:
     def __init__(self, path: str):
         self._embed = hub.load(path)
@@ -83,46 +59,18 @@ class SIF_word2vec:
         normalize: bool = True,
     ):
 
-        self._model = Word2Vec.load(path)
+        self._model = self._load_keyed_vectors(path)
 
-        self._word_count_dict = count_words(sentences)
+        self._words_counter = count_words(sentences)
 
-        self._sif_dict = compute_sif_weights(self._word_count_dict, alpha)
-
-        self._vocab = self._model.wv.vocab
-
-        self._normalize = normalize
-
-    def __call__(self, tokens: List[str]):
-        res = np.mean(
-            [self._sif_dict[token] * self._model.wv[token] for token in tokens], axis=0
-        )
-        if self._normalize:
-            res = res / norm(res)
-        return res
-
-    def most_similar(self, v):
-        return self._model.wv.most_similar(positive=[v], topn=1)[0]
-
-
-class SIF_keyed_vectors:
-    def __init__(
-        self,
-        path: str,
-        sentences=List[str],
-        alpha: Optional[float] = 0.001,
-        normalize: bool = True,
-    ):
-
-        self._model = api.load(path)
-
-        self._word_count_dict = count_words(sentences)
-
-        self._sif_dict = compute_sif_weights(self._word_count_dict, alpha)
+        self._sif_dict = compute_sif_weights(self._words_counter, alpha)
 
         self._vocab = self._model.vocab
 
         self._normalize = normalize
+
+    def _load_keyed_vectors(self, path):
+        return Word2Vec.load(path).wv
 
     def __call__(self, tokens: List[str]):
         res = np.mean(
@@ -134,6 +82,11 @@ class SIF_keyed_vectors:
 
     def most_similar(self, v):
         return self._model.most_similar(positive=[v], topn=1)[0]
+
+
+class SIF_keyed_vectors(SIF_word2vec):
+    def _load_keyed_vectors(self, path):
+        return api.load(path)
 
 
 def get_vector(tokens: List[str], model: Union[USE, SIF_word2vec, SIF_keyed_vectors]):
@@ -197,7 +150,7 @@ def get_vectors(
 
     """
 
-    role_counts = count_values(postproc_roles, roles=used_roles)
+    role_counts = count_values(postproc_roles, keys=used_roles)
 
     role_counts = [role.split() for role in list(role_counts)]
 
@@ -282,7 +235,7 @@ def get_clusters(
                 vec = get_vector(tokens, model)
                 if vec is not None:
                     clu = kmeans.predict(vec)
-                    roles_copy[i][role] = int(clu)
+                    roles_copy[i][role] = clu
                 else:
                     roles_copy[i].pop(role, None)
             else:
@@ -313,18 +266,23 @@ def label_clusters_most_freq(
 
     for i, statement in enumerate(clustering_res):
         for role, cluster in statement.items():
-            tokens = " ".join(postproc_roles[i][role])
+            tokens = postproc_roles[i][role]
             cluster_num = cluster
             if cluster_num not in temp:
                 temp[cluster_num] = [tokens]
             else:
-                temp[cluster_num] = temp[cluster_num] + [tokens]
+                temp[cluster_num].append(tokens)
 
     for cluster_num, tokens in temp.items():
-        token_counts = Counter(tokens)
-        token_freq = sorted(token_counts.items(), key=lambda x: x[1], reverse=True)
-        most_freq_token = token_freq[0][0]
-        labels[cluster_num] = most_freq_token
+        token_most_common = Counter(tokens).most_common(2)
+        if len(token_most_common) > 1 and (
+            token_most_common[0][1] == token_most_common[1][1]
+        ):
+            warnings.warn(
+                f"Multiple labels for cluster {cluster_num}- 2 shown: {token_most_common}. First one is picked.",
+                RuntimeWarning,
+            )
+        labels[cluster_num] = token_most_common[0][0]
 
     return labels
 

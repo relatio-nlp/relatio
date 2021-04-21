@@ -413,3 +413,34 @@ def count_values(
                     counts[value] = 1
 
     return Counter(counts)
+
+
+def count_words(sentences: List[str]) -> Counter:
+
+    """
+
+    A function that computes word frequencies in a list of sentences.
+
+    Args:
+        sentences: list of sentences
+
+    Returns:
+        Counter {"word": frequency}
+
+    Example:
+    >>> count_words(["this is a house"])
+    Counter({'this': 1, 'is': 1, 'a': 1, 'house': 1})
+    >>> count_words(["this is a house", "this is a house"])
+    Counter({'this': 2, 'is': 2, 'a': 2, 'house': 2})
+    >>> count_words([])
+    Counter()
+    """
+
+    words: List[str] = []
+
+    for sentence in sentences:
+        words.extend(sentence.split())
+
+    words_counter = Counter(words)
+
+    return words_counter
