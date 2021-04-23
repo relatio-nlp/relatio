@@ -5,7 +5,7 @@
 import json
 import os
 import pickle as pk
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -22,20 +22,21 @@ from .clustering import (
 )
 from .named_entity_recognition import map_entities, mine_entities
 from .semantic_role_labeling import SRL, extract_roles, get_raw_arguments, process_roles
-from .utils import clean_text, count_values, is_subsequence, remove_extra_whitespaces
+from .utils import clean_text, count_values, is_subsequence
 from .verbs import clean_verbs
 
 
 def run_srl(
     path: str,
     sentences: List[str],
-    batch_size: Optional[int] = 1,
-    cuda_device: Optional[int] = -1,
+    batch_size: Optional[int] = None,
+    max_batch_char_length: Optional[int] = 20_000,
+    cuda_device: int = -1,
     max_sentence_length: Optional[int] = None,
     max_number_words: Optional[int] = None,
     cuda_empty_cache: bool = None,
     cuda_sleep: float = None,
-    save_to_disk: Optional[str] = None,
+    output_path: Optional[str] = None,
     progress_bar: bool = False,
 ):
 
@@ -47,7 +48,7 @@ def run_srl(
         path: location of the SRL model to be used
         sentences: list of sentences
         SRL_options: see class SRL()
-        save_to_disk: path to save the narrative model (default is None, which means no saving to disk)
+        output_path: path to save the narrative model (default is None, which means no saving to disk)
         progress_bar: print a progress bar (default is False)
 
     Returns:
@@ -60,6 +61,7 @@ def run_srl(
     srl_res = srl(
         sentences=sentences,
         batch_size=batch_size,
+        max_batch_char_length=max_batch_char_length,
         max_sentence_length=max_sentence_length,
         max_number_words=max_number_words,
         cuda_empty_cache=cuda_empty_cache,
@@ -67,8 +69,8 @@ def run_srl(
         progress_bar=progress_bar,
     )
 
-    if save_to_disk is not None:
-        with open(save_to_disk, "w") as json_file:
+    if output_path is not None:
+        with open(output_path, "w") as json_file:
             json.dump(srl_res, json_file)
 
     return srl_res
@@ -77,7 +79,7 @@ def run_srl(
 def build_narrative_model(  # add more control for the user on clustering (n_jobs, random_state, etc.)
     srl_res: List[dict],
     sentences: List[str],
-    roles_considered: Optional[List[str]] = [
+    roles_considered: List[str] = [
         "ARGO",
         "B-V",
         "B-ARGM-NEG",
@@ -85,28 +87,28 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
         "ARG1",
         "ARG2",
     ],
-    save_to_disk: Optional[str] = None,
+    output_path: Optional[str] = None,
     max_length: Optional[int] = None,
-    remove_punctuation: Optional[bool] = True,
-    remove_digits: Optional[bool] = True,
-    remove_chars: Optional[str] = "",
+    remove_punctuation: bool = True,
+    remove_digits: bool = True,
+    remove_chars: str = "",
     stop_words: Optional[List[str]] = None,
-    lowercase: Optional[bool] = True,
-    strip: Optional[bool] = True,
-    remove_whitespaces: Optional[bool] = True,
-    lemmatize: Optional[bool] = False,
-    stem: Optional[bool] = False,
+    lowercase: bool = True,
+    strip: bool = True,
+    remove_whitespaces: bool = True,
+    lemmatize: bool = False,
+    stem: bool = False,
     tags_to_keep: Optional[List[str]] = None,
     remove_n_letter_words: Optional[int] = None,
-    roles_with_embeddings: Optional[List[List[str]]] = [["ARGO", "ARG1", "ARG2"]],
+    roles_with_embeddings: List[List[str]] = [["ARGO", "ARG1", "ARG2"]],
     embeddings_type: Optional[str] = None,
     embeddings_path: Optional[str] = None,
-    n_clusters: Optional[int] = [1],
-    verbose: Optional[int] = 0,
-    random_state: Optional[int] = 0,
-    roles_with_entities: Optional[List[str]] = ["ARGO", "ARG1", "ARG2"],
-    ent_labels: Optional[List[str]] = ["PERSON", "NORP", "ORG", "GPE", "EVENT"],
-    top_n_entities: Optional[int] = 0,
+    n_clusters: List[int] = [1],
+    verbose: int = 0,
+    random_state: int = 0,
+    roles_with_entities: List[str] = ["ARGO", "ARG1", "ARG2"],
+    ent_labels: List[str] = ["PERSON", "NORP", "ORG", "GPE", "EVENT"],
+    top_n_entities: Optional[int] = None,
     dimension_reduce_verbs: Optional[bool] = True,
     progress_bar: bool = False,
 ):
@@ -119,7 +121,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
         srl_res: sentences labeled with their semantic roles
         sentences: list of sentences
         roles_considered: list of semantic roles to consider
-        save_to_disk: path to save the narrative model (default is None, which means no saving to disk)
+        output_path: path to save the narrative model (default is None, which means no saving to disk)
         preprocessing_options: see clean_text() function
         roles_with_embeddings: list of lists of semantic roles to embed and cluster
         (i.e. each list represents semantic roles that should be clustered together)
@@ -148,22 +150,22 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
             roles_considered,
             ["ARGO", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"],
         )
-        == False
+        is False
     ):
         raise ValueError("Some roles_considered are not supported.")
 
-    if is_subsequence(["ARGO", "B-V", "B-ARGM-NEG", "ARG1"], roles_considered) == False:
+    if is_subsequence(["ARGO", "B-V", "B-ARGM-NEG", "ARG1"], roles_considered) is False:
         raise ValueError(
             "Minimum roles to consider: ['ARGO', 'B-V', 'B-ARGM-NEG', 'ARG1']"
         )
 
     if roles_with_entities is not None:
-        if is_subsequence(roles_with_entities, roles_considered) == False:
+        if is_subsequence(roles_with_entities, roles_considered) is False:
             raise ValueError("roles_with_entities should be in roles_considered.")
 
     if roles_with_embeddings is not None:
         for roles in roles_with_embeddings:
-            if is_subsequence(roles, roles_considered) == False:
+            if is_subsequence(roles, roles_considered) is False:
                 raise ValueError(
                     "each list in roles_with_embeddings should be a subset of roles_considered."
                 )
@@ -178,7 +180,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
                 "Only three types of embeddings accepted: gensim_keyed_vectors, gensim_full_model, USE"
             )
 
-    if is_subsequence(ent_labels, ["PERSON", "NORP", "ORG", "GPE", "EVENT"]) == False:
+    if is_subsequence(ent_labels, ["PERSON", "NORP", "ORG", "GPE", "EVENT"]) is False:
         raise ValueError("Some ent_labels are not supported.")
 
     if lemmatize is True and stem is True:
@@ -211,118 +213,77 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
         srl_res, used_roles=roles_considered, progress_bar=progress_bar
     )
 
-    if save_to_disk is not None:
-        if os.path.isfile("%spostproc_roles.json" % save_to_disk):
-            with open("%spostproc_roles.json" % save_to_disk, "r") as f:
-                postproc_roles = json.load(f)
+    if (output_path is not None) and os.path.isfile(
+        "%spostproc_roles.json" % output_path
+    ):
+        with open("%spostproc_roles.json" % output_path, "r") as f:
+            postproc_roles = json.load(f)
+    postproc_roles = process_roles(
+        roles,
+        max_length,
+        remove_punctuation,
+        remove_digits,
+        remove_chars,
+        stop_words,
+        lowercase,
+        strip,
+        remove_whitespaces,
+        lemmatize,
+        stem,
+        tags_to_keep,
+        remove_n_letter_words,
+        progress_bar=progress_bar,
+    )
 
-        else:
-            postproc_roles = process_roles(
-                roles,
-                max_length,
-                remove_punctuation,
-                remove_digits,
-                remove_chars,
-                stop_words,
-                lowercase,
-                strip,
-                remove_whitespaces,
-                lemmatize,
-                stem,
-                tags_to_keep,
-                remove_n_letter_words,
-                progress_bar=progress_bar,
-            )
-
-            with open("%spostproc_roles.json" % save_to_disk, "w") as f:
-                json.dump(postproc_roles, f)
-
-    else:
-        postproc_roles = process_roles(
-            roles,
-            max_length,
-            remove_punctuation,
-            remove_digits,
-            remove_chars,
-            stop_words,
-            lowercase,
-            strip,
-            remove_whitespaces,
-            lemmatize,
-            stem,
-            tags_to_keep,
-            remove_n_letter_words,
-            progress_bar=progress_bar,
-        )
+    if output_path is not None:
+        with open("%spostproc_roles.json" % output_path, "w") as f:
+            json.dump(postproc_roles, f)
 
     # Verb Counts
     if dimension_reduce_verbs:
 
-        if save_to_disk is not None:
-            if os.path.isfile("%sverb_counts.pk" % save_to_disk):
-                with open(save_to_disk + "verb_counts.pk", "rb") as f:
-                    verb_counts = pk.load(f)
+        if (output_path is not None) and os.path.isfile(
+            "%sverb_counts.pk" % output_path
+        ):
+            with open(output_path + "verb_counts.pk", "rb") as f:
+                verb_counts = pk.load(f)
 
-            else:
-                verb_counts = count_values(
-                    postproc_roles, roles=["B-V"], progress_bar=progress_bar
-                )
+        verb_counts = count_values(
+            postproc_roles, roles=["B-V"], progress_bar=progress_bar
+        )
 
-                with open("%sverb_counts.pk" % save_to_disk, "wb") as f:
-                    pk.dump(verb_counts, f)
-        else:
-            verb_counts = count_values(
-                postproc_roles, roles=["B-V"], progress_bar=progress_bar
-            )
+        if output_path is not None:
+            with open("%sverb_counts.pk" % output_path, "wb") as f:
+                pk.dump(verb_counts, f)
 
         narrative_model["verb_counts"] = verb_counts
 
     # Named Entities
     if roles_with_entities is not None:
 
-        if save_to_disk is not None:
-            if os.path.isfile("%sentities.pk" % save_to_disk):
-                with open("%sentities.pk" % save_to_disk, "rb") as f:
-                    entities = pk.load(f)
+        if (output_path is not None) and os.path.isfile("%sentities.pk" % output_path):
+            with open("%sentities.pk" % output_path, "rb") as f:
+                entities = pk.load(f)
+        entities = mine_entities(
+            sentences=sentences,
+            ent_labels=ent_labels,
+            remove_punctuation=remove_punctuation,
+            remove_digits=remove_digits,
+            remove_chars=remove_chars,
+            stop_words=stop_words,
+            lowercase=lowercase,
+            strip=strip,
+            remove_whitespaces=remove_whitespaces,
+            lemmatize=lemmatize,
+            stem=stem,
+            tags_to_keep=tags_to_keep,
+            remove_n_letter_words=remove_n_letter_words,
+            progress_bar=progress_bar,
+        )
 
-            else:
-                entities = mine_entities(
-                    sentences=sentences,
-                    ent_labels=ent_labels,
-                    remove_punctuation=remove_punctuation,
-                    remove_digits=remove_digits,
-                    remove_chars=remove_chars,
-                    stop_words=stop_words,
-                    lowercase=lowercase,
-                    strip=strip,
-                    remove_whitespaces=remove_whitespaces,
-                    lemmatize=lemmatize,
-                    stem=stem,
-                    tags_to_keep=tags_to_keep,
-                    remove_n_letter_words=remove_n_letter_words,
-                    progress_bar=progress_bar,
-                )
-
-                with open("%sentities.pk" % save_to_disk, "wb") as f:
-                    pk.dump(entities, f)
-
-        else:
-            entities = mine_entities(
-                sentences=sentences,
-                ent_labels=ent_labels,
-                remove_punctuation=remove_punctuation,
-                remove_digits=remove_digits,
-                remove_chars=remove_chars,
-                stop_words=stop_words,
-                lowercase=lowercase,
-                strip=strip,
-                remove_whitespaces=remove_whitespaces,
-                lemmatize=lemmatize,
-                stem=stem,
-                tags_to_keep=tags_to_keep,
-                remove_n_letter_words=remove_n_letter_words,
-                progress_bar=progress_bar,
-            )
+        if output_path is not None:
+            with open("%sentities.pk" % output_path, "wb") as f:
+                pk.dump(entities, f)
 
         entity_index, postproc_roles = map_entities(
             statements=postproc_roles,
@@ -356,9 +317,9 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
 
         if embeddings_type == "gensim_keyed_vectors":
             model = SIF_keyed_vectors(path=embeddings_path, sentences=sentences)
-        if embeddings_type == "gensim_full_model":
+        elif embeddings_type == "gensim_full_model":
             model = SIF_word2vec(path=embeddings_path, sentences=sentences)
-        if embeddings_type == "USE":
+        elif embeddings_type == "USE":
             model = USE(path=embeddings_path)
 
         narrative_model["embeddings_model"] = model
@@ -369,44 +330,31 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
 
         for i, roles in enumerate(roles_with_embeddings):
 
-            l1 = []
-            l2 = []
-            l3 = []
+            labels_most_similar_list = []
+            kmeans_list = []
+            labels_most_freq_list = []
 
             vecs = get_vectors(postproc_roles, model, used_roles=roles)
 
             for num in n_clusters[i]:
 
-                if save_to_disk is not None:
-                    if os.path.isfile(save_to_disk + "kmeans_%s_%s.pk" % (i, num)):
-                        with open(
-                            save_to_disk + "kmeans_%s_%s.pk" % (i, num), "rb"
-                        ) as f:
-                            kmeans = pk.load(f)
+                if (output_path is not None) and os.path.isfile(
+                    output_path + "kmeans_%s_%s.pk" % (i, num)
+                ):
+                    with open(output_path + "kmeans_%s_%s.pk" % (i, num), "rb") as f:
+                        kmeans = pk.load(f)
 
-                    else:
-                        kmeans = train_cluster_model(
-                            vecs,
-                            model,
-                            n_clusters=num,
-                            verbose=verbose,
-                            random_state=random_state,
-                        )
+                kmeans = train_cluster_model(
+                    vecs,
+                    model,
+                    n_clusters=num,
+                    verbose=verbose,
+                    random_state=random_state,
+                )
 
-                        with open(
-                            save_to_disk + "kmeans_%s_%s.pk" % (i, num), "wb"
-                        ) as f:
-                            pk.dump(kmeans, f)
-
-                else:
-
-                    kmeans = train_cluster_model(
-                        vecs,
-                        model,
-                        n_clusters=num,
-                        verbose=verbose,
-                        random_state=random_state,
-                    )
+                if output_path is not None:
+                    with open(output_path + "kmeans_%s_%s.pk" % (i, num), "wb") as f:
+                        pk.dump(kmeans, f)
 
                 clustering_res = get_clusters(
                     postproc_roles, model, kmeans, used_roles=roles
@@ -416,20 +364,21 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
                     clustering_res=clustering_res, postproc_roles=postproc_roles
                 )
 
-                if isinstance(model, (USE)) == False:
+                if isinstance(model, (USE)) is False:
                     labels_most_similar = label_clusters_most_similar(kmeans, model)
 
-                    l1.append(labels_most_similar)
+                labels_most_similar_list.append(labels_most_similar)
+                kmeans_list.append(kmeans)
+                labels_most_freq_list.append(labels_most_freq)
 
-                l2.append(kmeans)
-                l3.append(labels_most_freq)
+            narrative_model["cluster_labels_most_similar"].append(
+                labels_most_similar_list
+            )
+            narrative_model["cluster_model"].append(kmeans_list)
+            narrative_model["cluster_labels_most_freq"].append(labels_most_freq_list)
 
-            narrative_model["cluster_labels_most_similar"].append(l1)
-            narrative_model["cluster_model"].append(l2)
-            narrative_model["cluster_labels_most_freq"].append(l3)
-
-    if save_to_disk is not None:
-        with open(save_to_disk + "narrative_model.pk", "wb") as f:
+    if output_path is not None:
+        with open(output_path + "narrative_model.pk", "wb") as f:
             pk.dump(narrative_model, f)
 
     return narrative_model
@@ -440,7 +389,7 @@ def get_narratives(
     doc_index: List[int],
     narrative_model: dict,
     n_clusters: List[int],  # k means model you want to use
-    save_to_disk: Optional[str] = None,
+    output_path: Optional[str] = None,
     cluster_labeling: Optional[str] = "most_frequent",
     progress_bar: bool = False,
 ):
@@ -453,7 +402,7 @@ def get_narratives(
         srl_res: sentences labeled with their semantic roles
         doc_index: list of indices to keep track of original documents
         narrative_model: dict with the specifics of the narrative model
-        save_to_disk: path to save the narrative model (default is None, which means no saving to disk)
+        output_path: path to save the narrative model (default is None, which means no saving to disk)
         filter_complete_narratives: keep only narratives with at least an agent, a verb and a patient
         (default is True)
         cluster_labeling: either 'most_frequent' or 'most_similar'
@@ -561,116 +510,7 @@ def get_narratives(
     final_statements["statement"] = final_statements.index
     final_statements = final_statements.replace({np.NaN: ""})
 
-    if save_to_disk is not None:
-        final_statements.to_csv(save_to_disk, index=False)
-
-    return final_statements
-
-
-def prettify_narratives(  # to be considered as very preliminary
-    final_statements,
-    narrative_model: dict,
-    filter_complete_narratives: Optional[bool] = False,
-):
-
-    """
-
-    A function to make columns of 'raw' and 'cleaned' narratives.
-
-    Args:
-        final_statements: dataframe with the output of the pipeline
-        narrative_model: dict with the specifics of the narrative model
-        filter_complete_narratives: keep only narratives with at least an agent, a verb and a patient
-        (default is False)
-
-    Returns:
-        A pandas dataframe with the resulting narratives and two additional columns:
-        narrative-RAW and narrative-CLEANED
-
-    """
-
-    narrative_format = [
-        str(role + "-RAW") for role in narrative_model["roles_considered"]
-    ]
-
-    final_statements = final_statements.replace({"": np.NaN})
-
-    if filter_complete_narratives:
-        list_for_filter = [
-            arg
-            for arg in narrative_format
-            if arg not in ["ARG2-RAW", "B-ARGM-NEG-RAW", "B-ARGM-MOD-RAW"]
-        ]
-        final_statements = final_statements.dropna(subset=list_for_filter)
-
-    final_statements = final_statements.replace({np.NaN: ""})
-    final_statements = final_statements.replace({True: "not"})
-
-    # Check if all columns exist
-    for role in narrative_format:
-        if role not in final_statements.columns:
-            final_statements[role] = ""
-
-    final_statements["narrative-RAW"] = final_statements[narrative_format].agg(
-        " ".join, axis=1
-    )
-    final_statements["narrative-RAW"] = final_statements["narrative-RAW"].apply(
-        remove_extra_whitespaces
-    )
-
-    narrative_format = []
-    for role in narrative_model["roles_considered"]:
-        if role == "B-V":
-            if narrative_model["dimension_reduce_verbs"] == True:
-                narrative_format = narrative_format + ["B-V-CLEANED"]
-                narrative_format = narrative_format + ["B-ARGM-NEG-CLEANED"]
-            else:
-                narrative_format = narrative_format + ["B-V-RAW"]
-                narrative_format = narrative_format + ["B-ARGM-NEG-RAW"]
-
-        elif role == "B-ARGM-NEG":
-            continue
-
-        elif role == "B-ARGM-MOD":
-            narrative_format = narrative_format + ["B-ARGM-MOD-RAW"]
-
-        else:
-            if (
-                narrative_model["roles_with_embeddings"] is not None
-                or narrative_model["roles_with_entities"] is not None
-            ):
-                narrative_format = narrative_format + [role]
-            else:
-                narrative_format = narrative_format + [str(role + "-RAW")]
-
-    final_statements["narrative-CLEANED"] = final_statements[narrative_format].agg(
-        " ".join, axis=1
-    )
-    final_statements["narrative-CLEANED"] = final_statements["narrative-CLEANED"].apply(
-        remove_extra_whitespaces
-    )
-
-    # Re-ordering columns
-    columns = ["doc", "sentence", "statement", "narrative-CLEANED", "narrative-RAW"]
-    for role in narrative_model["roles_considered"]:
-        if role in ["ARGO", "ARG1", "ARG2"]:
-            columns = columns + [str(role + "-RAW")]
-            columns = columns + [role]
-        elif role == "B-ARGM-MOD":
-            columns = columns + [str(role + "-RAW")]
-        elif role == "B-V":
-            if narrative_model["dimension_reduce_verbs"] == True:
-                columns = columns + [str(role + "-RAW")]
-                columns = columns + [str(role + "-CLEANED")]
-            else:
-                columns = columns + [str(role + "-RAW")]
-        elif role == "B-ARGM-NEG":
-            if narrative_model["dimension_reduce_verbs"] == True:
-                columns = columns + [str(role + "-RAW")]
-                columns = columns + [str(role + "-CLEANED")]
-            else:
-                columns = columns + [str(role + "-RAW")]
-
-    final_statements = final_statements[columns]
+    if output_path is not None:
+        final_statements.to_csv(output_path, index=False)
 
     return final_statements

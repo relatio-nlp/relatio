@@ -7,8 +7,7 @@ import re
 import string
 import time
 from collections import Counter
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 import spacy
@@ -22,7 +21,7 @@ nlp = spacy.load("en_core_web_sm")
 
 def split_into_sentences(
     dataframe: pd.DataFrame,
-    output_path: Union[Path, str, None] = None,
+    output_path: Optional[str] = None,
     progress_bar: bool = False,
 ) -> Tuple[List[str], List[str]]:
 
