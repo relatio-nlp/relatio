@@ -217,44 +217,44 @@ def clean_text(
     remove_n_letter_words: Optional[int] = None,
 ) -> List[str]:
     """
-      Clean a list of sentences.
+    Clean a list of sentences.
 
-      Args:
-          sentence: list of sentences
-          remove_punctuation: whether to remove string.punctuation
-    pre-commit install      remove_digits: whether to remove string.digits
-          remove_chars: remove the given characters
-          stop_words: list of stopwords to remove
-          lowercase: whether to lower the case
-          strip: whether to strip
-          remove_whitespaces: whether to remove superfluous whitespaceing by " ".join(str.split(())
-          lemmatize: whether to lemmatize using nltk.WordNetLemmatizer
-          stem: whether to stem using nltk.SnowballStemmer("english")
-          tags_to_keep: list of grammatical tags to keep (common tags: ['V', 'N', 'J'])
-          remove_n_letter_words: drop words lesser or equal to n letters (default is None)
-      Returns:
-          Processed list of sentences
-      Examples:
-          >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'])
-          ['return the factorial of n an exact integer']
-          >>> clean_text(['Learning is usefull.'])
-          ['learning is usefull']
-          >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], stop_words=['factorial'])
-          ['return the of n an exact integer']
-          >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], lemmatize=True)
-          ['return the factorial of n an exact integer']
-          >>> clean_text(['Learning is usefull.'],lemmatize=True)
-          ['learn be usefull']
-          >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], stem=True)
-          ['return the factori of n an exact integ']
-          >>> clean_text(['Learning is usefull.'],stem=True)
-          ['learn is useful']
-          >>> clean_text(['A1b c\\n\\nde \\t fg\\rkl\\r\\n m+n'])
-          ['ab c de fg kl mn']
-          >>> clean_text(['This is a sentence with verbs and nice adjectives.'], tags_to_keep = ['V', 'J'])
-          ['is nice']
-          >>> clean_text(['This is a sentence with one and two letter words.'], remove_n_letter_words = 2)
-          ['this sentence with one and two letter words']
+    Args:
+        sentence: list of sentences
+        remove_punctuation: whether to remove string.punctuation
+        remove_digits: whether to remove string.digits
+        remove_chars: remove the given characters
+        stop_words: list of stopwords to remove
+        lowercase: whether to lower the case
+        strip: whether to strip
+        remove_whitespaces: whether to remove superfluous whitespaceing by " ".join(str.split(())
+        lemmatize: whether to lemmatize using nltk.WordNetLemmatizer
+        stem: whether to stem using nltk.SnowballStemmer("english")
+        tags_to_keep: list of grammatical tags to keep (common tags: ['V', 'N', 'J'])
+        remove_n_letter_words: drop words lesser or equal to n letters (default is None)
+    Returns:
+        Processed list of sentences
+    Examples:
+        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'])
+        ['return the factorial of n an exact integer']
+        >>> clean_text(['Learning is usefull.'])
+        ['learning is usefull']
+        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], stop_words=['factorial'])
+        ['return the of n an exact integer']
+        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], lemmatize=True)
+        ['return the factorial of n an exact integer']
+        >>> clean_text(['Learning is usefull.'],lemmatize=True)
+        ['learn be usefull']
+        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], stem=True)
+        ['return the factori of n an exact integ']
+        >>> clean_text(['Learning is usefull.'],stem=True)
+        ['learn is useful']
+        >>> clean_text(['A1b c\\n\\nde \\t fg\\rkl\\r\\n m+n'])
+        ['ab c de fg kl mn']
+        >>> clean_text(['This is a sentence with verbs and nice adjectives.'], tags_to_keep = ['V', 'J'])
+        ['is nice']
+        >>> clean_text(['This is a sentence with one and two letter words.'], remove_n_letter_words = 2)
+        ['this sentence with one and two letter words']
     """
     if lemmatize is True and stem is True:
         raise ValueError("lemmatize and stemming cannot be both True")
