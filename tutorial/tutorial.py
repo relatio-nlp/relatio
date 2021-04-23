@@ -15,7 +15,7 @@ df = load_trump_data("raw")
 from narrativeNLP.utils import split_into_sentences
 
 split_sentences = split_into_sentences(
-    df.iloc[0:100], save_to_disk=None, progress_bar=True
+    df.iloc[0:100], output_path=None, progress_bar=True
 )
 
 # Run SRL (example on a 100 tweets)
@@ -25,8 +25,7 @@ from narrativeNLP.wrappers import run_srl
 srl_res = run_srl(
     path="https://storage.googleapis.com/allennlp-public-models/openie-model.2020.03.26.tar.gz",
     sentences=split_sentences[1],
-    save_to_disk=None,
-    batch_size=20,
+    output_path=None,
     progress_bar=True,
 )
 
@@ -52,7 +51,7 @@ narrative_model = build_narrative_model(
     roles_with_entities=["ARGO", "ARG1", "ARG2"],
     top_n_entities=10,
     dimension_reduce_verbs=True,
-    save_to_disk=None,
+    output_path=None,
     max_length=4,
     remove_punctuation=True,
     remove_digits=True,
@@ -76,7 +75,7 @@ final_statements = get_narratives(
     srl_res=srl_res[0:1000],
     doc_index=split_sentences[0][0:1000],  # doc names
     narrative_model=narrative_model,
-    save_to_disk=None,
+    output_path=None,
     n_clusters=[0],  # pick model with 10 clusters
     cluster_labeling="most_frequent",
     progress_bar=True,

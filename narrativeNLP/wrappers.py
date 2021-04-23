@@ -249,7 +249,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
                 verb_counts = pk.load(f)
 
         verb_counts = count_values(
-            postproc_roles, roles=["B-V"], progress_bar=progress_bar
+            postproc_roles, keys=["B-V"], progress_bar=progress_bar
         )
 
         if output_path is not None:

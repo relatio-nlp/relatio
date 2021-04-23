@@ -108,10 +108,10 @@ def map_entities(  # the output could be a list of dictionaries (for consistency
 
     """
 
-    entities = entities.most_common(top_n_entities)
+    entities_keys = [el[0] for el in entities.most_common(top_n_entities)]
 
     entity_index = {
-        role: {entity: np.asarray([], dtype=int) for entity in entities.keys()}
+        role: {entity: np.asarray([], dtype=int) for entity in entities_keys}
         for role in used_roles
     }
 
@@ -125,7 +125,7 @@ def map_entities(  # the output could be a list of dictionaries (for consistency
     for i, statement in enumerate(statements):
         for role, role_content in roles_copy[i].items():
             if role in used_roles:
-                for entity in entities:
+                for entity in entities_keys:
                     if is_subsequence(entity.split(), role_content.split()) is True:
                         entity_index[role][entity] = np.append(
                             entity_index[role][entity], [i]
