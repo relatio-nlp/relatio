@@ -5,6 +5,7 @@
 import time
 from copy import deepcopy
 from typing import List, Optional
+from collections import Counter
 
 from nltk.corpus import wordnet
 from tqdm import tqdm
@@ -59,7 +60,7 @@ def find_antonyms(verb: str) -> List[str]:
     return antonyms
 
 
-def get_most_frequent(tokens: List[str], token_counts: dict) -> Optional[str]:
+def get_most_frequent(tokens: List[str], token_counts: Counter) -> Optional[str]:
 
     """
 
@@ -86,7 +87,10 @@ def get_most_frequent(tokens: List[str], token_counts: dict) -> Optional[str]:
 
 
 def clean_verbs(
-    statements: List[dict], verb_counts: dict, progress_bar: bool = False
+    statements: List[dict],
+    verb_counts: Counter,
+    progress_bar: bool = False,
+    suffix: str = "_lowdim",
 ) -> List[dict]:
 
     """
@@ -99,6 +103,7 @@ def clean_verbs(
         statements: a list of dictionaries of postprocessed semantic roles
         verb_counts: a dictionary of verb counts (e.g. d['verb'] = count)
         progress_bar: print a progress bar (default is False)
+        suffix: suffix for the new dimension-reduced verb's name (e.g. 'B-V_lowdim')
 
     Returns:
         a list of dictionaries of postprocessed semantic roles with replaced verbs (same format as statements)
@@ -107,7 +112,7 @@ def clean_verbs(
         >>> test = [{'B-V': ['increase'], 'B-ARGM-NEG': True},{'B-V': ['decrease']},{'B-V': ['decrease']}]\n
         ... verb_counts = count_values(test, roles = ['B-V'])\n
         ... clean_verbs(test, verb_counts = verb_counts)
-        [{'B-V-CLEANED': 'decrease'}, {'B-V-CLEANED': 'decrease'}, {'B-V-CLEANED': 'decrease'}]
+        [{'B-V_lowdim': 'decrease'}, {'B-V_lowdim': 'decrease'}, {'B-V_lowdim': 'decrease'}]
 
     """
 
@@ -122,29 +127,31 @@ def clean_verbs(
 
     for i, roles in enumerate(statements):
         new_roles = roles_copy[i]
-        new_roles = {
-            str(k + "-CLEANED"): v
-            for k, v in new_roles.items()
-            if k in ["B-V", "B-ARGM-NEG"]
-        }
         if "B-V" in roles:
-            verb = " ".join(new_roles["B-V-CLEANED"])
-            new_roles["B-V-CLEANED"] = verb
+            verb = new_roles["B-V"]
+            new_roles["B-V"] = verb
             if "B-ARGM-NEG" in roles:
                 verbs = find_antonyms(verb)
                 most_freq_verb = get_most_frequent(
                     tokens=verbs, token_counts=verb_counts
                 )
                 if most_freq_verb is not None:
-                    new_roles["B-V-CLEANED"] = most_freq_verb
-                    del new_roles["B-ARGM-NEG-CLEANED"]
+                    new_roles["B-V"] = most_freq_verb
+                    del new_roles["B-ARGM-NEG"]
             else:
                 verbs = find_synonyms(verb) + [verb]
                 most_freq_verb = get_most_frequent(
                     tokens=verbs, token_counts=verb_counts
                 )
                 if most_freq_verb is not None:
-                    new_roles["B-V-CLEANED"] = most_freq_verb
+                    new_roles["B-V"] = most_freq_verb
+
+        new_roles = {
+            str(k + suffix): v
+            for k, v in new_roles.items()
+            if k in ["B-V", "B-ARGM-NEG"]
+        }
+
         new_roles_all.append(new_roles)
 
     return new_roles_all

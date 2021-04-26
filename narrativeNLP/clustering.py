@@ -203,6 +203,7 @@ def get_clusters(
     kmeans,
     used_roles=List[str],
     progress_bar: bool = False,
+    suffix: str = "_lowdim",
 ) -> List[dict]:
 
     """
@@ -216,6 +217,7 @@ def get_clusters(
         kmeans = a pre-trained sklearn kmeans model
         used_roles: list of roles
         progress_bar: print a progress bar (default is False)
+        suffix: suffix for the new dimension-reduced role's name (e.g. 'ARGO_lowdim')
 
     Returns:
         A list of dictionaries with the predicted cluster for each role
@@ -232,14 +234,18 @@ def get_clusters(
     for i, statement in enumerate(postproc_roles):
         for role, tokens in statement.items():
             if role in used_roles:
-                vec = get_vector(tokens, model)
+                vec = get_vector(tokens.split(), model)
                 if vec is not None:
-                    clu = kmeans.predict(vec)
+                    clu = kmeans.predict(vec)[0]
                     roles_copy[i][role] = clu
                 else:
                     roles_copy[i].pop(role, None)
             else:
                 roles_copy[i].pop(role, None)
+
+    roles_copy = [
+        {str(k + suffix): v for k, v in statement.items()} for statement in roles_copy
+    ]
 
     return roles_copy
 

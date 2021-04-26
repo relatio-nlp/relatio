@@ -21,7 +21,7 @@ from .clustering import (
     train_cluster_model,
 )
 from .named_entity_recognition import map_entities, mine_entities
-from .semantic_role_labeling import SRL, extract_roles, get_raw_arguments, process_roles
+from .semantic_role_labeling import SRL, extract_roles, rename_arguments, process_roles
 from .utils import clean_text, count_values, is_subsequence
 from .verbs import clean_verbs
 
@@ -80,7 +80,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
     srl_res: List[dict],
     sentences: List[str],
     roles_considered: List[str] = [
-        "ARGO",
+        "ARG0",
         "B-V",
         "B-ARGM-NEG",
         "B-ARGM-MOD",
@@ -100,13 +100,13 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
     stem: bool = False,
     tags_to_keep: Optional[List[str]] = None,
     remove_n_letter_words: Optional[int] = None,
-    roles_with_embeddings: List[List[str]] = [["ARGO", "ARG1", "ARG2"]],
+    roles_with_embeddings: List[List[str]] = [["ARG0", "ARG1", "ARG2"]],
     embeddings_type: Optional[str] = None,
     embeddings_path: Optional[str] = None,
     n_clusters: List[int] = [1],
     verbose: int = 0,
     random_state: int = 0,
-    roles_with_entities: List[str] = ["ARGO", "ARG1", "ARG2"],
+    roles_with_entities: List[str] = ["ARG0", "ARG1", "ARG2"],
     ent_labels: List[str] = ["PERSON", "NORP", "ORG", "GPE", "EVENT"],
     top_n_entities: Optional[int] = None,
     dimension_reduce_verbs: Optional[bool] = True,
@@ -148,15 +148,15 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
     if (
         is_subsequence(
             roles_considered,
-            ["ARGO", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"],
+            ["ARG0", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"],
         )
         is False
     ):
         raise ValueError("Some roles_considered are not supported.")
 
-    if is_subsequence(["ARGO", "B-V", "B-ARGM-NEG", "ARG1"], roles_considered) is False:
+    if is_subsequence(["ARG0", "B-V", "B-ARGM-NEG", "ARG1"], roles_considered) is False:
         raise ValueError(
-            "Minimum roles to consider: ['ARGO', 'B-V', 'B-ARGM-NEG', 'ARG1']"
+            "Minimum roles to consider: ['ARG0', 'B-V', 'B-ARGM-NEG', 'ARG1']"
         )
 
     if roles_with_entities is not None:
@@ -359,7 +359,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
                         pk.dump(kmeans, f)
 
                 clustering_res = get_clusters(
-                    postproc_roles, model, kmeans, used_roles=roles
+                    postproc_roles, model, kmeans, used_roles=roles, suffix=""
                 )
 
                 labels_most_freq = label_clusters_most_freq(
@@ -450,12 +450,15 @@ def get_narratives(
         progress_bar=progress_bar,
     )
 
-    final_statements = get_raw_arguments(postproc_roles, progress_bar)
+    final_statements = rename_arguments(postproc_roles, progress_bar, suffix="_highdim")
 
     # Dimension reduction of verbs
     if narrative_model["dimension_reduce_verbs"]:
         cleaned_verbs = clean_verbs(
-            postproc_roles, narrative_model["verb_counts"], progress_bar
+            postproc_roles,
+            narrative_model["verb_counts"],
+            progress_bar,
+            suffix="_lowdim",
         )
 
         for i, statement in enumerate(cleaned_verbs):
@@ -474,7 +477,7 @@ def get_narratives(
         for role in narrative_model["roles_with_entities"]:
             for token, indices in entity_index[role].items():
                 for index in indices:
-                    final_statements[index][role] = token
+                    final_statements[index][str(role + "_lowdim")] = token
 
     # Embeddings
     if narrative_model["roles_with_embeddings"] is not None:
@@ -487,6 +490,7 @@ def get_narratives(
                 narrative_model["cluster_model"][l][n_clusters[l]],
                 used_roles=roles,
                 progress_bar=progress_bar,
+                suffix="_lowdim",
             )
 
             if cluster_labeling == "most_frequent":

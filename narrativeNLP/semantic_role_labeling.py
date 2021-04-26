@@ -104,10 +104,7 @@ class SRL:
             try:
                 res_batch = self._predictor.predict_batch_json(sentences_json)
             except RuntimeError as err:
-                warnings.warn(
-                    f"empty result {err}",
-                    RuntimeWarning,
-                )
+                warnings.warn(f"empty result {err}", RuntimeWarning)
                 res = [{"words": [], "verbs": []}] * len(batch)
                 break
             except:
@@ -120,9 +117,7 @@ class SRL:
 
 
 def extract_roles(
-    srl: List[Dict[str, Any]],
-    used_roles: List[str],
-    progress_bar: bool = False,
+    srl: List[Dict[str, Any]], used_roles: List[str], progress_bar: bool = False
 ) -> Tuple[List[Dict[str, Union[str, bool]]], List[int]]:
 
     """
@@ -179,7 +174,7 @@ def extract_role_per_sentence(
         tag_list = statement_dict["tags"]
 
         statement_role_dict: Dict[str, Union[str, bool]] = {}
-        for role in ["ARGO", "ARG1", "ARG2", "B-V", "B-ARGM-MOD"]:
+        for role in ["ARG0", "ARG1", "ARG2", "B-V", "B-ARGM-MOD"]:
             if role in used_roles:
                 indices_role = [i for i, tok in enumerate(tag_list) if role in tok]
                 toks_role = [
@@ -269,7 +264,9 @@ def process_roles(
     return roles_copy
 
 
-def get_raw_arguments(statements: List[dict], progress_bar: bool = False):
+def rename_arguments(
+    statements: List[dict], progress_bar: bool = False, suffix: str = "_highdim"
+):
 
     roles_copy = deepcopy(statements)
 
@@ -280,7 +277,7 @@ def get_raw_arguments(statements: List[dict], progress_bar: bool = False):
 
     for i, statement in enumerate(statements):
         for role, role_content in statement.items():
-            name = role + "-RAW"
+            name = role + suffix
             roles_copy[i][name] = roles_copy[i].pop(role)
             roles_copy[i][name] = role_content
 

@@ -16,7 +16,7 @@ from nltk.corpus import wordnet
 from nltk.stem import SnowballStemmer, WordNetLemmatizer
 from tqdm import tqdm
 
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_sm", disable=["tagger", "ner", "lemmatizer"])
 
 
 def split_into_sentences(
@@ -367,9 +367,7 @@ def is_subsequence(v1: list, v2: list) -> bool:
 
 
 def count_values(
-    dicts: List[Dict],
-    keys: Optional[list] = None,
-    progress_bar: bool = False,
+    dicts: List[Dict], keys: Optional[list] = None, progress_bar: bool = False
 ) -> Counter:
 
     """
