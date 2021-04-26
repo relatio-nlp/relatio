@@ -218,22 +218,23 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
     ):
         with open("%spostproc_roles.json" % output_path, "r") as f:
             postproc_roles = json.load(f)
-    postproc_roles = process_roles(
-        roles,
-        max_length,
-        remove_punctuation,
-        remove_digits,
-        remove_chars,
-        stop_words,
-        lowercase,
-        strip,
-        remove_whitespaces,
-        lemmatize,
-        stem,
-        tags_to_keep,
-        remove_n_letter_words,
-        progress_bar=progress_bar,
-    )
+    else:
+        postproc_roles = process_roles(
+            roles,
+            max_length,
+            remove_punctuation,
+            remove_digits,
+            remove_chars,
+            stop_words,
+            lowercase,
+            strip,
+            remove_whitespaces,
+            lemmatize,
+            stem,
+            tags_to_keep,
+            remove_n_letter_words,
+            progress_bar=progress_bar,
+        )
 
     if output_path is not None:
         with open("%spostproc_roles.json" % output_path, "w") as f:
@@ -247,10 +248,10 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
         ):
             with open(output_path + "verb_counts.pk", "rb") as f:
                 verb_counts = pk.load(f)
-
-        verb_counts = count_values(
-            postproc_roles, keys=["B-V"], progress_bar=progress_bar
-        )
+        else:
+            verb_counts = count_values(
+                postproc_roles, keys=["B-V"], progress_bar=progress_bar
+            )
 
         if output_path is not None:
             with open("%sverb_counts.pk" % output_path, "wb") as f:
@@ -264,22 +265,23 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
         if (output_path is not None) and os.path.isfile("%sentities.pk" % output_path):
             with open("%sentities.pk" % output_path, "rb") as f:
                 entities = pk.load(f)
-        entities = mine_entities(
-            sentences=sentences,
-            ent_labels=ent_labels,
-            remove_punctuation=remove_punctuation,
-            remove_digits=remove_digits,
-            remove_chars=remove_chars,
-            stop_words=stop_words,
-            lowercase=lowercase,
-            strip=strip,
-            remove_whitespaces=remove_whitespaces,
-            lemmatize=lemmatize,
-            stem=stem,
-            tags_to_keep=tags_to_keep,
-            remove_n_letter_words=remove_n_letter_words,
-            progress_bar=progress_bar,
-        )
+        else:
+            entities = mine_entities(
+                sentences=sentences,
+                ent_labels=ent_labels,
+                remove_punctuation=remove_punctuation,
+                remove_digits=remove_digits,
+                remove_chars=remove_chars,
+                stop_words=stop_words,
+                lowercase=lowercase,
+                strip=strip,
+                remove_whitespaces=remove_whitespaces,
+                lemmatize=lemmatize,
+                stem=stem,
+                tags_to_keep=tags_to_keep,
+                remove_n_letter_words=remove_n_letter_words,
+                progress_bar=progress_bar,
+            )
 
         if output_path is not None:
             with open("%sentities.pk" % output_path, "wb") as f:
@@ -343,14 +345,14 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
                 ):
                     with open(output_path + "kmeans_%s_%s.pk" % (i, num), "rb") as f:
                         kmeans = pk.load(f)
-
-                kmeans = train_cluster_model(
-                    vecs,
-                    model,
-                    n_clusters=num,
-                    verbose=verbose,
-                    random_state=random_state,
-                )
+                else:
+                    kmeans = train_cluster_model(
+                        vecs,
+                        model,
+                        n_clusters=num,
+                        verbose=verbose,
+                        random_state=random_state,
+                    )
 
                 if output_path is not None:
                     with open(output_path + "kmeans_%s_%s.pk" % (i, num), "wb") as f:
