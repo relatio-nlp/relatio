@@ -368,8 +368,8 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
 
                 if isinstance(model, (USE)) is False:
                     labels_most_similar = label_clusters_most_similar(kmeans, model)
+                    labels_most_similar_list.append(labels_most_similar)
 
-                labels_most_similar_list.append(labels_most_similar)
                 kmeans_list.append(kmeans)
                 labels_most_freq_list.append(labels_most_freq)
 

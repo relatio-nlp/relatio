@@ -93,19 +93,15 @@ def map_entities(  # the output could be a list of dictionaries (for consistency
 ) -> Tuple[dict, List[dict]]:
 
     """
-
     A function that goes through statements and identifies pre-defined named entities within postprocessed semantic roles.
-
     Args:
         statements: list of dictionaries of postprocessed semantic roles
         entities: user-defined list of named entities
         used_roles: list of roles for named entity recognition
         progress_bar: print a progress bar (default is False)
-
     Returns:
         entity_index: dictionary containing statements indices with entities for each role
         roles_copy: new list of postprocessed semantic roles (without the named entities mined since they will not be embedded)
-
     """
 
     entities_keys = [el[0] for el in entities.most_common(top_n_entities)]

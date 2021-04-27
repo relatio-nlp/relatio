@@ -85,8 +85,9 @@ final_statements = get_narratives(
 
 from narrativeNLP.graphs import build_graph, draw_graph
 
-temp = final_statements[["ARG0", "ARG1", "B-V-RAW"]]
-temp = temp.groupby(["ARG0", "ARG1", "B-V-RAW"]).size().reset_index(name="weight")
+temp = final_statements[["ARG0_lowdim", "ARG1_lowdim", "B-V_lowdim"]]
+temp.columns = ["ARG0", "ARG1", "B-V"]
+temp = temp.groupby(["ARG0", "ARG1", "B-V"]).size().reset_index(name="weight")
 temp = temp.sort_values(by="weight", ascending=False).iloc[
     0:100
 ]  # pick top 100 most frequent narratives

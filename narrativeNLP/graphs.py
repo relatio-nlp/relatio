@@ -22,7 +22,7 @@ def build_graph(  # to be considered as preliminary
     if edge_size == None:
         for l in dict_edges:
             G.add_edge(
-                l["ARGO"],
+                l["ARG0"],
                 l["ARG1"],
                 weight=l["weight"],
                 label=l["B-V"],
@@ -33,7 +33,7 @@ def build_graph(  # to be considered as preliminary
     else:
         for l in dict_edges:
             G.add_edge(
-                l["ARGO"],
+                l["ARG0"],
                 l["ARG1"],
                 weight=l["weight"],
                 value=l["weight"],
