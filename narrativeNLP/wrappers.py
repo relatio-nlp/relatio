@@ -515,6 +515,24 @@ def get_narratives(
     final_statements = pd.DataFrame(final_statements)
     final_statements["statement"] = final_statements.index
     final_statements = final_statements.replace({np.NaN: ""})
+    colnames_ordered = [
+        "doc",
+        "sentence",
+        "statement",
+        "ARG0_highdim",
+        "ARG0_lowdim",
+        "B-V_highdim",
+        "B-V_lowdim",
+        "B-ARGM-NEG_highdim",
+        "B-ARGM-NEG_lowdim",
+        "B-ARGM-MOD_highdim",
+        "ARG1_highdim",
+        "ARG1_lowdim",
+        "ARG2_highdim",
+        "ARG2_lowdim",
+    ]
+    colnames = [col for col in colnames_ordered if col in list(final_statements)]
+    final_statements = final_statements[colnames]
 
     if output_path is not None:
         final_statements.to_csv(output_path, index=False)
