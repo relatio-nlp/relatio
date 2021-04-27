@@ -1,108 +1,116 @@
+# Utils
+# ..................................................................................................................
+# ..................................................................................................................
+
 import json
 import re
 import string
-import warnings
-from copy import deepcopy
-from typing import Dict, List, NamedTuple, Optional
+import time
+from collections import Counter
+from typing import Dict, List, Optional, Tuple
 
-import numpy as np
 import pandas as pd
-from nltk import pos_tag, word_tokenize
+import spacy
+from nltk import pos_tag
 from nltk.corpus import wordnet
 from nltk.stem import SnowballStemmer, WordNetLemmatizer
-from nltk.tokenize import sent_tokenize
 from tqdm import tqdm
 
-
-def dict_concatenate(d_list, axis=0):
-    d_non_empty = [d for d in d_list if d]
-    res = {}
-    if not d_non_empty:
-        pass
-    elif len(d_non_empty) == 1:
-        res = d_non_empty[0]
-    else:
-        for k in d_non_empty[0].keys():
-            d_to_concat = [d[k] for d in d_non_empty if d[k].size != 0]
-            if not d_to_concat:
-                res[k] = d_non_empty[0][k].copy()
-            else:
-                res[k] = np.concatenate(d_to_concat, axis=axis)
-    return res
+nlp = spacy.load("en_core_web_sm", disable=["tagger", "ner", "lemmatizer"])
 
 
-def tokenize_into_sentences(document: str) -> List[str]:
+def split_into_sentences(
+    dataframe: pd.DataFrame,
+    output_path: Optional[str] = None,
+    progress_bar: bool = False,
+) -> Tuple[List[str], List[str]]:
+
     """
-    Split a document in sentences.
+
+    A function that splits a list of documents into sentences (using the SpaCy sentence splitter).
 
     Args:
-        document: The document
+        dataframe: a pandas dataframe with one column "id" and one column "doc"
+        progress_bar: print a progress bar (default is False)
 
     Returns:
-        List of sentences
+        Tuple with the list of document indices and list of sentences
 
     """
-    sentences = sent_tokenize(document)
-    return sentences
+
+    docs = dataframe.to_dict(orient="records")
+
+    sentences: List[str] = []
+    doc_indices: List[str] = []
+
+    if progress_bar:
+        print("Splitting into sentences...")
+        time.sleep(1)
+        docs = tqdm(docs)
+
+    for doc in docs:
+        for sent in nlp(doc["doc"], disable=["tagger", "ner"]).sents:
+            sentences.append(str(sent))
+            doc_indices = doc_indices + [doc["id"]]
+
+    if output_path is not None:
+        with open(output_path, "w") as f:
+            json.dump((doc_indices, sentences), f)
+
+    return (doc_indices, sentences)
 
 
-def filter_sentences(
+def replace_sentences(
     sentences: List[str],
     max_sentence_length: Optional[int] = None,
     max_number_words: Optional[int] = None,
 ) -> List[str]:
-    """
-    Filter list of sentences based on the number of characters length.
 
+    """
+
+    Replace long sentences in list of sentences by empty strings.
     Args:
         max_sentence_length: Keep only sentences with a a number of character lower or equal to max_sentence_length. For max_number_words = max_sentence_length = -1 all sentences are kept.
         max_number_words: Keep only sentences with a a number of words lower or equal to max_number_words. For max_number_words = max_sentence_length = -1 all sentences are kept.
-
     Returns:
-        Filtered list of sentences.
-
+        Replaced list of sentences.
     Examples:
-        >>> filter_sentences(['This is a house'])
+        >>> replace_sentences(['This is a house'])
         ['This is a house']
-        >>> filter_sentences(['This is a house'], max_sentence_length=15)
+        >>> replace_sentences(['This is a house'], max_sentence_length=15)
         ['This is a house']
-        >>> filter_sentences(['This is a house'], max_sentence_length=14)
-        []
-        >>> filter_sentences(['This is a house'], max_number_words=4)
+        >>> replace_sentences(['This is a house'], max_sentence_length=14)
+        ['']
+        >>> replace_sentences(['This is a house'], max_number_words=4)
         ['This is a house']
-        >>> filter_sentences(['This is a house'], max_number_words=3)
-        []
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=18)
+        >>> replace_sentences(['This is a house'], max_number_words=3)
+        ['']
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=18)
         ['This is a house', 'It is a nice house']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=4, max_sentence_length=18)
-        ['This is a house']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=17)
-        ['This is a house']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=0, max_sentence_length=18)
-        []
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=0)
-        []
-        >>> filter_sentences(['This is a house', 'It is a nice house'])
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=4, max_sentence_length=18)
+        ['This is a house', '']
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=17)
+        ['This is a house', '']
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=0, max_sentence_length=18)
+        ['', '']
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=5, max_sentence_length=0)
+        ['', '']
+        >>> replace_sentences(['This is a house', 'It is a nice house'])
         ['This is a house', 'It is a nice house']
-        >>> filter_sentences(['This is a house', 'It is a nice house'], max_number_words=4)
-        ['This is a house']
+        >>> replace_sentences(['This is a house', 'It is a nice house'], max_number_words=4)
+        ['This is a house', '']
+
     """
 
-    if max_sentence_length is None and max_number_words is None:
-        pass
-    elif max_sentence_length == 0 or max_number_words == 0:
-        sentences = []
-    else:
-        if max_sentence_length is not None:
-            sentences = [sent for sent in sentences if len(sent) <= max_sentence_length]
+    if max_sentence_length is not None:
+        sentences = [
+            "" if (len(sent) > max_sentence_length) else sent for sent in sentences
+        ]
 
-            def filter_funct(sent):
-                return len(sent) <= max_sentence_length
-
-        if max_number_words is not None:
-            sentences = [
-                sent for sent in sentences if len(sent.split()) <= max_number_words
-            ]
+    if max_number_words is not None:
+        sentences = [
+            "" if (len(sent.split()) > max_number_words) else sent for sent in sentences
+        ]
 
     return sentences
 
@@ -112,21 +120,26 @@ def group_sentences_in_batches(
     max_batch_char_length: Optional[int] = None,
     batch_size: Optional[int] = None,
 ) -> List[List[str]]:
+
     """
-    Group sentences in batches of given total character length.
+
+    Group sentences in batches of given total character length or size (number of sentences).
+
+    In case a sentence is longer than max_batch_char_length it is replaced with an empty string.
 
     Args:
         sentences: List of sentences
         max_batch_char_length: maximum char length for a batch
-
+        batch_size: number of sentences
     Returns:
         List of batches (list) of sentences.
-
     Examples:
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=15)
         [['This is a house'], ['This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=14)
-        []
+        [['', '']]
+        >>> group_sentences_in_batches(['This is a house','This is a house', 'This is not a house'], max_batch_char_length=15)
+        [['This is a house'], ['This is a house', '']]
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=29)
         [['This is a house'], ['This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=30)
@@ -135,32 +148,29 @@ def group_sentences_in_batches(
         [['This is a house', 'This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], max_batch_char_length=29)
         [['This is a house'], ['This is a house'], ['This is a house']]
+        >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], max_batch_char_length=30)
+        [['This is a house', 'This is a house'], ['This is a house']]
         >>> group_sentences_in_batches(['This is a house','This is a house','This is a house'], batch_size=2)
         [['This is a house', 'This is a house'], ['This is a house']]
+
     """
+
     batches: List[List[str]] = []
 
-    if max_batch_char_length is None and batch_size is None:
-        batches = [sentences]
-    elif max_batch_char_length is not None and batch_size is not None:
-        raise ValueError("max_batch_char_length and batch_size are mutual exclusive.")
-    elif batch_size is not None:
-        batches = [
-            sentences[i : i + batch_size] for i in range(0, len(sentences), batch_size)
-        ]
-    else:
+    if max_batch_char_length is not None and batch_size is not None:
+        raise ValueError("max_batch_char_length and batch_size are mutually exclusive.")
+    elif max_batch_char_length is not None:
+
+        # longer sentences are replaced with an empty string
+        sentences = replace_sentences(
+            sentences, max_sentence_length=max_batch_char_length
+        )
         batch_char_length = 0
         batch: List[str] = []
 
         for el in sentences:
             length = len(el)
             batch_char_length += length
-            if length > max_batch_char_length:
-                warnings.warn(
-                    f"The length of the sentence = {length} > max_batch_length={max_batch_char_length}. The following sentence is skipped: \n > {el}",
-                    RuntimeWarning,
-                )
-                continue
             if batch_char_length > max_batch_char_length:
                 batches.append(batch)
                 batch = [el]
@@ -170,6 +180,13 @@ def group_sentences_in_batches(
 
         if batch:
             batches.append(batch)
+
+    elif batch_size is not None:
+        batches = [
+            sentences[i : i + batch_size] for i in range(0, len(sentences), batch_size)
+        ]
+    else:
+        batches = [sentences]
 
     return batches
 
@@ -185,7 +202,7 @@ wnl = WordNetLemmatizer()
 f_lemmatize = wnl.lemmatize
 
 
-def preprocess(
+def clean_text(
     sentences: List[str],
     remove_punctuation: bool = True,
     remove_digits: bool = True,
@@ -200,7 +217,7 @@ def preprocess(
     remove_n_letter_words: Optional[int] = None,
 ) -> List[str]:
     """
-    Preprocess a list of sentences for word embedding.
+    Clean a list of sentences.
 
     Args:
         sentence: list of sentences
@@ -217,27 +234,26 @@ def preprocess(
         remove_n_letter_words: drop words lesser or equal to n letters (default is None)
     Returns:
         Processed list of sentences
-
     Examples:
-        >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'])
+        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'])
         ['return the factorial of n an exact integer']
-        >>> preprocess(['Learning is usefull.'])
+        >>> clean_text(['Learning is usefull.'])
         ['learning is usefull']
-        >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'], stop_words=['factorial'])
+        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], stop_words=['factorial'])
         ['return the of n an exact integer']
-        >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'], lemmatize=True)
+        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], lemmatize=True)
         ['return the factorial of n an exact integer']
-        >>> preprocess(['Learning is usefull.'],lemmatize=True)
+        >>> clean_text(['Learning is usefull.'],lemmatize=True)
         ['learn be usefull']
-        >>> preprocess([' Return the factorial of n, an  exact integer >= 0.'], stem=True)
+        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], stem=True)
         ['return the factori of n an exact integ']
-        >>> preprocess(['Learning is usefull.'],stem=True)
+        >>> clean_text(['Learning is usefull.'],stem=True)
         ['learn is useful']
-        >>> preprocess(['A1b c\\n\\nde \\t fg\\rkl\\r\\n m+n'])
+        >>> clean_text(['A1b c\\n\\nde \\t fg\\rkl\\r\\n m+n'])
         ['ab c de fg kl mn']
-        >>> preprocess(['This is a sentence with verbs and nice adjectives.'], tags_to_keep = ['V', 'J'])
+        >>> clean_text(['This is a sentence with verbs and nice adjectives.'], tags_to_keep = ['V', 'J'])
         ['is nice']
-        >>> preprocess(['This is a sentence with one and two letter words.'], remove_n_letter_words = 2)
+        >>> clean_text(['This is a sentence with one and two letter words.'], remove_n_letter_words = 2)
         ['this sentence with one and two letter words']
     """
     if lemmatize is True and stem is True:
@@ -326,360 +342,102 @@ def preprocess(
     return sentences
 
 
-def get_role_counts(
-    statements: List[dict],
-    roles: Optional[list] = ["B-V", "ARGO", "ARG1", "ARG2"],
-) -> dict:
+def is_subsequence(v1: list, v2: list) -> bool:
+
     """
 
-    Get role frequency within the corpus from preprocessed semantic roles. Roles considered are specified by the user.
+    Check whether v1 is a subset of v2.
 
     Args:
-        statements: list of dictionaries of postprocessed semantic roles
-        roles: list of roles considered
+        v1: lists of elements
+        v2: list of elements
 
     Returns:
-        Dictionary in which postprocessed semantic roles are keys and their frequency within the corpus are values
-        (e.g. d['verb'] = count)
+        a boolean
 
     Example:
-        >>> test = [{'B-V': ['increase'], 'B-ARGM-NEG': True},{'B-V': ['decrease']},{'B-V': ['decrease']}]\n
-        ... verb_counts = get_role_counts(test, roles = ['B-V'])
-        {'increase': 1, 'decrease': 2}
+        >>> is_subsequence(['united', 'states', 'of', 'europe'],['the', 'united', 'states', 'of', 'america'])
+        False
+        >>> is_subsequence(['united', 'states', 'of'],['the', 'united', 'states', 'of', 'america'])
+        True
+
+    """
+    # TODO: Check whether the order of elements matter, e.g. is_subsequence(["A","B"],["B","A"])
+    return set(v1).issubset(set(v2))
+
+
+def count_values(
+    dicts: List[Dict], keys: Optional[list] = None, progress_bar: bool = False
+) -> Counter:
 
     """
 
-    counts = {}
+    Get a counter with the values of a list of dictionaries, with the conssidered keys given as argument.
 
-    for statement in tqdm(statements):
-        for key in statement.keys():
-            if key in roles:
-                temp = " ".join(statement[key])
-                if temp in counts:
-                    counts[temp] += 1
+    Args:
+        dicts: list of dictionaries
+        keys: keys to consider
+        progress_bar: print a progress bar (default is False)
+
+    Returns:
+        Counter
+
+    Example:
+        >>> count_values([{'B-V': 'increase', 'B-ARGM-NEG': True},{'B-V': 'decrease'},{'B-V': 'decrease'}],keys = ['B-V'])
+        Counter({'decrease': 2, 'increase': 1})
+        >>> count_values([{'B-V': 'increase', 'B-ARGM-NEG': True},{'B-V': 'decrease'},{'B-V': 'decrease'}])
+        Counter()
+
+
+    """
+
+    counts: Dict[str, int] = {}
+
+    if progress_bar:
+        print("Computing role frequencies...")
+        time.sleep(1)
+        dicts = tqdm(dicts)
+
+    if keys is None:
+        return Counter()
+
+    for el in dicts:
+        for key, value in el.items():
+            if key in keys:
+                if value in counts:
+                    counts[value] += 1
                 else:
-                    counts[temp] = 1
+                    counts[value] = 1
 
-    return counts
+    return Counter(counts)
 
 
-def find_synonyms(verb: str) -> List[str]:
+def count_words(sentences: List[str]) -> Counter:
+
     """
 
-    Find synonyms of a given word based on wordnet.
+    A function that computes word frequencies in a list of sentences.
 
     Args:
-        verb: a verb
+        sentences: list of sentences
 
     Returns:
-        a list of synonyms
+        Counter {"word": frequency}
 
     Example:
-        >>> find_synonyms('fight')
-        ['contend', 'fight', 'struggle', 'fight', 'oppose', 'fight_back', 'fight_down', 'defend', 'fight', 'struggle', 'crusade', 'fight', 'press', 'campaign', 'push', 'agitate']
-
-    """
-    synonyms = []
-    for syn in wordnet.synsets(verb, pos=wordnet.VERB):
-        for l in syn.lemmas():
-            synonyms.append(l.name())
-    return synonyms
-
-
-def find_antonyms(verb: str) -> List[str]:
+    >>> count_words(["this is a house"])
+    Counter({'this': 1, 'is': 1, 'a': 1, 'house': 1})
+    >>> count_words(["this is a house", "this is a house"])
+    Counter({'this': 2, 'is': 2, 'a': 2, 'house': 2})
+    >>> count_words([])
+    Counter()
     """
 
-    Find antonyms of a given word based on wordnet.
+    words: List[str] = []
 
-    Args:
-        verb: a verb
+    for sentence in sentences:
+        words.extend(sentence.split())
 
-    Returns:
-        a list of antonyms
+    words_counter = Counter(words)
 
-    Example:
-        >>> find_antonyms('break')
-        ['repair', 'keep', 'conform_to', 'make', 'promote']
-
-    """
-    antonyms = []
-    for syn in wordnet.synsets(verb, pos=wordnet.VERB):
-        for l in syn.lemmas():
-            if l.antonyms():
-                antonyms.append(l.antonyms()[0].name())
-    return antonyms
-
-
-def get_most_frequent(tokens: List[str], token_counts: dict) -> str:
-    """
-
-    Find most frequent token in a list of tokens.
-
-    Args:
-        tokens: a list of tokens
-        token_counts: a dictionary of token frequencies
-
-    Returns:
-        the most frequent token in the list of tokens
-
-    """
-
-    freq = 0
-    for candidate in tokens:
-        if candidate in token_counts:
-            if token_counts[candidate] > freq:
-                freq = token_counts[candidate]
-                most_freq_verb = candidate
-    return most_freq_verb
-
-
-def clean_verbs(statements: List[dict], verb_counts: dict) -> List[dict]:
-    """
-
-    Replace verbs by their most frequent synonym or antonym.
-    If a verb is combined with a negation in the statement (e.g. 'not increase'),
-    it is replaced by its most frequent antonym and the negation is removed (e.g. "decrease").
-
-    Args:
-        statements: a list of dictionaries of postprocessed semantic roles
-        verb_counts: a dictionary of verb counts (e.g. d['verb'] = count)
-
-    Returns:
-        a list of dictionaries of postprocessed semantic roles with replaced verbs (same format as statements)
-
-    Example:
-        >>> test = [{'B-V': ['increase'], 'B-ARGM-NEG': True},{'B-V': ['decrease']},{'B-V': ['decrease']}]\n
-        ... verb_counts = get_role_counts(test, roles = ['B-V'])\n
-        ... clean_verbs(test, verb_counts = verb_counts)
-        [{'B-V': ['decrease']}, {'B-V': ['decrease']}, {'B-V': ['decrease']}]
-
-    """
-
-    new_roles_all = []
-    for roles in tqdm(statements):
-        new_roles = deepcopy(roles)
-        if "B-V" in roles:
-            verb = " ".join(new_roles["B-V"])
-            if "B-ARGM-NEG" in roles:
-                verbs = find_antonyms(verb) + [verb]
-                most_freq_verb = get_most_frequent(
-                    tokens=verbs, token_counts=verb_counts
-                )
-                if most_freq_verb != verb:
-                    new_roles["B-V"] = [most_freq_verb]
-                    del new_roles["B-ARGM-NEG"]
-            else:
-                verbs = find_synonyms(verb) + [verb]
-                most_freq_verb = get_most_frequent(
-                    tokens=verbs, token_counts=verb_counts
-                )
-                new_roles["B-V"] = [most_freq_verb]
-        new_roles_all.append(new_roles)
-    return new_roles_all
-
-
-class UsedRoles:
-    """
-    A dict like class for used roles.
-
-    The class has predefined keys and one cannot delete nor add new keys.
-
-    Example:
-    >>> used_roles = UsedRoles(); used_roles
-    {'ARGO': True, 'ARG1': True, 'ARG2': False, 'B-V': True, 'B-ARGM-MOD': True, 'B-ARGM-NEG': True}
-    >>> used_roles = UsedRoles(); used_roles["ARG2"]
-    False
-    >>> used_roles = UsedRoles(); used_roles["ARG2"] = True; used_roles
-    {'ARGO': True, 'ARG1': True, 'ARG2': True, 'B-V': True, 'B-ARGM-MOD': True, 'B-ARGM-NEG': True}
-    """
-
-    # The order of roles is critical in other modules.
-    # In cooccurrence the B-V is grouped with B-... and all roles before B-V
-    # should be clustered in word embedding
-    _roles = {
-        "ARGO": True,
-        "ARG1": True,
-        "ARG2": False,
-        "B-V": True,
-        "B-ARGM-MOD": True,
-        "B-ARGM-NEG": True,
-    }
-    _not_embeddable = ("B-ARGM-MOD", "B-ARGM-NEG")
-
-    def __init__(self, roles: Optional[Dict[str, bool]] = None):
-        if roles is not None:
-            self.update(roles)
-
-    def _check_key(self, key):
-        if key not in self._roles.keys():
-            raise ValueError(
-                f"role_name {key} not in allowed set {self._roles.keys()}."
-            )
-
-    def _check_value(self, key, value):
-        if not isinstance(value, bool):
-            raise ValueError(
-                f"role[{key}]={value} where type({value})={type(value)} but only boolean values allowed."
-            )
-
-    def __repr__(self):
-        return repr(self._roles)
-
-    def __str__(self):
-        return str(self._roles)
-
-    def __setitem__(self, role_name: str, value: bool):
-        role = {role_name: value}
-        self.update(role)
-
-    def __getitem__(self, role_name):
-        return self._roles[role_name]
-
-    def __len__(self):
-        return len(self._roles)
-
-    def __iter__(self):
-        return iter(self._roles)
-
-    def items(self):
-        return self._roles.items()
-
-    def keys(self):
-        return self._roles.keys()
-
-    def values(self):
-        return self._roles.values()
-
-    def update(self, roles: Dict[str, bool]):
-        for key, value in roles.items():
-            self._check_key(key)
-            self._check_value(key, value)
-            self._roles[key] = value
-
-    def as_dict(self):
-        return self._roles.copy()
-
-    @property
-    def embeddable(self):
-        role_names = []
-        for el, value in self._roles.items():
-            if value and (el not in self._not_embeddable):
-                role_names.append(el)
-        return tuple(role_names)
-
-    @property
-    def not_embeddable(self):
-        return self._not_embeddable
-
-    @property
-    def used(self):
-        return tuple([el for el, value in self._roles.items() if value])
-
-
-class Document(NamedTuple):
-    path: str
-    statement_start_index: int
-
-
-class DocumentTracker:
-    def __init__(self, documents, sentence_index, build_statement_df: bool = True):
-        self._sentence_index = sentence_index
-        _df = pd.DataFrame(documents).set_index("path")
-        _df["statement_end_index"] = (
-            _df.squeeze().shift(-1, fill_value=sentence_index.size) - 1
-        )
-
-        ## remove empty documents
-        empty_paths = _df["statement_start_index"] > _df["statement_end_index"]
-        _df = _df[~empty_paths]
-
-        _df["number_of_sentences"] = (
-            sentence_index[_df.loc[:, "statement_end_index"]]
-            - sentence_index[_df.loc[:, "statement_start_index"]]
-        ) + 1
-        self.doc = _df.reset_index()
-
-        if build_statement_df:
-            self.build_statement_df()
-        else:
-            self.__has_statement_df = False
-
-    def find_doc(self, statement_index):
-        mask = (self.doc.loc[:, "statement_start_index"] <= statement_index) & (
-            statement_index <= self.doc.loc[:, "statement_end_index"]
-        )
-        res = self.doc[mask].copy()
-        res["sentence_index_inside_doc"] = (
-            self._sentence_index[statement_index]
-            - self._sentence_index[res.loc[:, "statement_start_index"]]
-        )
-        return res
-
-    def build_statement_df(self):
-        df = self.doc.copy(deep=True)
-        df["statement"] = (
-            "range("
-            + df.statement_start_index.astype(str)
-            + ","
-            + (df.statement_end_index + 1).astype(str)
-            + ")"
-        ).map(eval)
-
-        df = df.explode("statement")
-
-        df = df.set_index("statement")
-        df["sentence_index"] = self._sentence_index
-
-        ## find which sentence in the corresponding document
-
-        df["sentence_index_in_doc"] = (
-            df.sentence_index.values
-            - df.loc[df.statement_start_index, "sentence_index"].values
-        )
-
-        ## make the object
-        df["statement_index_in_sentences"] = self.find_local_position(
-            df.sentence_index_in_doc
-        )
-
-        self.statement_df = df
-        self.__has_statement_df = True
-
-    def find_statement(self, statement_index):
-        if not self.__has_statement_df:
-            raise ValueError("you have to call first build_statement_df() method")
-        res = self.statement_df.loc[statement_index, :]
-        with open(res.path) as json_file:
-            srl_output = json.load(json_file)
-
-        ## Similar to extract_role_per_sentence from semantic_role_labeling.py
-        local_index = 0
-        for statement_dict in srl_output[res.sentence_index_in_doc]["verbs"]:
-            tag_list = statement_dict["tags"]
-            if any("ARG" in tag for tag in tag_list):
-                if local_index == res.statement_index_in_sentences:
-                    return statement_dict["description"]
-                else:
-                    local_index += 1
-            else:
-                continue
-
-    @staticmethod
-    def find_local_position(s: pd.Series):
-        ## find which local position has an element in case consecutive equal elements
-        ## from a series of indexes [0,1,1,2,2,2,3,4] we want [0,0,1,0,1,2,0,0]
-        ## we do this in 3 steps:
-        ## 1: identify consecutive equal elements by doing a shift difference so [0,1,1,2,2,2,3,4] -> [-1,1,0,]
-        ## 2: replace all null elements with 1 and the other ones with 0
-        ## 3: for each subarrays delimited by zeros do a cumsum
-
-        ## 1
-        a = (s - s.shift(fill_value=-1)).values
-
-        ## 2
-        a = np.where(a == 0, 1, 0)
-
-        ## 3
-        a = np.concatenate([np.cumsum(el) for el in np.split(a, np.where(a == 0)[0])])
-
-        return a
+    return words_counter
