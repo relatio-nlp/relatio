@@ -10,7 +10,10 @@ git clone git@github.com:elliottash/narrative-nlp.git
 # go in the main directory
 cd narrative-nlp
 
-# install it
+# upgrade pip, wheel and setuptools
+python -m pip install -U pip wheel setuptools
+
+# install the project
 python -m pip install -e .
 
 # download SpaCy and NLTK additional resources
