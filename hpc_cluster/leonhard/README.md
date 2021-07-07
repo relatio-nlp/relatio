@@ -1,77 +1,53 @@
-# narrativeNLP
-A Python package to extract narrative statements from text.
+# narrative-nlp
+code base for constructing narrative statements from text
 
-## Installation
+## Installation on Leonhard Cluster
 
-It is highly recommended to use a virtual environment (or conda environment) for the installation.
+It is highly recommended to use a virtual environment for the installation.
 
 ```bash
-# clone the project
-$ git clone git@github.com:elliottash/narrative-nlp.git
+# it is expected that you are on the cluster in the main directory of the repo narrative-nlp
 
-# go in the main directory
-$ cd narrative-nlp
+# load python_gpu module
+$ module load python_gpu/3.7.4
 
-# upgrade pip, wheel and setuptools
-python -m pip install -U pip wheel setuptools
+# upgrade pip
+$ pip install --upgrade pip
 
-# install the project
+# update / install wheels and setuptools
+$ pip install -U wheel setuptools
+
+# install it
 python -m pip install -e .
-
-# download SpaCy and NLTK additional resources
-python -m spacy download en_core_web_sm
-python -m nltk.downloader punkt wordnet stopwords averaged_perceptron_tagger
 ```
 
 In case you want to use Jupyter make sure that you have it installed in the current environment.
 
-## Development
-
-### Prepare the development environment
-You need `python3.7`, `git` and [tox](https://tox.readthedocs.io/en/latest/).  
-A recent version of `wheel` and `pip>21.0` are desired for the python versions that you want to use.
+## Test GPU on Leonhard Cluster
 
 ```bash
-# clone the project
-$ git clone git@github.com:elliottash/narrative-nlp.git
+## start an interactive
+$ bsub -n 1 -Is -W 2:00 -R "rusage[mem=10000,ngpus_excl_p=1] select[gpu_model0==GeForceRTX2080Ti]" bash
 
-# go in the main directory
-$ cd narrative-nlp
+## wait until you get the requested resources <<Waiting for dispatch ...>>
 
-# create the development environment
-$ tox -e dev
-# in case you do not have tox use directly .binder/requirements_dev.txt
+## load modules (eth_proxy is needed to download from external sources)
+$ module load python_gpu/3.7.4 eth_proxy
 
-# activate the development environment
-$ source .tox/dev/bin/activate
+## in case you use an environment load it as well
 
-# download SpaCy and NLTK additional resources
-(dev)$ python -m spacy download en_core_web_sm
-(dev)$ python -m nltk.downloader punkt wordnet stopwords averaged_perceptron_tagger
+## test whether PyTorch is using the GPU ("True" output expected)
+$ python -c "import torch; print(torch.cuda.is_available())"
 
-# install the hooks
-(dev)$ pre-commit install
-
-# OPTIONAL: make your IPython kernel in one env available to Jupyter in a different env
-(dev)$ python -m ipykernel install --user --name py37_narrativeNLP --display-name "Python 3.7 (narrativeNLP)"
+## In case the output is False redo the installation
+## In case the output is True test SRL
+$ python hpc_cluster/leonhard/test_SRL.py
 ```
-
-### Testing
-
-You can easily test using `tox` on `python3.7`, `python3.8`, and `python3.9`.
-
-```bash
-$ tox -e py37 # python3.7 required
-$ tox -e py38 # python3.8 required
-$ tox -e py39 # python3.9 required
-```
-
-So far it works only with `python3.7` probably due to implications from `allennlp <1` requirement.
 
 ## DEPRECATED - Installation using Conda
 
 ### Only for Windows10
-One can use conda native for Windows10 or a Linux-like experience via Windows Subsystems for Linux. For compatibility reasons the second option is the recommended.
+One can use conda native for Windows10 or a Linux-like experience via Windows Subsystems for Linux. For compatibility reasons the second option is the recommended. 
 
 #### Recommended - WSL and Conda
 - [Install Windows Subsystems for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10#install-the-windows-subsystem-for-linux)
@@ -88,7 +64,7 @@ One can use conda native for Windows10 or a Linux-like experience via Windows Su
  `cd /cluster/work/lawecon/Projects/Ash_Gauthier_Widmer/Andrei`  
  If you don't have your folder create one.
  - make sure that you are in the folder that you expect run `pwd` and it should be `/cluster/work/...`
-- download `wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh`
+- download `wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh` 
 - install it `bash Miniconda3-latest-Linux-x86_64.sh -p ${PWD}/miniconda3`
     - after you accept the license pay attention at the **location:** where miniconda is going to be installed. It should be miniconda3 folder inside your folder from `/cluster/work/...`
     - I recommend to run conda init
@@ -138,7 +114,7 @@ In case you need more resources ask for them (see [here](https://scicomp.ethz.ch
 - activate the desired conda environment: `conda activate narrative-nlp`
 - just once: `pip install pycuda mpi4py`
 - only for ipyparallel: `ipcluster start --ip="*" --location=$(hostname) --engines=MPI -n 6 &`
-- start jupyter notebook without browser: `jupyter notebook --no-browser --ip $(hostname -i)` .
+- start jupyter notebook without browser: `jupyter notebook --no-browser --ip $(hostname -i)` . 
 Pay attention at the remote_ip, remote_port and token, e.g. `http://remote_ip:remote_port/?token=token` . The remote_is is not `127.0.0.1`
 
 **On your PC (WSL for windows)**
@@ -147,7 +123,7 @@ Pay attention at the remote_ip, remote_port and token, e.g. `http://remote_ip:re
 - In your favourite browser open `http://localhost:port_local`. You might need the token.
 - Once you are done press on `Quit` in jupyter notebook and close your terminal (`Ctrl+C`), stop ipcluster `ipcluster stop` and `exit` from the interactive session (**on Leonhard**)
 ### Example
-See [Example.ipynb](./Notebooks/Example.ipynb).
+See [Example.ipynb](./Notebooks/Example.ipynb). 
 In your python script or Jupyter Notebook add to the path `narrative-nlp/code` and use any module as desired
 ```python
 import sys
@@ -165,7 +141,7 @@ python -m pip install black pytest mypy bandit pylint flake8 pydocstyle line_pro
 ```
 
 ### Tools
-- Auto-formatter:
+- Auto-formatter: 
     - [black](https://black.readthedocs.io/en/stable/) that might break the [79 characters maximum line length](https://www.python.org/dev/peps/pep-0008/#maximum-line-length) from PEP8 (see [here](https://github.com/psf/black#line-length))
     - [isort](https://timothycrosley.github.io/isort/): "isort your imports, so you don't have to." . Used with black line length and trailing comma `-l 88 -tc`
 - Testing via [pytest](https://docs.pytest.org/en/latest/) with `--doctest-modules` enabled (see [doctest](http://doc.pytest.org/en/latest/doctest.html))
