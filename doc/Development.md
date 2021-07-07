@@ -18,10 +18,6 @@ $ tox -e dev
 # activate the development environment
 $ source .tox/dev/bin/activate
 
-# download SpaCy and NLTK additional resources
-(dev)$ python -m spacy download en_core_web_sm
-(dev)$ python -m nltk.downloader punkt wordnet stopwords averaged_perceptron_tagger
-
 # install the hooks
 (dev)$ pre-commit install
 
