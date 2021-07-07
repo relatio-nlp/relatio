@@ -12,12 +12,6 @@ $ git clone git@github.com:elliottash/narrative-nlp.git
 # go in the main directory
 $ cd narrative-nlp
 
-# upgrade pip
-$ pip install --upgrade pip
-
-# update / install wheels and setuptools
-$ pip install -U wheel setuptools
-
 # upgrade pip, wheel and setuptools
 python -m pip install -U pip wheel setuptools
 
