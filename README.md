@@ -3,7 +3,7 @@ A Python package to extract narrative statements from text.
 
 ## Installation
 
-It requires Python3.7 and pip.  
+It requires Python 3.7 (or 3.8) and pip.  
 It is highly recommended to use a virtual environment (or conda environment) for the installation.
 
 ```bash
