@@ -13,7 +13,6 @@ $ cd narrative-nlp
 
 # create the development environment
 $ tox -e dev
-# in case you do not have tox use directly .binder/requirements_dev.txt
 
 # activate the development environment
 $ source .tox/dev/bin/activate
