@@ -390,7 +390,7 @@ def get_narratives(
     srl_res: List[dict],
     doc_index: List[int],
     narrative_model: dict,
-    n_clusters: List[List[int]],  # k means model you want to use
+    n_clusters: List[int],  # k means model you want to use
     output_path: Optional[str] = None,
     cluster_labeling: Optional[str] = "most_frequent",
     progress_bar: bool = False,
