@@ -31,6 +31,7 @@ def split_into_sentences(
 
     Args:
         dataframe: a pandas dataframe with one column "id" and one column "doc"
+        output_path: path to save the output
         progress_bar: print a progress bar (default is False)
 
     Returns:
@@ -69,11 +70,15 @@ def replace_sentences(
     """
 
     Replace long sentences in list of sentences by empty strings.
+
     Args:
+        sentences: list of sentences
         max_sentence_length: Keep only sentences with a a number of character lower or equal to max_sentence_length. For max_number_words = max_sentence_length = -1 all sentences are kept.
         max_number_words: Keep only sentences with a a number of words lower or equal to max_number_words. For max_number_words = max_sentence_length = -1 all sentences are kept.
+
     Returns:
         Replaced list of sentences.
+
     Examples:
         >>> replace_sentences(['This is a house'])
         ['This is a house']
@@ -131,8 +136,10 @@ def group_sentences_in_batches(
         sentences: List of sentences
         max_batch_char_length: maximum char length for a batch
         batch_size: number of sentences
+
     Returns:
         List of batches (list) of sentences.
+
     Examples:
         >>> group_sentences_in_batches(['This is a house','This is a house'], max_batch_char_length=15)
         [['This is a house'], ['This is a house']]
@@ -216,11 +223,13 @@ def clean_text(
     tags_to_keep: Optional[List[str]] = None,
     remove_n_letter_words: Optional[int] = None,
 ) -> List[str]:
+
     """
+
     Clean a list of sentences.
 
     Args:
-        sentence: list of sentences
+        sentences: list of sentences
         remove_punctuation: whether to remove string.punctuation
         remove_digits: whether to remove string.digits
         remove_chars: remove the given characters
@@ -232,8 +241,10 @@ def clean_text(
         stem: whether to stem using nltk.SnowballStemmer("english")
         tags_to_keep: list of grammatical tags to keep (common tags: ['V', 'N', 'J'])
         remove_n_letter_words: drop words lesser or equal to n letters (default is None)
+
     Returns:
         Processed list of sentences
+
     Examples:
         >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'])
         ['return the factorial of n an exact integer']
@@ -255,7 +266,9 @@ def clean_text(
         ['is nice']
         >>> clean_text(['This is a sentence with one and two letter words.'], remove_n_letter_words = 2)
         ['this sentence with one and two letter words']
+
     """
+
     if lemmatize is True and stem is True:
         raise ValueError("lemmatize and stemming cannot be both True")
     if stop_words is not None and lowercase is False:
@@ -387,7 +400,6 @@ def count_values(
         Counter({'decrease': 2, 'increase': 1})
         >>> count_values([{'B-V': 'increase', 'B-ARGM-NEG': True},{'B-V': 'decrease'},{'B-V': 'decrease'}])
         Counter()
-
 
     """
 

@@ -23,11 +23,12 @@ def compute_sif_weights(words_counter: dict, alpha: Optional[float] = 0.001) -> 
 
     """
 
-    A function that computes SIF weights based on word frequencies.
+    A function that computes smooth inverse frequency (SIF) weights based on word frequencies.
+    (See "Arora, S., Liang, Y., & Ma, T. (2016). A simple but tough-to-beat baseline for sentence embeddings.")
 
     Args:
         words_counter: a dictionary {"word": frequency}
-        alpha: regularization parameter (see original paper)
+        alpha: regularization parameter
 
     Returns:
         A dictionary {"word": SIF weight}
@@ -97,8 +98,10 @@ def get_vector(tokens: List[str], model: Union[USE, SIF_word2vec, SIF_keyed_vect
 
     Args:
         tokens: list of string tokens to embed
-        model: trained embedding model
-        (e.g. either Universal Sentence Encoders, a full gensim Word2Vec model or gensim Keyed Vectors)
+        model: trained embedding model. It can be either:
+         - Universal Sentence Encoders (USE)
+         - a full gensim Word2Vec model (SIF_word2vec)
+         - gensim Keyed Vectors based on a pre-trained model (SIF_keyed_vectors)
 
     Returns:
         A two-dimensional numpy array (1,dimension of the embedding space)
@@ -137,13 +140,15 @@ def get_vectors(
 
     """
 
-    A function to train a kmeans model on the corpus.
+    A function to train a K-Means model on the corpus.
 
     Args:
         postproc_roles: list of statements
-        model: trained embedding model
-        (e.g. either Universal Sentence Encoders, a full gensim Word2Vec model or gensim Keyed Vectors)
-        used_roles: list of roles
+        model: trained embedding model. It can be either:
+         - Universal Sentence Encoders (USE)
+         - a full gensim Word2Vec model (SIF_word2vec)
+         - gensim Keyed Vectors based on a pre-trained model (SIF_keyed_vectors)
+        used_roles: list of semantic roles to cluster together
 
     Returns:
         A list of vectors
@@ -179,14 +184,15 @@ def train_cluster_model(
 
     Args:
         vecs: list of vectors
-        model: trained embedding model
-        (e.g. either Universal Sentence Encoders, a full gensim Word2Vec model or gensim Keyed Vectors)
-        n_clusters: number of clusters
+        model: trained embedding model. It can be either:
+         - Universal Sentence Encoders (USE)
+         - a full gensim Word2Vec model (SIF_word2vec)
+         - gensim Keyed Vectors based on a pre-trained model (SIF_keyed_vectors)
         random_state: seed for replication (default is 0)
         verbose: see Scikit-learn documentation for details
 
     Returns:
-        A sklearn kmeans model
+        A Scikit-learn kmeans model
 
     """
 
@@ -215,7 +221,7 @@ def get_clusters(
         model: trained embedding model
         (e.g. either Universal Sentence Encoders, a full gensim Word2Vec model or gensim Keyed Vectors)
         kmeans = a pre-trained sklearn kmeans model
-        used_roles: list of roles
+        used_roles: list of semantic roles to consider
         progress_bar: print a progress bar (default is False)
         suffix: suffix for the new dimension-reduced role's name (e.g. 'ARGO_lowdim')
 
@@ -302,8 +308,9 @@ def label_clusters_most_similar(kmeans, model) -> dict:
 
     Args:
         kmeans: the trained kmeans model
-        model: trained embedding model
-        (e.g. a full gensim Word2Vec model or gensim Keyed Vectors)
+        model: trained embedding model. It can be either:
+         - a full gensim Word2Vec model (SIF_word2vec)
+         - gensim Keyed Vectors based on a pre-trained model (SIF_keyed_vectors)
 
     Returns:
         A dictionary associating to each cluster number a label

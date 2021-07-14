@@ -126,7 +126,7 @@ def extract_roles(
 
     Args:
         srl: srl output
-        used_roles: list of roles
+        used_roles: list of semantic roles to extract
         progress_bar: print a progress bar (default is False)
 
     Returns:
@@ -160,7 +160,7 @@ def extract_role_per_sentence(
 
     Args:
         srl: srl output
-        used_roles: list of roles
+        used_roles: list of semantic roles to extract
 
     Returns:
         List of statements with their associated roles for a given sentence
@@ -219,9 +219,15 @@ def process_roles(
 
     """
 
-    max_length = remove roles of more than n tokens (NB: very long roles tend to be uninformative in our context)
-    progress_bar: print a progress bar (default is False)
-    For other arguments see utils.clean_text.
+    Takes a list of raw extracted semantic roles and cleans the text.
+
+    Args:
+        max_length = remove roles of more than n characters (NB: very long roles tend to be uninformative)
+        progress_bar: print a progress bar (default is False)
+        For other arguments see utils.clean_text.
+
+    Returns:
+        List of processed statements
 
     """
 
@@ -267,6 +273,20 @@ def process_roles(
 def rename_arguments(
     statements: List[dict], progress_bar: bool = False, suffix: str = "_highdim"
 ):
+
+    """
+
+    Takes a list of dictionaries and renames the keys of the dictionary with an extra user-specified suffix.
+
+    Args:
+        statements: list of statements
+        progress_bar: print a progress bar (default is False)
+        suffix: extra suffix to add to the keys of the dictionaries
+
+    Returns:
+        List of dictionaries with renamed keys.
+
+    """
 
     roles_copy = deepcopy(statements)
 

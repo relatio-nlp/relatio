@@ -80,10 +80,10 @@ def draw_graph(
     networkx_graph,
     notebook=True,
     output_filename="graph.html",
-    show_buttons=False,
-    only_physics_buttons=False,
     width="1000px",
     height="1000px",
+    show_buttons=False,
+    only_physics_buttons=False,
 ):
     """
     This function accepts a networkx graph object,

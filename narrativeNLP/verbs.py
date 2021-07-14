@@ -16,10 +16,13 @@ def find_synonyms(verb: str) -> List[str]:
     """
 
     Find synonyms of a given word based on wordnet.
+
     Args:
         verb: a verb
+
     Returns:
         a list of synonyms
+
     Example:
         >>> find_synonyms('fight')
         ['contend', 'fight', 'struggle', 'fight', 'oppose', 'fight_back', 'fight_down', 'defend', 'fight', 'struggle', 'crusade', 'fight', 'press', 'campaign', 'push', 'agitate']
@@ -40,10 +43,13 @@ def find_antonyms(verb: str) -> List[str]:
     """
 
     Find antonyms of a given word based on wordnet.
+
     Args:
         verb: a verb
+
     Returns:
         a list of antonyms
+
     Example:
         >>> find_antonyms('break')
         ['repair', 'keep', 'conform_to', 'make', 'promote']
@@ -69,6 +75,7 @@ def get_most_frequent(tokens: List[str], token_counts: Counter) -> Optional[str]
     Args:
         tokens: a list of tokens
         token_counts: a dictionary of token frequencies
+
     Returns:
         the most frequent token in the list of tokens
 
@@ -100,13 +107,13 @@ def clean_verbs(
     it is replaced by its most frequent antonym and the negation is removed (e.g. "decrease").
 
     Args:
-        statements: a list of dictionaries of postprocessed semantic roles
-        verb_counts: a dictionary of verb counts (e.g. d['verb'] = count)
+        statements: list of statements
+        verb_counts: a counter of verb counts (e.g. d['verb'] = count)
         progress_bar: print a progress bar (default is False)
         suffix: suffix for the new dimension-reduced verb's name (e.g. 'B-V_lowdim')
 
     Returns:
-        a list of dictionaries of postprocessed semantic roles with replaced verbs (same format as statements)
+        a list of dictionaries of processed semantic roles with replaced verbs (same format as statements)
 
     Example:
         >>> test = [{'B-V': ['increase'], 'B-ARGM-NEG': True},{'B-V': ['decrease']},{'B-V': ['decrease']}]\n

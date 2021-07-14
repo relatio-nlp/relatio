@@ -31,8 +31,8 @@ srl_res = run_srl(
 
 # As sentence splitting and SRL is time-consuming, we download the results from the datasets module.
 
-# split_sentences = load_trump_data("split_sentences")
-# srl_res = load_trump_data("srl_res")
+split_sentences = load_trump_data("split_sentences")
+srl_res = load_trump_data("srl_res")
 
 # Build the narrative model
 # This will take several minutes to run. You might want to grab a coffee.
@@ -46,10 +46,10 @@ narrative_model = build_narrative_model(
     roles_with_embeddings=[["ARG0", "ARG1", "ARG2"]],
     embeddings_type="gensim_keyed_vectors",  # see documentation for a list of supported types
     embeddings_path="glove-wiki-gigaword-300",
-    n_clusters=[[10, 20]],  # try different cluster numbers
-    verbose=1,
+    n_clusters=[[50, 100]],  # try different cluster numbers
+    verbose=0,
     roles_with_entities=["ARG0", "ARG1", "ARG2"],
-    top_n_entities=10,
+    top_n_entities=50,
     dimension_reduce_verbs=True,
     output_path=None,
     max_length=None,
@@ -76,7 +76,7 @@ final_statements = get_narratives(
     doc_index=split_sentences[0],  # doc names
     narrative_model=narrative_model,
     output_path=None,
-    n_clusters=[0],  # pick model with 10 clusters
+    n_clusters=[0],  # pick model with 5O clusters
     cluster_labeling="most_frequent",
     progress_bar=True,
 )
@@ -87,6 +87,7 @@ from narrativeNLP.graphs import build_graph, draw_graph
 
 temp = final_statements[["ARG0_lowdim", "ARG1_lowdim", "B-V_lowdim"]]
 temp.columns = ["ARG0", "ARG1", "B-V"]
+temp = temp[(temp["ARG0"] != "") & (temp["ARG1"] != "") & (temp["B-V"] != "")]
 temp = temp.groupby(["ARG0", "ARG1", "B-V"]).size().reset_index(name="weight")
 temp = temp.sort_values(by="weight", ascending=False).iloc[
     0:100

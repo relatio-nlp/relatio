@@ -76,7 +76,7 @@ def run_srl(
     return srl_res
 
 
-def build_narrative_model(  # add more control for the user on clustering (n_jobs, random_state, etc.)
+def build_narrative_model(
     srl_res: List[dict],
     sentences: List[str],
     roles_considered: List[str] = [
@@ -103,7 +103,7 @@ def build_narrative_model(  # add more control for the user on clustering (n_job
     roles_with_embeddings: List[List[str]] = [["ARG0", "ARG1", "ARG2"]],
     embeddings_type: Optional[str] = None,
     embeddings_path: Optional[str] = None,
-    n_clusters: List[int] = [1],
+    n_clusters: List[List[int]] = [[1]],
     verbose: int = 0,
     random_state: int = 0,
     roles_with_entities: List[str] = ["ARG0", "ARG1", "ARG2"],
@@ -390,7 +390,7 @@ def get_narratives(
     srl_res: List[dict],
     doc_index: List[int],
     narrative_model: dict,
-    n_clusters: List[int],  # k means model you want to use
+    n_clusters: List[List[int]],  # k means model you want to use
     output_path: Optional[str] = None,
     cluster_labeling: Optional[str] = "most_frequent",
     progress_bar: bool = False,
@@ -404,9 +404,8 @@ def get_narratives(
         srl_res: sentences labeled with their semantic roles
         doc_index: list of indices to keep track of original documents
         narrative_model: dict with the specifics of the narrative model
+        n_clusters: clustering scenario to use for each group of semantic roles
         output_path: path to save the narrative model (default is None, which means no saving to disk)
-        filter_complete_narratives: keep only narratives with at least an agent, a verb and a patient
-        (default is True)
         cluster_labeling: either 'most_frequent' or 'most_similar'
         progress_bar: print a progress bar (default is False)
 
