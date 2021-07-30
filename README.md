@@ -34,6 +34,6 @@ If you are interested in contributing to the project please read the [Developmen
 * [Elliott Ash](elliottash.com), ETH Zurich
 * [Germain Gauthier](https://pinchofdata.github.io/germaingauthier/), CREST
 * [Andrei Plamada](https://www.linkedin.com/in/andreiplamada), ETH Zurich
-* [Philine Widmer](https://philinew.github.io/), University of St. Gallen
+* [Philine Widmer](https://philinew.github.io/), University of St.Gallen
 
 with a special thanks for support of [ETH Scientific IT Services](https://sis.id.ethz.ch/).
