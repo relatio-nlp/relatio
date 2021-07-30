@@ -1,18 +1,18 @@
 # Browse list of available datasets
 
-from narrativeNLP.datasets import list_datasets
+from relatio.datasets import list_datasets
 
 print(list_datasets())
 
 # Load an available dataset
 
-from narrativeNLP.datasets import load_trump_data
+from relatio.datasets import load_trump_data
 
 df = load_trump_data("raw")
 
 # Split into sentences (example on 100 tweets)
 
-from narrativeNLP.utils import split_into_sentences
+from relatio.utils import split_into_sentences
 
 split_sentences = split_into_sentences(
     df.iloc[0:100], output_path=None, progress_bar=True
@@ -20,7 +20,7 @@ split_sentences = split_into_sentences(
 
 # Run SRL (example on a 100 tweets)
 
-from narrativeNLP.wrappers import run_srl
+from relatio.wrappers import run_srl
 
 srl_res = run_srl(
     path="https://storage.googleapis.com/allennlp-public-models/openie-model.2020.03.26.tar.gz",
@@ -37,7 +37,7 @@ srl_res = load_trump_data("srl_res")
 # Build the narrative model
 # This will take several minutes to run. You might want to grab a coffee.
 
-from narrativeNLP.wrappers import build_narrative_model
+from relatio.wrappers import build_narrative_model
 
 narrative_model = build_narrative_model(
     srl_res=srl_res,
@@ -69,7 +69,7 @@ narrative_model = build_narrative_model(
 
 # Get narrative blocks based on the narrative_model and srl_res.
 
-from narrativeNLP.wrappers import get_narratives
+from relatio.wrappers import get_narratives
 
 final_statements = get_narratives(
     srl_res=srl_res,
@@ -83,7 +83,7 @@ final_statements = get_narratives(
 
 # Plot network (preliminary)
 
-from narrativeNLP.graphs import build_graph, draw_graph
+from relatio.graphs import build_graph, draw_graph
 
 temp = final_statements[["ARG0_lowdim", "ARG1_lowdim", "B-V_lowdim"]]
 temp.columns = ["ARG0", "ARG1", "B-V"]

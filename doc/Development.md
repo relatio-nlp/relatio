@@ -6,10 +6,10 @@ A recent version of `wheel` and `pip>21.0` are desired for the python versions t
 
 ```bash
 # clone the project
-$ git clone git@github.com:elliottash/narrative-nlp.git
+$ git clone https://github.com/relatio-nlp/relatio
 
 # go in the main directory
-$ cd narrative-nlp
+$ cd relatio
 
 # create the development environment
 $ tox -e dev
@@ -21,7 +21,7 @@ $ source .tox/dev/bin/activate
 (dev)$ pre-commit install
 
 # OPTIONAL: make your IPython kernel in one env available to Jupyter in a different env
-(dev)$ python -m ipykernel install --user --name py37_narrativeNLP --display-name "Python 3.7 (narrativeNLP)"
+(dev)$ python -m ipykernel install --user --name py37_relatio --display-name "Python 3.7 (relatio)"
 ```
 
 ## Testing
