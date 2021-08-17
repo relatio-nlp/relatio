@@ -20,7 +20,7 @@ $ source .tox/dev/bin/activate
 # install the hooks
 (dev)$ pre-commit install
 
-# OPTIONAL: make your IPython kernel in one env available to Jupyter in a different env
+# OPTIONAL: make your IPython kernel available to Jupyter in a different env
 (dev)$ python -m ipykernel install --user --name py37_relatio --display-name "Python 3.7 (relatio)"
 ```
 
@@ -33,7 +33,7 @@ $ tox -e py38 # python3.8 required
 $ tox -e py39 # python3.9 required
 ```
 
-So far it works only with `python3.7` probably due to implications from `allennlp <1` requirement.
+So far it works only with `python3.7` and `python3.8`.
 
 
 ## Tools
