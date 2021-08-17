@@ -21,7 +21,7 @@ from .clustering import (
     train_cluster_model,
 )
 from .named_entity_recognition import map_entities, mine_entities
-from .semantic_role_labeling import SRL, extract_roles, rename_arguments, process_roles
+from .semantic_role_labeling import SRL, extract_roles, process_roles, rename_arguments
 from .utils import clean_text, count_values, is_subsequence
 from .verbs import clean_verbs
 
@@ -34,8 +34,6 @@ def run_srl(
     cuda_device: int = -1,
     max_sentence_length: Optional[int] = None,
     max_number_words: Optional[int] = None,
-    cuda_empty_cache: bool = None,
-    cuda_sleep: float = None,
     output_path: Optional[str] = None,
     progress_bar: bool = False,
 ):
@@ -47,7 +45,11 @@ def run_srl(
     Args:
         path: location of the SRL model to be used
         sentences: list of sentences
-        SRL_options: see class SRL()
+        batch_size: number of sentences in a batch
+        max_batch_char_length: maximum number of characters in a batch (incompatible with batch_size)
+        cuda_device: GPU only, and it should be one of CUDA_VISIBLE_DEVICES
+        max_sentence_length: drop sentences with the length above this threshhold
+        max_number_words: drop the sentences with the number of words above this threshhold
         output_path: path to save the narrative model (default is None, which means no saving to disk)
         progress_bar: print a progress bar (default is False)
 
@@ -64,8 +66,6 @@ def run_srl(
         max_batch_char_length=max_batch_char_length,
         max_sentence_length=max_sentence_length,
         max_number_words=max_number_words,
-        cuda_empty_cache=cuda_empty_cache,
-        cuda_sleep=cuda_sleep,
         progress_bar=progress_bar,
     )
 
