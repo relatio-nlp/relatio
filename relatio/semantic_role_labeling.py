@@ -12,7 +12,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from allennlp.predictors.predictor import Predictor
+from allennlp_models.structured_prediction.predictors import (
+    SemanticRoleLabelerPredictor as Predictor,
+)
 from tqdm import tqdm
 
 from .utils import clean_text, group_sentences_in_batches, replace_sentences
@@ -92,7 +94,7 @@ class SRL:
             batch_size=batch_size,
         )
 
-        res = []
+        res: List[Dict[str, List]] = []
 
         if progress_bar:
             print("Running SRL...")
