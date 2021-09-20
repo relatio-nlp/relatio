@@ -44,6 +44,16 @@ def compute_sif_weights(words_counter: dict, alpha: Optional[float] = 0.001) -> 
 
 
 class USE:
+
+    """
+
+    A class to call the Universal Sentence Encoder model.
+
+    For further details: https://tfhub.dev/google/universal-sentence-encoder/4
+    Download link/path: https://tfhub.dev/google/universal-sentence-encoder/4?tf-hub-format=compressed
+
+    """
+
     def __init__(self, path: str):
         self._embed = hub.load(path)
 
@@ -52,6 +62,15 @@ class USE:
 
 
 class SIF_word2vec:
+
+    """
+
+    A class to call a trained word2vec model using gensim's library.
+
+    For basic code snippets and additional details: https://radimrehurek.com/gensim/models/word2vec.html
+
+    """
+
     def __init__(
         self,
         path: str,
@@ -86,6 +105,21 @@ class SIF_word2vec:
 
 
 class SIF_keyed_vectors(SIF_word2vec):
+
+    """
+
+    A class to call a pre-trained embeddings model from gensim's library.
+
+    The embeddings are weighted by the smoothed inverse frequency of each token.
+    For further details, see: https://github.com/PrincetonML/SIF
+
+    # The list of pre-trained embeddings may be browsed by typing:
+
+        import gensim.downloader as api
+        list(api.info()['models'].keys())
+
+    """
+
     def _load_keyed_vectors(self, path):
         return api.load(path)
 

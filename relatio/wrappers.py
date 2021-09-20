@@ -48,8 +48,8 @@ def run_srl(
         batch_size: number of sentences in a batch
         max_batch_char_length: maximum number of characters in a batch (incompatible with batch_size)
         cuda_device: GPU only, and it should be one of CUDA_VISIBLE_DEVICES
-        max_sentence_length: drop sentences with the length above this threshhold
-        max_number_words: drop the sentences with the number of words above this threshhold
+        max_sentence_length: drop sentences with the length above this threshold
+        max_number_words: drop the sentences with the number of words above this threshold
         output_path: path to save the narrative model (default is None, which means no saving to disk)
         progress_bar: print a progress bar (default is False)
 
@@ -96,7 +96,7 @@ def build_narrative_model(
     lowercase: bool = True,
     strip: bool = True,
     remove_whitespaces: bool = True,
-    lemmatize: bool = False,
+    lemmatize: bool = True,
     stem: bool = False,
     tags_to_keep: Optional[List[str]] = None,
     remove_n_letter_words: Optional[int] = None,
@@ -126,7 +126,7 @@ def build_narrative_model(
         roles_with_embeddings: list of lists of semantic roles to embed and cluster
         (i.e. each list represents semantic roles that should be clustered together)
         embeddings_type: whether the user wants to use USE / Keyed Vectors or a custom pre-trained Word2Vec
-        (e.g. "USE" / "gensim_keyed_vectors" / "gesim_full_model")
+        (e.g. "USE" / "gensim_keyed_vectors" / "gensim_full_model")
         embeddings_path: path for the trained embeddings model
         n_clusters: number of clusters for the clustering model
         verbose: see sklearn.KMeans documentation for details
@@ -296,6 +296,7 @@ def build_narrative_model(
         )
 
         narrative_model["entities"] = entities
+        narrative_model["top_n_entities"] = top_n_entities
 
     # Embeddings and clustering
     if roles_with_embeddings is not None:
@@ -470,6 +471,7 @@ def get_narratives(
             statements=postproc_roles,
             entities=narrative_model["entities"],
             used_roles=narrative_model["roles_with_entities"],
+            top_n_entities=narrative_model["top_n_entities"],
             progress_bar=progress_bar,
         )
 
