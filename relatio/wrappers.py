@@ -126,7 +126,7 @@ def build_narrative_model(
         roles_with_embeddings: list of lists of semantic roles to embed and cluster
         (i.e. each list represents semantic roles that should be clustered together)
         embeddings_type: whether the user wants to use USE / Keyed Vectors or a custom pre-trained Word2Vec
-        (e.g. "USE" / "gensim_keyed_vectors" / "gesim_full_model")
+        (e.g. "USE" / "gensim_keyed_vectors" / "gensim_full_model")
         embeddings_path: path for the trained embeddings model
         n_clusters: number of clusters for the clustering model
         verbose: see sklearn.KMeans documentation for details
