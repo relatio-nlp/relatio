@@ -16,6 +16,14 @@ from numpy.linalg import norm
 from sklearn.cluster import KMeans
 from tqdm import tqdm
 
+import torch 
+
+from transformers import DistilBertTokenizerFast
+from transformers import DistilBertModel, DistilBertConfig
+from transformers import AdamW
+
+from sentence_transformers import SentenceTransformer
+
 from .utils import count_values, count_words
 
 
@@ -203,6 +211,32 @@ def get_vectors(
 
     return vecs
 
+class dBERT_encodings():
+
+    """ DistilBERT tokenzier for text vectorization"""
+    tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
+
+    def __init__():
+        pass
+
+    def get_dBERT_vector(self,text: List[str]):
+
+        encodings = self.tokenizer(text, return_tensors='pt', truncation=True, padding=True)
+        return encodings
+
+class sBERT_encodings():
+
+    # Check if GPU exists for training the model, else default to CPU
+    device = torch.device('cuda:1') if torch.cuda.is_available() else torch.device('cpu')
+    model = SentenceTransformer("distilbert-base-v1", device = device)
+
+    def __init__():
+        pass
+
+    def get_sBERT_vector(self,text: List[str]):
+
+        embeddings = self.model.encode(text)
+        return embeddings
 
 def train_cluster_model(
     vecs,
