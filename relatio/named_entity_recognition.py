@@ -1,3 +1,10 @@
+# MIT License
+
+# Copyright (c) 2020-2021 ETH Zurich, Andrei V. Plamada
+# Copyright (c) 2020-2021 ETH Zurich, Elliott Ash
+# Copyright (c) 2020-2021 University of St.Gallen, Philine Widmer
+# Copyright (c) 2020-2021 Ecole Polytechnique, Germain Gauthier
+
 # Named Entity Recognition
 # ..................................................................................................................
 # ..................................................................................................................
