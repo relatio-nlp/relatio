@@ -39,6 +39,12 @@ class Embeddings(EmbeddingsBase):
         (300,)
         >>> model.get_vectors(["Hello world"]).shape
         (1, 300)
+        >>> model = Embeddings("Gensim_SIF_KeyedVectors", "glove-twitter-25",sentences = ["This is a nice world","Hello world","Hello everybody"])
+        >>> model.get_vector("world").shape
+        (25,)
+        >>> model.get_vectors(["world"]).shape
+        (1, 25)
+
     """
 
     def __init__(
