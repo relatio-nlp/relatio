@@ -29,11 +29,6 @@ class Embeddings(EmbeddingsBase):
     """
 
     Examples:
-        >>> model = Embeddings("TensorFlow_USE","https://tfhub.dev/google/universal-sentence-encoder/4")
-        >>> model.get_vector("Hello world").shape
-        (512,)
-        >>> model.get_vectors(["Hello world"]).shape
-        (1, 512)
         >>> model = Embeddings("spaCy", "en_core_web_md")
         >>> model.get_vector("Hello world").shape
         (300,)
