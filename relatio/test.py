@@ -1,6 +1,7 @@
 from utils import split_into_sentences
 import pandas as pd 
 
+# Check for string and all other data types
 test_string = {"doc" : "Some text. Some more text. Some more and more text.", "id" : 0}
 test_bool = {"doc" : False, "id" : 0}
 test_int = {"doc" : 10, "id" : 0}
