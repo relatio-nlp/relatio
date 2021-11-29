@@ -49,15 +49,8 @@ def split_into_sentences(
         time.sleep(1)
         docs = tqdm(docs)
 
-    # When I used the split_into_sentences method for my .csv files
-    # came across this issue of blank entries which are treated as
-    # NaN in the df object
     # Ready to be submitted now and test for merge
     for doc in docs:
-        # Check if the value in doc is a not string/empty, else in the DataFrame, 
-        # it returns a NaN float value and the .sents method of spacy fails 
-        # Alternatively can always use df.fillna("", inplace=True) inside the 
-        # DataFrame but this should be cleaner.
         if not (isinstance(doc["doc"], str)):
             # Blank sentence (str format)
             doc["doc"] = ""
