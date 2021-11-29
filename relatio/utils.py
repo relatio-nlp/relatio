@@ -56,7 +56,13 @@ def split_into_sentences(
         time.sleep(1)
         docs = tqdm(docs)
 
+    # Ready to be submitted now and test for merge
     for doc in docs:
+        if not (isinstance(doc["doc"], str)):
+            # Blank sentence (str format)
+            doc["doc"] = ""
+            doc_indices = doc_indices + [doc["id"]]
+        
         for sent in nlp(doc["doc"], disable=["tagger", "ner"]).sents:
             sentences.append(str(sent))
             doc_indices = doc_indices + [doc["id"]]
