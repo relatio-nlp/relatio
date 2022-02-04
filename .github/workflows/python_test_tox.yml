@@ -2,6 +2,8 @@ name: Python package
 
 on:
   push:
+    branches:
+      - master
   pull_request:
   schedule:
     # run every Monday at 1:15 AM UTC - to test against the external reasons
