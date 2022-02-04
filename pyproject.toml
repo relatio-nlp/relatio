@@ -17,3 +17,4 @@ include = '\.pyi?$'
 
 [tool.isort]
 profile = "black"
+src_paths = ["relatio"]
