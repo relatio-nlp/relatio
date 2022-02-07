@@ -39,6 +39,7 @@ So far it works only with `python3.7` and `python3.8`.
 ## Tools
 - Auto-formatter:
     - [black](https://black.readthedocs.io/en/stable/) that might break the [79 characters maximum line length](https://www.python.org/dev/peps/pep-0008/#maximum-line-length) from PEP8 (see [here](https://github.com/psf/black#line-length))
+    - [isort](https://pycqa.github.io/isort/index.html) using [black compatibility](https://pycqa.github.io/isort/docs/configuration/black_compatibility.html)
 - Testing via [pytest](https://docs.pytest.org/en/latest/) with `--doctest-modules` enabled (see [doctest](http://doc.pytest.org/en/latest/doctest.html))
 - security issues: [bandit](https://github.com/PyCQA/bandit)
 - [mypy](http://mypy-lang.org/)
