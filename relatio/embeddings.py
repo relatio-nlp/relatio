@@ -17,9 +17,25 @@ from .utils import count_words
 
 
 class EmbeddingsBase(ABC):
+    _normalize: bool = True
+
+    @property
+    def normalize(self) -> bool:
+        return self._normalize
+
+    # One cannot add a setter since it is added next to the child classes
+
     @abstractmethod
-    def get_vector(self, phrase: str) -> np.ndarray:
+    def _get_default_vector(self, phrase: str) -> np.ndarray:
         pass
+
+    def get_vector(self, phrase: str) -> np.ndarray:
+        res = self._get_default_vector(phrase)
+
+        if self.normalize:
+            return res / norm(res)
+        else:
+            return res
 
     def get_vectors(self, phrases: List[str]) -> np.array:
         return np.stack([self.get_vector(phrase) for phrase in phrases])
@@ -39,6 +55,11 @@ class Embeddings(EmbeddingsBase):
         (300,)
         >>> model.get_vectors(["Hello world"]).shape
         (1, 300)
+        >>> norm(model.get_vector("Hello world")) < 1.001
+        True
+        >>> model = Embeddings("spaCy", "en_core_web_md", normalize=False)
+        >>> norm(model.get_vector("Hello world")) < 1.001
+        False
         >>> model = Embeddings("Gensim_SIF_KeyedVectors", "glove-twitter-25",sentences = ["This is a nice world","Hello world","Hello everybody"])
         >>> model.get_vector("world").shape
         (25,)
@@ -48,7 +69,11 @@ class Embeddings(EmbeddingsBase):
     """
 
     def __init__(
-        self, embeddings_type: str, embeddings_model: Union[Path, str], **kwargs
+        self,
+        embeddings_type: str,
+        embeddings_model: Union[Path, str],
+        normalize: bool = True,
+        **kwargs,
     ) -> None:
         if embeddings_type == "TensorFlow_USE":
             EmbeddingsClass = TensorFlowUSEEmbeddings
@@ -62,6 +87,12 @@ class Embeddings(EmbeddingsBase):
             raise ValueError(f"Unknown embeddings_type={embeddings_type}")
 
         self._embeddings_model = EmbeddingsClass(embeddings_model, **kwargs)
+        # Next step is tricky and one should avoid defining a setter for normalize property
+        self._embeddings_model._normalize = normalize
+        self._normalize = normalize
+
+    def _get_default_vector(self, phrase: str) -> np.ndarray:
+        return self._embeddings_model._get_default_vector(phrase)
 
     def get_vector(self, phrase: str) -> np.ndarray:
         return self._embeddings_model.get_vector(phrase)
@@ -75,7 +106,7 @@ class spaCyEmbeddings(EmbeddingsBase):
 
         self._nlp = spacy.load(model)
 
-    def get_vector(self, phrase: str) -> np.ndarray:
+    def _get_default_vector(self, phrase: str) -> np.ndarray:
         return self._nlp(phrase).vector
 
 
@@ -88,20 +119,22 @@ class TensorFlowUSEEmbeddings(EmbeddingsBase):
             raise
         self._embed = hub.load(path)
 
-    def get_vector(self, phrase: str) -> np.ndarray:
+    def _get_default_vector(self, phrase: str) -> np.ndarray:
         return self._embed([phrase]).numpy()[0]
+
+    def get_vector(self, phrase: str) -> np.ndarray:
+        return self._get_default_vector(phrase)
 
     def get_vectors(self, phrases: List[str]) -> np.ndarray:
         return self._embed(phrases).numpy()
 
 
-class GensimSIFWord2VecEmbeddings:
+class GensimSIFWord2VecEmbeddings(EmbeddingsBase):
     def __init__(
         self,
         path: str,
         sentences: List[str],
         alpha: Optional[float] = 0.001,
-        normalize: bool = True,
     ):
 
         self._model = self._load_keyed_vectors(path)
@@ -109,8 +142,6 @@ class GensimSIFWord2VecEmbeddings:
 
         words_counter = count_words(sentences)
         self._sif_dict = self.compute_sif_weights(words_counter, alpha)
-
-        self._normalize = normalize
 
     @classmethod
     def compute_sif_weights(cls, words_counter, alpha) -> dict:
@@ -146,13 +177,11 @@ class GensimSIFWord2VecEmbeddings:
 
         return Word2Vec.load(path).wv
 
-    def get_vector(self, phrase: str) -> np.ndarray:
+    def _get_default_vector(self, phrase: str) -> np.ndarray:
         tokens = phrase.split()
         res = np.mean(
             [self._sif_dict[token] * self._model[token] for token in tokens], axis=0
         )
-        if self._normalize:
-            res = res / norm(res)
         return res
 
     ## TODO: do we need most_similar? If yes should we do it at embeddings level?!
@@ -181,11 +210,12 @@ class GensimSIFKeyedVectorsEmbeddings(GensimSIFWord2VecEmbeddings, EmbeddingsBas
         model: str,
         sentences: List[str],
         alpha: Optional[float] = 0.001,
-        normalize: bool = True,
     ):
 
         super().__init__(
-            path=model, sentences=sentences, alpha=alpha, normalize=normalize
+            path=model,
+            sentences=sentences,
+            alpha=alpha,
         )
 
     def _load_keyed_vectors(self, model):
