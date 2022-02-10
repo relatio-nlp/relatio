@@ -14,7 +14,7 @@ import spacy
 from numpy.linalg import norm
 from spacy.cli import download as spacy_download
 
-from .utils import count_words
+from relatio.utils import count_words
 
 
 class EmbeddingsBase(ABC):
