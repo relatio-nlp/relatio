@@ -17,28 +17,9 @@ from .utils import count_words
 
 
 class EmbeddingsBase(ABC):
-    _normalize: bool = True
-
-    @property
-    def normalize(self) -> bool:
-        return self._normalize
-
-    # One cannot add a setter since it is added next to the child classes
-
     @abstractmethod
     def _get_default_vector(self, phrase: str) -> np.ndarray:
         pass
-
-    def get_vector(self, phrase: str) -> np.ndarray:
-        res = self._get_default_vector(phrase)
-
-        if self.normalize:
-            return res / norm(res)
-        else:
-            return res
-
-    def get_vectors(self, phrases: List[str]) -> np.array:
-        return np.stack([self.get_vector(phrase) for phrase in phrases])
 
 
 class Embeddings(EmbeddingsBase):
@@ -48,13 +29,11 @@ class Embeddings(EmbeddingsBase):
         >>> model = Embeddings("TensorFlow_USE","https://tfhub.dev/google/universal-sentence-encoder/4")
         >>> model.get_vector("Hello world").shape
         (512,)
-        >>> model.get_vectors(["Hello world"]).shape
-        (1, 512)
         >>> model = Embeddings("spaCy", "en_core_web_md")
+        >>> model.get_vector("") is None
+        True
         >>> model.get_vector("Hello world").shape
         (300,)
-        >>> model.get_vectors(["Hello world"]).shape
-        (1, 300)
         >>> norm(model.get_vector("Hello world")) < 1.001
         True
         >>> model = Embeddings("spaCy", "en_core_web_md", normalize=False)
@@ -63,8 +42,8 @@ class Embeddings(EmbeddingsBase):
         >>> model = Embeddings("Gensim_SIF_KeyedVectors", "glove-twitter-25",sentences = ["This is a nice world","Hello world","Hello everybody"])
         >>> model.get_vector("world").shape
         (25,)
-        >>> model.get_vectors(["world"]).shape
-        (1, 25)
+        >>> model.get_vector("") is None
+        True
 
     """
 
@@ -87,18 +66,28 @@ class Embeddings(EmbeddingsBase):
             raise ValueError(f"Unknown embeddings_type={embeddings_type}")
 
         self._embeddings_model = EmbeddingsClass(embeddings_model, **kwargs)
-        # Next step is tricky and one should avoid defining a setter for normalize property
-        self._embeddings_model._normalize = normalize
-        self._normalize = normalize
+        self._normalize: bool = normalize
+
+    @property
+    def normalize(self) -> bool:
+        return self._normalize
+
+    # One cannot add a setter since it is added next to the child classes
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
         return self._embeddings_model._get_default_vector(phrase)
 
-    def get_vector(self, phrase: str) -> np.ndarray:
-        return self._embeddings_model.get_vector(phrase)
+    def get_vector(self, phrase: str) -> Optional[np.ndarray]:
+        res = self._get_default_vector(phrase)
 
-    def get_vectors(self, phrases: List[str]) -> np.array:
-        return self._embeddings_model.get_vectors(phrases)
+        # in case the result is fishy it will return a None
+        if np.isnan(res).any() or np.count_nonzero(res) == 0:
+            return None
+
+        if self.normalize:
+            return res / norm(res)
+        else:
+            return res
 
 
 class spaCyEmbeddings(EmbeddingsBase):
@@ -124,9 +113,6 @@ class TensorFlowUSEEmbeddings(EmbeddingsBase):
 
     def get_vector(self, phrase: str) -> np.ndarray:
         return self._get_default_vector(phrase)
-
-    def get_vectors(self, phrases: List[str]) -> np.ndarray:
-        return self._embed(phrases).numpy()
 
 
 class GensimSIFWord2VecEmbeddings(EmbeddingsBase):
