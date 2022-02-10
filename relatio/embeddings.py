@@ -205,10 +205,6 @@ class GensimWord2VecEmbeddings(EmbeddingsBase):
     def _get_default_vector(self, phrase: str) -> np.ndarray:
         return self._model[phrase]
 
-    ## TODO: do we need most_similar? If yes should we do it at embeddings level?!
-    def most_similar(self, v):
-        return self._model.most_similar(positive=[v], topn=1)[0]
-
 
 class GensimPreTrainedEmbeddings(EmbeddingsBase):
 
@@ -243,7 +239,3 @@ class GensimPreTrainedEmbeddings(EmbeddingsBase):
             raise
 
         return api.load(model)
-
-    ## TODO: do we need most_similar? If yes should we do it at embeddings level?!
-    def most_similar(self, v):
-        return self._model.most_similar(positive=[v], topn=1)[0]
