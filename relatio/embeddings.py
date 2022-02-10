@@ -7,11 +7,12 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Type, Union
 
 import numpy as np
 import spacy
 from numpy.linalg import norm
+from spacy.cli import download as spacy_download
 
 from .utils import count_words
 
@@ -23,7 +24,12 @@ class EmbeddingsBase(ABC):
 
 
 class Embeddings(EmbeddingsBase):
+    # TODO: lower the case of the input (phrase and sentences)
+    # TODO: for SIF many things can go wrong since we do the linear combination of potential nan values
     """
+    When sentences is used in the constructor the embeddings are weighted by the smoothed inverse frequency of each token.
+    For further details, see: https://github.com/PrincetonML/SIF
+
 
     Examples:
         >>> model = Embeddings("TensorFlow_USE","https://tfhub.dev/google/universal-sentence-encoder/4")
@@ -39,11 +45,12 @@ class Embeddings(EmbeddingsBase):
         >>> model = Embeddings("spaCy", "en_core_web_md", normalize=False)
         >>> norm(model.get_vector("Hello world")) < 1.001
         False
-        >>> model = Embeddings("Gensim_SIF_KeyedVectors", "glove-twitter-25",sentences = ["This is a nice world","Hello world","Hello everybody"])
+        >>> model = Embeddings("Gensim_pretrained", "glove-twitter-25")
         >>> model.get_vector("world").shape
         (25,)
-        >>> model.get_vector("") is None
-        True
+        >>> model = Embeddings("Gensim_pretrained", "glove-twitter-25",sentences = ["this is a nice world","hello world","hello everybody"])
+        >>> model.get_vector("hello world").shape
+        (25,)
 
     """
 
@@ -52,14 +59,23 @@ class Embeddings(EmbeddingsBase):
         embeddings_type: str,
         embeddings_model: Union[Path, str],
         normalize: bool = True,
+        sentences: Optional[List[str]] = None,
+        alpha: float = 0.001,
         **kwargs,
     ) -> None:
+
+        EmbeddingsClass: Union[
+            Type[TensorFlowUSEEmbeddings],
+            Type[GensimWord2VecEmbeddings],
+            Type[GensimPreTrainedEmbeddings],
+            Type[spaCyEmbeddings],
+        ]
         if embeddings_type == "TensorFlow_USE":
             EmbeddingsClass = TensorFlowUSEEmbeddings
-        elif embeddings_type == "Gensim_SIF_Word2Vec":
-            EmbeddingsClass = GensimSIFWord2VecEmbeddings
-        elif embeddings_type == "Gensim_SIF_KeyedVectors":
-            EmbeddingsClass = GensimSIFKeyedVectorsEmbeddings
+        elif embeddings_type == "Gensim_Word2Vec":
+            EmbeddingsClass = GensimWord2VecEmbeddings
+        elif embeddings_type == "Gensim_pretrained":
+            EmbeddingsClass = GensimPreTrainedEmbeddings
         elif embeddings_type == "spaCy":
             EmbeddingsClass = spaCyEmbeddings
         else:
@@ -67,21 +83,43 @@ class Embeddings(EmbeddingsBase):
 
         self._embeddings_model = EmbeddingsClass(embeddings_model, **kwargs)
         self._normalize: bool = normalize
+        if sentences is not None:
+            self._sif_dict = self.compute_sif_weights(sentences=sentences, alpha=alpha)
+            self._use_sif = True
+        else:
+            self._sif_dict = {}
+            self._use_sif = False
 
     @property
     def normalize(self) -> bool:
         return self._normalize
 
+    @property
+    def use_sif(self) -> bool:
+        return self._use_sif
+
     # One cannot add a setter since it is added next to the child classes
 
-    def _get_default_vector(self, phrase: str) -> np.ndarray:
-        return self._embeddings_model._get_default_vector(phrase)
-
     def get_vector(self, phrase: str) -> Optional[np.ndarray]:
-        res = self._get_default_vector(phrase)
+        tokens = phrase.split()
+
+        if self.use_sif and len(tokens) > 1:
+
+            res = np.mean(
+                [
+                    self._sif_dict[token] * self._get_default_vector(token)
+                    for token in tokens
+                ],
+                axis=0,
+            )
+
+        else:
+            res = self._get_default_vector(phrase)
 
         # in case the result is fishy it will return a None
-        if np.isnan(res).any() or np.count_nonzero(res) == 0:
+        if res is None:
+            return None
+        elif np.isnan(res).any() or np.count_nonzero(res) == 0:
             return None
 
         if self.normalize:
@@ -89,14 +127,44 @@ class Embeddings(EmbeddingsBase):
         else:
             return res
 
+    def _get_default_vector(self, phrase: str) -> np.ndarray:
+        return self._embeddings_model._get_default_vector(phrase)
+
+    @staticmethod
+    def compute_sif_weights(sentences: List[str], alpha: float) -> Dict[str, float]:
+
+        """
+
+        A function that computes smooth inverse frequency (SIF) weights based on word frequencies.
+        (See "Arora, S., Liang, Y., & Ma, T. (2016). A simple but tough-to-beat baseline for sentence embeddings.")
+
+        The sentences are used to build the counter dictionary {"word": frequency} which is further used to compute the sif weights
+        Args:
+            sentences: a list of sentences
+            alpha: regularization parameter
+
+        Returns:
+            A dictionary {"word": SIF weight}
+
+        """
+        words_counter = count_words(sentences)
+
+        sif_dict = {}
+
+        for word, count in words_counter.items():
+            sif_dict[word] = alpha / (alpha + count)
+
+        return sif_dict
+
 
 class spaCyEmbeddings(EmbeddingsBase):
     def __init__(self, model: str) -> None:
-
+        if not spacy.util.is_package(model):
+            spacy_download(model)
         self._nlp = spacy.load(model)
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
-        return self._nlp(phrase).vector
+        return np.array(self._nlp(phrase).vector)
 
 
 class TensorFlowUSEEmbeddings(EmbeddingsBase):
@@ -115,43 +183,14 @@ class TensorFlowUSEEmbeddings(EmbeddingsBase):
         return self._get_default_vector(phrase)
 
 
-class GensimSIFWord2VecEmbeddings(EmbeddingsBase):
+class GensimWord2VecEmbeddings(EmbeddingsBase):
     def __init__(
         self,
         path: str,
-        sentences: List[str],
-        alpha: Optional[float] = 0.001,
     ):
 
         self._model = self._load_keyed_vectors(path)
         self._vocab = self._model.vocab
-
-        words_counter = count_words(sentences)
-        self._sif_dict = self.compute_sif_weights(words_counter, alpha)
-
-    @classmethod
-    def compute_sif_weights(cls, words_counter, alpha) -> dict:
-
-        """
-
-        A function that computes smooth inverse frequency (SIF) weights based on word frequencies.
-        (See "Arora, S., Liang, Y., & Ma, T. (2016). A simple but tough-to-beat baseline for sentence embeddings.")
-
-        Args:
-            words_counter: a dictionary {"word": frequency}
-            alpha: regularization parameter
-
-        Returns:
-            A dictionary {"word": SIF weight}
-
-        """
-
-        sif_dict = {}
-
-        for word, count in words_counter.items():
-            sif_dict[word] = alpha / (alpha + count)
-
-        return sif_dict
 
     def _load_keyed_vectors(self, path):
         try:
@@ -164,25 +203,18 @@ class GensimSIFWord2VecEmbeddings(EmbeddingsBase):
         return Word2Vec.load(path).wv
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
-        tokens = phrase.split()
-        res = np.mean(
-            [self._sif_dict[token] * self._model[token] for token in tokens], axis=0
-        )
-        return res
+        return self._model[phrase]
 
     ## TODO: do we need most_similar? If yes should we do it at embeddings level?!
     def most_similar(self, v):
         return self._model.most_similar(positive=[v], topn=1)[0]
 
 
-class GensimSIFKeyedVectorsEmbeddings(GensimSIFWord2VecEmbeddings, EmbeddingsBase):
+class GensimPreTrainedEmbeddings(EmbeddingsBase):
 
     """
 
     A class to call a pre-trained embeddings model from gensim's library.
-
-    The embeddings are weighted by the smoothed inverse frequency of each token.
-    For further details, see: https://github.com/PrincetonML/SIF
 
     # The list of pre-trained embeddings may be browsed by typing:
 
@@ -194,15 +226,13 @@ class GensimSIFKeyedVectorsEmbeddings(GensimSIFWord2VecEmbeddings, EmbeddingsBas
     def __init__(
         self,
         model: str,
-        sentences: List[str],
-        alpha: Optional[float] = 0.001,
     ):
 
-        super().__init__(
-            path=model,
-            sentences=sentences,
-            alpha=alpha,
-        )
+        self._model = self._load_keyed_vectors(model)
+        self._vocab = self._model.vocab
+
+    def _get_default_vector(self, phrase: str) -> np.ndarray:
+        return self._model[phrase]
 
     def _load_keyed_vectors(self, model):
         try:
@@ -213,3 +243,7 @@ class GensimSIFKeyedVectorsEmbeddings(GensimSIFWord2VecEmbeddings, EmbeddingsBas
             raise
 
         return api.load(model)
+
+    ## TODO: do we need most_similar? If yes should we do it at embeddings level?!
+    def most_similar(self, v):
+        return self._model.most_similar(positive=[v], topn=1)[0]
