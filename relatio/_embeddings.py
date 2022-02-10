@@ -33,17 +33,17 @@ class Embeddings(EmbeddingsBase):
 
     Examples:
         >>> model = Embeddings("TensorFlow_USE","https://tfhub.dev/google/universal-sentence-encoder/4")
-        >>> model.get_vector("Hello world").shape
+        >>> model.get_vector("hello world").shape
         (512,)
         >>> model = Embeddings("spaCy", "en_core_web_md")
         >>> model.get_vector("") is None
         True
-        >>> model.get_vector("Hello world").shape
+        >>> model.get_vector("hello world").shape
         (300,)
-        >>> norm(model.get_vector("Hello world")) < 1.001
+        >>> norm(model.get_vector("hello world")) < 1.001
         True
         >>> model = Embeddings("spaCy", "en_core_web_md", normalize=False)
-        >>> norm(model.get_vector("Hello world")) < 1.001
+        >>> norm(model.get_vector("hello world")) < 1.001
         False
         >>> model = Embeddings("Gensim_pretrained", "glove-twitter-25")
         >>> model.get_vector("world").shape
