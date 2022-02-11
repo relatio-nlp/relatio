@@ -24,12 +24,11 @@ class EmbeddingsBase(ABC):
 
 
 class Embeddings(EmbeddingsBase):
-    # TODO: lower the case of the input (phrase and sentences)
     # TODO: for SIF many things can go wrong since we do the linear combination of potential nan values
     """
-    When sentences is used in the constructor the embeddings are weighted by the smoothed inverse frequency of each token.
+    If sentences is used in the constructor the embeddings are weighted by the smoothed inverse frequency of each token.
     For further details, see: https://github.com/PrincetonML/SIF
-
+    The input is expected in lowe case.
 
     Examples:
         >>> model = Embeddings("TensorFlow_USE","https://tfhub.dev/google/universal-sentence-encoder/4")
@@ -48,7 +47,7 @@ class Embeddings(EmbeddingsBase):
         >>> model = Embeddings("Gensim_pretrained", "glove-twitter-25")
         >>> model.get_vector("world").shape
         (25,)
-        >>> model = Embeddings("Gensim_pretrained", "glove-twitter-25",sentences = ["this is a nice world","hello world","hello everybody"])
+        >>> model = Embeddings("Gensim_pretrained", "glove-twitter-25", sentences = ["this is a nice world","hello world","hello everybody"])
         >>> model.get_vector("hello world").shape
         (25,)
 
@@ -103,7 +102,8 @@ class Embeddings(EmbeddingsBase):
     def get_vector(self, phrase: str) -> Optional[np.ndarray]:
         tokens = phrase.split()
 
-        if self.use_sif and len(tokens) > 1:
+        # For phrases with one token
+        if self.use_sif is True and len(tokens) > 0:
 
             res = np.mean(
                 [
