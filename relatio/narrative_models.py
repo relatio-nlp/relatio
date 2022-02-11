@@ -5,6 +5,7 @@ from scipy.spatial.distance import cdist
 from tqdm import tqdm
 
 from .embeddings import *
+from .utils import *
 
 
 class NarrativeModelBase(ABC):

@@ -8,9 +8,6 @@ import pandas as pd
 from copy import deepcopy
 from tqdm import tqdm
 from typing import Dict, List, Optional, Tuple, Union, Any
-from spacy.lang.en.stop_words import STOP_WORDS as en_stop
-
-en_stop = list(en_stop)
 
 
 class Preprocessor:
