@@ -62,6 +62,10 @@ class NarrativeModelBase(ABC):
     def train(self, list_of_srl_res):
         pass
 
+    def compute_distances(self, vector, vectors):
+        distances = cdist(vectors, vector.reshape(1, -1), metric="euclidean").flatten()
+        return distances
+
     def _process_srl_item_for_prediction(self, role, content):
 
         if role in self.roles_considered:
@@ -75,7 +79,9 @@ class NarrativeModelBase(ABC):
                 if role in self.roles_with_entities:
                     if self.assignment_to_known_entities == "regex":
                         for e in self.list_of_known_entities:
-                            if e in content:
+                            if (
+                                e in content
+                            ):  # this should be rewritten with is_subsequence() + handle multiple matches
                                 return e
 
                 # Clustering with embeddings
@@ -87,11 +93,9 @@ class NarrativeModelBase(ABC):
                             # Known entities
                             if role in self.roles_with_entities:
                                 if self.assignment_to_known_entities == "embeddings":
-                                    distances = cdist(
-                                        self.vectors_of_known_entities,
-                                        vector.reshape(1, -1),
-                                        metric="euclidean",
-                                    ).flatten()
+                                    distances = self.compute_distances(
+                                        vector, self.vectors_of_known_entities
+                                    )
                                     nmin = min(distances)
                                     if nmin <= self.threshold:
                                         entity_index = np.where(
@@ -101,11 +105,9 @@ class NarrativeModelBase(ABC):
 
                             # Unknown entities
                             if len(self.vectors[i]) != 0:
-                                distances = cdist(
-                                    self.vectors[i],
-                                    vector.reshape(1, -1),
-                                    metric="euclidean",
-                                ).flatten()
+                                distances = self.compute_distances(
+                                    vector, self.vectors[i]
+                                )
                                 nmin = min(distances)
                                 if nmin <= self.threshold:
                                     clu = np.where(distances == np.amin(distances))[0][
@@ -140,7 +142,6 @@ class NarrativeModelBase(ABC):
     def predict(
         self, list_of_srl_res, prettify: bool = False, progress_bar: bool = False
     ):
-
         """
 
         Predict the latent narrative statement based of a SRL statement.
@@ -232,11 +233,9 @@ class StaticModel(NarrativeModelBase):
             for phrase in list_of_phrases:
                 vector = self.embeddings_model.get_vector(phrase)
                 if len(vector) != 0:
-                    distances = cdist(
-                        self.vectors_of_known_entities,
-                        vector.reshape(1, -1),
-                        metric="euclidean",
-                    ).flatten()
+                    distances = self.compute_distances(
+                        vector, self.vectors_of_known_entities
+                    )
                     nmin = min(distances)
                     if nmin <= self.threshold:
                         list_of_phrases.remove(phrase)
@@ -369,11 +368,9 @@ class DynamicModel(NarrativeModelBase):
                             # Known entities (skipped for training)
                             if role in self.roles_with_entities:
                                 if self.assignment_to_known_entities == "embeddings":
-                                    distances = cdist(
-                                        self.vectors_of_known_entities,
-                                        vector.reshape(1, -1),
-                                        metric="euclidean",
-                                    ).flatten()
+                                    distances = self.compute_distances(
+                                        vector, self.vectors_of_known_entities
+                                    )
                                     nmin = min(distances)
                                     if nmin <= self.threshold:
                                         return None
@@ -386,11 +383,9 @@ class DynamicModel(NarrativeModelBase):
                                 self.labels[i][0] = content
                             else:
                                 clu = len(self.vectors[i])
-                                distances = cdist(
-                                    self.vectors[i],
-                                    vector.reshape(1, -1),
-                                    metric="euclidean",
-                                ).flatten()
+                                distances = self.compute_distances(
+                                    vector, self.vectors[i]
+                                )
                                 nmin = min(distances)
                                 if nmin <= self.threshold:
                                     clu = np.where(distances == np.amin(distances))[0][
