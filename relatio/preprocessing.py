@@ -1,6 +1,4 @@
 from collections import Counter
-from scipy.spatial.distance import cdist
-from sklearn.preprocessing import normalize
 import numpy as np
 import spacy
 import time
@@ -19,9 +17,23 @@ class Preprocessor:
 
     """
 
-    def __init__(self, spacy_model):
+    def __init__(
+        self,
+        spacy_model,
+        remove_punctuation: bool = True,
+        remove_digits: bool = True,
+        stop_words: List[str] = [],
+        lowercase: bool = True,
+        lemmatize: bool = True,
+    ):
+
         self.spacy_model = spacy_model
         self.nlp = spacy.load(spacy_model)
+        self.remove_punctuation = remove_punctuation
+        self.remove_digits = remove_digits
+        self.stop_words = stop_words
+        self.lowercase = lowercase
+        self.lemmatize = lemmatize
 
     def split_into_sentences(
         self,
@@ -65,10 +77,49 @@ class Preprocessor:
 
         return (doc_indices, sentences)
 
+    def clean_text(
+        self, sentence: str, pos_tags_to_keep: Optional[List[str]] = None
+    ) -> List[str]:
+
+        """
+
+        Clean a string of text.
+
+        """
+
+        s = self.nlp(sentence)
+
+        if self.remove_punctuation:
+            s = [t for t in s if t.is_punct == False]
+
+        if self.remove_digits:
+            s = [t for t in s if t.is_digit == False]
+
+        if pos_tags_to_keep:
+            s = [t for t in s if t.pos_ in pos_tags_to_keep]
+
+        if self.lowercase and not self.lemmatize:
+            s = [t.lower_ for t in s]
+
+        if self.lowercase and self.lemmatize:
+            s = [t.lemma_.lower() for t in s]
+
+        if not self.lowercase and not self.lemmatize:
+            s = [t.text for t in s]
+
+        s = [t for t in s if t not in self.stop_words]
+
+        s = [t.strip() for t in s if t not in self.stop_words]
+
+        s = " ".join(s)
+
+        return s
+
     def mine_entities(
         self,
         sentences: List[str],
         ent_labels: Optional[List[str]] = ["PERSON", "NORP", "ORG", "GPE", "EVENT"],
+        clean_entities: bool = True,
         progress_bar: bool = False,
     ) -> Counter:
 
@@ -100,54 +151,12 @@ class Preprocessor:
                 if ent.label_ in ent_labels:
                     entities_all.append(ent.text)
 
+        if clean_entities:
+            entities_all = [self.clean_text(e) for e in entities_all]
+
         entity_counts = Counter(entities_all)
 
         return entity_counts
-
-    def clean_text(
-        self,
-        sentence: str,
-        remove_punctuation: bool = True,
-        remove_digits: bool = True,
-        stop_words: List[str] = [],
-        lowercase: bool = True,
-        lemmatize: bool = True,
-        pos_tags_to_keep: Optional[List[str]] = None,
-    ) -> List[str]:
-
-        """
-
-        Clean a string of text.
-
-        """
-
-        s = self.nlp(sentence)
-
-        if remove_punctuation:
-            s = [t for t in s if t.is_punct == False]
-
-        if remove_digits:
-            s = [t for t in s if t.is_digit == False]
-
-        if pos_tags_to_keep:
-            s = [t for t in s if t.pos_ in pos_tags_to_keep]
-
-        if lowercase and not lemmatize:
-            s = [t.lower_ for t in s]
-
-        if lowercase and lemmatize:
-            s = [t.lemma_.lower() for t in s]
-
-        if not lowercase and not lemmatize:
-            s = [t.text for t in s]
-
-        s = [t for t in s if t not in stop_words]
-
-        s = [t.strip() for t in s if t not in stop_words]
-
-        s = " ".join(s)
-
-        return s
 
     def extract_role_per_sentence(
         self, sentence_dict: dict, used_roles: List[str]
@@ -240,11 +249,6 @@ class Preprocessor:
         self,
         statements: List[Dict[str, List]],
         max_length: Optional[int] = None,
-        remove_punctuation: bool = True,
-        remove_digits: bool = True,
-        stop_words: List[str] = [],
-        lowercase: bool = True,
-        lemmatize: bool = True,
         dict_of_pos_tags_to_keep: Optional[dict] = None,
         progress_bar: bool = False,
     ) -> List[Dict[str, List]]:
@@ -285,13 +289,7 @@ class Preprocessor:
             for role, role_content in roles_copy[i].items():
                 if isinstance(role_content, str):
                     res = self.clean_text(
-                        role_content,
-                        remove_punctuation=remove_punctuation,
-                        remove_digits=remove_digits,
-                        stop_words=stop_words,
-                        lowercase=lowercase,
-                        lemmatize=lemmatize,
-                        pos_tags_to_keep=pos_tags_to_keep[role],
+                        role_content, pos_tags_to_keep=pos_tags_to_keep[role]
                     )
                     if max_length is not None:
                         if len(res) <= max_length:

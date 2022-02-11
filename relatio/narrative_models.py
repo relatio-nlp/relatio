@@ -4,8 +4,8 @@ from collections import Counter
 from scipy.spatial.distance import cdist
 from tqdm import tqdm
 
-from .embeddings import *
-from .utils import *
+from relatio.embeddings import *
+from relatio.utils import is_subsequence
 
 
 class NarrativeModelBase(ABC):
