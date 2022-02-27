@@ -356,7 +356,7 @@ def build_narrative_model(
                 else:
                     kmeans = train_cluster_model(
                         vecs,
-                        model,
+                        # model,
                         n_clusters=num,
                         verbose=verbose,
                         random_state=random_state,
