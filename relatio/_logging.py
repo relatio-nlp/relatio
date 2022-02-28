@@ -10,25 +10,63 @@ from pathlib import Path
 
 
 class FileLogger:
-    def __init__(self, path=Path("relatio.log")):
-        LOGGING_PATH = path
+    """
+    File logger used to capture the warnings and write the warnings to a file.
+
+    The default warnings can be integrated with the logging using the logging.captureWarnings(True) function.
+    See https://docs.python.org/3/library/logging.html#integration-with-the-warnings-module .
+    The logs are saved in file that is created if it does not exists or the content is truncated (write mode).
+
+    Parameters
+    ----------
+    file : pathlib.Path, default=pathlib.Path("relatio.log")
+        The file path used for savings the logs.
+    capture_warnings : bool, default=True
+        Whether to capture the default warnings.
+
+
+    Attributes
+    ----------
+    capture_warnings : bool
+        If capture_warnings is true the warnings are logged. Otherwise they are not.
+
+
+    Methods
+    -------
+    close()
+        The file handler is properly closed.
+
+
+    """
+
+    def __init__(self, file: Path = Path("relatio.log"), capture_warnings: bool = True):
         self._logger = logging.getLogger("py.warnings")
-        logging.captureWarnings(True)
+
+        self._capture_warnings: bool = capture_warnings
+        if capture_warnings is True:
+            logging.captureWarnings(True)
 
         # Create handlers
-        handler = logging.FileHandler(LOGGING_PATH, mode="w")
-        handler.setLevel(logging.INFO)
+        self._handler = logging.FileHandler(filename=file, mode="w")
+        self._handler.setLevel(logging.WARN)
 
         # Create formatters and add it to handlers
         format = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
-        handler.setFormatter(format)
+        self._handler.setFormatter(format)
 
         # Add handlers to the logger
-        self._logger.addHandler(handler)
+        self._logger.addHandler(self._handler)
+
+    @property
+    def capture_warnings(self):
+        return self._capture_warnings
+
+    @capture_warnings.setter
+    def capture_warnings(self, value: bool):
+        logging.captureWarnings(value)
+        self._capture_warnings = value
 
     def close(self):
-        for handler in self._logger.handlers:
-            if isinstance(handler, logging.FileHandler):
-                handler.close()
+        self._handler.close()
