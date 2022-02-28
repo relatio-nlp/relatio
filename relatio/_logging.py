@@ -45,9 +45,9 @@ class FileLogger:
 
     def __init__(self, file: Path = Path("relatio.log"), capture_warnings: bool = True):
         if FileLogger._used is True:
-            raise RuntimeError("Once one instanced is allowed.")
+            raise RuntimeError("Only one instance is allowed.")
         else:
-            FileLogger._used = False
+            FileLogger._used = True
 
         self._logger = logging.getLogger("py.warnings")
 
