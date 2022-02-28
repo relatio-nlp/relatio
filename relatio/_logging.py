@@ -35,15 +35,16 @@ class FileLogger:
     Methods
     -------
     close()
-        The file handler is properly closed.
+        It should be called at the end of its usage to make sure that the file handler is properly closed.
 
 
     """
 
-    # This class can be used only once
+    # This class can be used only once and we used a private attribute to check this
     _used: bool = False
 
     def __init__(self, file: Path = Path("relatio.log"), capture_warnings: bool = True):
+        # This class can be used only once. Check whether it is already used.
         if FileLogger._used is True:
             raise RuntimeError("Only one instance is allowed.")
         else:
@@ -70,6 +71,11 @@ class FileLogger:
 
     @property
     def capture_warnings(self):
+        """
+        If capture_warnings is true the warnings are logged. Otherwise they are not.
+
+        """
+
         return self._capture_warnings
 
     @capture_warnings.setter
@@ -78,4 +84,8 @@ class FileLogger:
         self._capture_warnings = value
 
     def close(self):
+        """
+        It should be called at the end of its usage to make sure that the file handler is properly closed.
+
+        """
         self._handler.close()
