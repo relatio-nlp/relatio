@@ -3,6 +3,7 @@
 # ..................................................................................................................
 
 import json
+import pickle as pk
 import time
 from collections import Counter
 from typing import Dict, List, Optional, Tuple
@@ -246,3 +247,71 @@ def count_words(sentences: List[str]) -> Counter:
     words_counter = Counter(words)
 
     return words_counter
+
+
+def get_element(narrative, role):
+    return narrative[role] if role in narrative else ""
+
+
+def prettify(narrative) -> str:
+
+    ARG0 = get_element(narrative, "ARG0")
+    V = get_element(narrative, "B-V")
+
+    NEG = get_element(narrative, "B-ARGM-NEG")
+    if NEG:
+        NEG = "not"
+    else:
+        NEG == ""
+
+    MOD = get_element(narrative, "B-ARGM-MOD")
+    ARG1 = get_element(narrative, "ARG1")
+    ARG2 = get_element(narrative, "ARG2")
+
+    pretty_narrative = (ARG0, NEG, V, MOD, ARG1, ARG2)
+
+    pretty_narrative = " ".join([t for t in pretty_narrative if t != ""])
+
+    return pretty_narrative
+
+
+def load_sentences(input_path: str):
+
+    with open(output_path, "r") as f:
+        (doc_indices, sentences) = json.load(f)
+
+    return (doc_indices, sentences)
+
+
+def save_sentences(doc_indices, sentences, output_path):
+
+    with open(output_path, "w") as f:
+        json.dump((doc_indices, sentences), f)
+
+
+def save_entities(entity_counts, output_path: str):
+
+    with open(output_path, "wb") as f:
+        pk.dump(entity_counts, f)
+
+
+def load_entities(input_path: str):
+
+    with open(output_path, "rb") as f:
+        entity_counts = pk.load(f)
+
+    return entity_counts
+
+
+def save_roles(roles, output_path):
+
+    with open(output_path, "w") as f:
+        json.dump(roles, f)
+
+
+def load_roles(input_path):
+
+    with open(output_path, "r") as f:
+        roles = json.load(f)
+
+    return roles

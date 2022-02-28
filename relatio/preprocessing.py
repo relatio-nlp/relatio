@@ -6,6 +6,9 @@ import pandas as pd
 from copy import deepcopy
 from tqdm import tqdm
 from typing import Dict, List, Optional, Tuple, Union, Any
+from spacy.cli import download as spacy_download
+
+from relatio.utils import save_sentences, save_roles, save_entities
 
 
 class Preprocessor:
@@ -25,10 +28,18 @@ class Preprocessor:
         stop_words: List[str] = [],
         lowercase: bool = True,
         lemmatize: bool = True,
+        n_process: int = 1,
+        batch_size: int = 1000,
     ):
+
+        if not spacy.util.is_package(spacy_model):
+            spacy_download(spacy_model)
 
         self.spacy_model = spacy_model
         self.nlp = spacy.load(spacy_model)
+        self.nlp.add_pipe("sentencizer")
+        self.n_process = n_process
+        self.batch_size = batch_size
         self.remove_punctuation = remove_punctuation
         self.remove_digits = remove_digits
         self.stop_words = stop_words
@@ -56,38 +67,40 @@ class Preprocessor:
 
         """
 
-        docs = dataframe.to_dict(orient="records")
-
         sentences: List[str] = []
         doc_indices: List[str] = []
+
+        length = len(dataframe["doc"])
+
+        spacy_docs = self.nlp.pipe(
+            dataframe["doc"],
+            disable=["tagger", "ner", "parser", "lemmatizer"],
+            batch_size=self.batch_size,
+            n_process=self.n_process,
+        )
 
         if progress_bar:
             print("Splitting into sentences...")
             time.sleep(1)
-            docs = tqdm(docs)
+            spacy_docs = tqdm(spacy_docs, total=length)
 
-        for doc in docs:
-            for sent in self.nlp(doc["doc"], disable=["tagger", "ner"]).sents:
+        for i, doc in enumerate(spacy_docs):
+            for sent in doc.sents:
                 sentences.append(str(sent))
-                doc_indices = doc_indices + [doc["id"]]
+                doc_indices = doc_indices + [dataframe["id"].iloc[i]]
 
         if output_path is not None:
-            with open(output_path, "w") as f:
-                json.dump((doc_indices, sentences), f)
+            save_sentences(doc_indices, sentences, output_path)
 
         return (doc_indices, sentences)
 
-    def clean_text(
-        self, sentence: str, pos_tags_to_keep: Optional[List[str]] = None
-    ) -> List[str]:
+    def clean_text(self, s, pos_tags_to_keep: Optional[List[str]] = None) -> List[str]:
 
         """
 
         Clean a string of text.
 
         """
-
-        s = self.nlp(sentence)
 
         if self.remove_punctuation:
             s = [t for t in s if t.is_punct == False]
@@ -118,8 +131,9 @@ class Preprocessor:
     def mine_entities(
         self,
         sentences: List[str],
-        ent_labels: Optional[List[str]] = ["PERSON", "NORP", "ORG", "GPE", "EVENT"],
+        ent_labels: List[str] = ["PERSON", "NORP", "ORG", "GPE", "EVENT"],
         clean_entities: bool = True,
+        output_path: Optional[str] = None,
         progress_bar: bool = False,
     ) -> Counter:
 
@@ -140,25 +154,33 @@ class Preprocessor:
 
         entities_all = []
 
+        spacy_sentences = self.nlp.pipe(
+            sentences, batch_size=self.batch_size, n_process=self.n_process
+        )
+
+        length = len(sentences)
+
         if progress_bar:
             print("Mining named entities...")
             time.sleep(1)
-            sentences = tqdm(sentences)
+            spacy_sentences = tqdm(spacy_sentences, total=length)
 
-        for sentence in sentences:
-            sentence = self.nlp(sentence)
+        for sentence in spacy_sentences:
             for ent in sentence.ents:
                 if ent.label_ in ent_labels:
-                    entities_all.append(ent.text)
-
-        if clean_entities:
-            entities_all = [self.clean_text(e) for e in entities_all]
+                    entity = ent.text
+                    if clean_entities:
+                        entity = self.clean_text(ent)
+                    entities_all.append(entity)
 
         entity_counts = Counter(entities_all)
 
+        if output_path is not None:
+            save_entities(entity_counts, output_path)
+
         return entity_counts
 
-    def extract_role_per_sentence(
+    def _extract_role_per_sentence(
         self, sentence_dict: dict, used_roles: List[str]
     ) -> List[Dict[str, Union[str, bool]]]:
 
@@ -237,7 +259,7 @@ class Preprocessor:
             srl = tqdm(srl)
 
         for i, sentence_dict in enumerate(srl):
-            role_per_sentence = self.extract_role_per_sentence(
+            role_per_sentence = self._extract_role_per_sentence(
                 sentence_dict, used_roles
             )
             sentence_index.extend([i] * len(role_per_sentence))
@@ -245,11 +267,145 @@ class Preprocessor:
 
         return statements_role_list, np.asarray(sentence_index, dtype=np.uint32)
 
+    def _make_list_of_roles(self, used_role, statements):
+
+        list_of_roles = []
+        indices = []
+
+        for i, statement in enumerate(statements):
+            role_content = statement.get(used_role)
+            if role_content is not None:
+                list_of_roles.append(role_content)
+                indices.append(i)
+
+        return indices, list_of_roles
+
+    def _process_list_of_roles(
+        self, list_of_roles, max_length, pos_tags_to_keep, progress_bar
+    ):
+
+        list_of_spacy_roles = self.nlp.pipe(
+            list_of_roles, batch_size=self.batch_size, n_process=self.n_process
+        )
+
+        length = len(list_of_roles)
+
+        if progress_bar:
+            list_of_spacy_roles = tqdm(list_of_spacy_roles, total=length)
+
+        list_of_clean_roles = []
+
+        for phrase in list_of_spacy_roles:
+            clean_phrase = self.clean_text(phrase, pos_tags_to_keep=pos_tags_to_keep)
+            if max_length is not None:
+                if len(clean_phrase) > max_length:
+                    clean_phrase = ""
+            list_of_clean_roles.append(clean_phrase)
+
+        return list_of_clean_roles
+
     def process_roles(
         self,
         statements: List[Dict[str, List]],
         max_length: Optional[int] = None,
         dict_of_pos_tags_to_keep: Optional[dict] = None,
+        output_path: Optional[str] = None,
+        progress_bar: bool = False,
+    ) -> List[Dict[str, List]]:
+
+        """
+
+        Takes a list of raw extracted semantic roles and cleans the text.
+
+        Args:
+            max_length = remove roles of more than n characters (NB: very long roles tend to be uninformative)
+            progress_bar: print a progress bar (default is False)
+            For other arguments see utils.clean_text.
+
+        Returns:
+            List of processed statements
+
+        """
+
+        pos_tags_to_keep = {
+            "ARG0": None,
+            "ARG1": None,
+            "ARG2": None,
+            "B-ARGM-MOD": None,
+            "B-V": None,
+        }
+        if dict_of_pos_tags_to_keep is not None:
+            for role in dict_of_pos_tags_to_keep.keys():
+                pos_tags_to_keep[role] = dict_of_pos_tags_to_keep[role]
+
+        length = len(statements)
+        clean_statements = [{} for i in range(length)]
+
+        for role in ["ARG0", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"]:
+
+            indices, list_of_roles = self._make_list_of_roles(role, statements)
+
+            if role != "B-ARGM-NEG":
+                print("Cleaning roles %s..." % role)
+                list_of_roles = self._process_list_of_roles(
+                    list_of_roles,
+                    max_length=max_length,
+                    pos_tags_to_keep=pos_tags_to_keep[role],
+                    progress_bar=progress_bar,
+                )
+
+            for i, role_content in enumerate(list_of_roles):
+                clean_statements[indices[i]][role] = role_content
+
+        if output_path is not None:
+            save_roles(clean_statements, output_path)
+
+        return clean_statements
+
+    def _clean_text_not_optimized(
+        self, s, pos_tags_to_keep: Optional[List[str]] = None
+    ) -> List[str]:
+
+        """
+
+        Clean a string of text.
+
+        """
+
+        s = self.nlp(s)
+
+        if self.remove_punctuation:
+            s = [t for t in s if t.is_punct == False]
+
+        if self.remove_digits:
+            s = [t for t in s if t.is_digit == False]
+
+        if pos_tags_to_keep:
+            s = [t for t in s if t.pos_ in pos_tags_to_keep]
+
+        if self.lowercase and not self.lemmatize:
+            s = [t.lower_ for t in s]
+
+        if self.lowercase and self.lemmatize:
+            s = [t.lemma_.lower() for t in s]
+
+        if not self.lowercase and not self.lemmatize:
+            s = [t.text for t in s]
+
+        s = [t for t in s if t not in self.stop_words]
+
+        s = [t.strip() for t in s if t not in self.stop_words]
+
+        s = " ".join(s)
+
+        return s
+
+    def _process_roles_not_optimized(
+        self,
+        statements: List[Dict[str, List]],
+        max_length: Optional[int] = None,
+        dict_of_pos_tags_to_keep: Optional[dict] = None,
+        output_path: Optional[str] = None,
         progress_bar: bool = False,
     ) -> List[Dict[str, List]]:
 
@@ -286,9 +442,9 @@ class Preprocessor:
                 pos_tags_to_keep[role] = dict_of_pos_tags_to_keep[role]
 
         for i, statement in enumerate(statements):
-            for role, role_content in roles_copy[i].items():
+            for role, role_content in statement.items():
                 if isinstance(role_content, str):
-                    res = self.clean_text(
+                    res = self._clean_text_not_optimized(
                         role_content, pos_tags_to_keep=pos_tags_to_keep[role]
                     )
                     if max_length is not None:
@@ -302,5 +458,8 @@ class Preprocessor:
                     pass
                 else:
                     raise ValueError(f"{role_content}")
+
+        if output_path is not None:
+            save_roles(roles_copy, output_path)
 
         return roles_copy

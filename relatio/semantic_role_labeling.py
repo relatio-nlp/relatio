@@ -17,7 +17,7 @@ from allennlp_models.structured_prediction.predictors import (
 )
 from tqdm import tqdm
 
-from .utils import clean_text, group_sentences_in_batches, replace_sentences
+from .utils import group_sentences_in_batches, replace_sentences
 
 
 class SRL:

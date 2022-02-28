@@ -1,11 +1,16 @@
 from abc import ABC, abstractmethod
 from typing import Type
 from collections import Counter
-from scipy.spatial.distance import cdist
 from tqdm import tqdm
+import warnings
 
-from relatio.embeddings import *
-from relatio.utils import is_subsequence
+from scipy.spatial.distance import cdist
+from sklearn.cluster import KMeans
+
+from relatio._embeddings import *
+from relatio.utils import is_subsequence, count_values, prettify
+
+from spacy.cli import download as spacy_download
 
 
 class NarrativeModelBase(ABC):
@@ -17,10 +22,17 @@ class NarrativeModelBase(ABC):
 
     def __init__(
         self,
-        roles_considered: List[str] = ["ARG0", "B-V", "ARGM-MOD", "ARG1", "ARG2"],
+        roles_considered: List[str] = [
+            "ARG0",
+            "B-V",
+            "B-ARGM-NEG",
+            "B-ARGM-MOD",
+            "ARG1",
+            "ARG2",
+        ],
         roles_with_entities: str = ["ARG0", "ARG1", "ARG2"],
         list_of_known_entities: Optional[List[str]] = None,
-        assignment_to_known_entities: str = "regex",
+        assignment_to_known_entities: str = "character_matching",
         roles_with_embeddings: List[List[str]] = [["ARG0", "ARG1", "ARG2"]],
         embeddings_model: Optional[Type[Embeddings]] = None,
         threshold: int = 0.1,
@@ -35,6 +47,8 @@ class NarrativeModelBase(ABC):
         self.threshold = threshold
 
         if embeddings_model is None:
+            if not spacy.util.is_package("en_core_web_sm"):
+                spacy_download(spacy_model)
             self.embeddings_model = Embeddings("spaCy", "en_core_web_sm")
         else:
             self.embeddings_model = embeddings_model
@@ -77,18 +91,19 @@ class NarrativeModelBase(ABC):
 
                 # Character matching of known entities
                 if role in self.roles_with_entities:
-                    if self.assignment_to_known_entities == "regex":
+                    if self.assignment_to_known_entities == "character_matching":
+                        list_of_matched_entities = []
                         for e in self.list_of_known_entities:
-                            if (
-                                e in content
-                            ):  # this should be rewritten with is_subsequence() + handle multiple matches
-                                return e
+                            if is_subsequence(e.split(), content.split()):
+                                list_of_matched_entities.append(e)
+                        if len(list_of_matched_entities) != 0:
+                            return "|".join(list_of_matched_entities)
 
                 # Clustering with embeddings
                 for i, l in enumerate(self.roles_with_embeddings):
                     if role in l:
                         vector = self.embeddings_model.get_vector(content)
-                        if len(vector) != 0:
+                        if vector is not None:
 
                             # Known entities
                             if role in self.roles_with_entities:
@@ -115,30 +130,6 @@ class NarrativeModelBase(ABC):
                                     ]
                                     return self.labels[i][clu]
 
-    def get_element(self, narrative, role):
-        return narrative[role] if role in narrative else ""
-
-    def prettify(self, narrative):
-
-        ARG0 = self.get_element(narrative, "ARG0")
-        V = self.get_element(narrative, "B-V")
-
-        NEG = self.get_element(narrative, "B-ARGM-NEG")
-        if NEG:
-            NEG = "not"
-        else:
-            NEG == ""
-
-        MOD = self.get_element(narrative, "B-ARGM-MOD")
-        ARG1 = self.get_element(narrative, "ARG1")
-        ARG2 = self.get_element(narrative, "ARG2")
-
-        pretty_narrative = (ARG0, NEG, V, MOD, ARG1, ARG2)
-
-        pretty_narrative = " ".join([t for t in pretty_narrative if t != ""])
-
-        return pretty_narrative
-
     def predict(
         self, list_of_srl_res, prettify: bool = False, progress_bar: bool = False
     ):
@@ -162,7 +153,7 @@ class NarrativeModelBase(ABC):
 
         if prettify:
             list_of_narratives = [
-                self.prettify(narrative) for narrative in list_of_narratives
+                prettify(narrative) for narrative in list_of_narratives
             ]
 
         return list_of_narratives
@@ -177,11 +168,6 @@ class DeterministicModel(NarrativeModelBase):
 
     def train(self, list_of_srl_res):
         print("No training required: the model is deterministic.")
-
-
-from relatio.utils import count_values
-from sklearn.cluster import KMeans
-import warnings
 
 
 class StaticModel(NarrativeModelBase):
@@ -224,15 +210,16 @@ class StaticModel(NarrativeModelBase):
 
     def _remove_entities(self, list_of_phrases: List[str]):
 
-        if self.assignment_to_known_entities == "regex":
+        if self.assignment_to_known_entities == "character_matching":
             for phrase in list_of_phrases:
                 for entity in self.list_of_known_entities:
                     if is_subsequence(entity.split(), phrase.split()):
                         list_of_phrases.remove(phrase)
+                        break
         else:
             for phrase in list_of_phrases:
                 vector = self.embeddings_model.get_vector(phrase)
-                if len(vector) != 0:
+                if vector is not None:
                     distances = self.compute_distances(
                         vector, self.vectors_of_known_entities
                     )
@@ -252,8 +239,8 @@ class StaticModel(NarrativeModelBase):
     ):
 
         for i, roles in enumerate(self.roles_with_embeddings):
-
             if progress_bar:
+
                 print("Focus on roles: %s" % "-".join(roles))
                 print("Ignoring known entities...")
 
@@ -275,10 +262,10 @@ class StaticModel(NarrativeModelBase):
             vecs = []
             for phrase in phrases_to_embed:
                 vec = self.embeddings_model.get_vector(phrase)
-                if len(vec) == 0:
+                if vec is None:
                     phrases_to_embed.remove(phrase)
                 else:
-                    vec = np.array([vec])  # discuss with Andrei
+                    vec = np.array([vec])
                     if vec is not None:
                         vecs.append(vec)
 
@@ -354,7 +341,7 @@ class DynamicModel(NarrativeModelBase):
 
                 # Character matching of known entities (skipped for training)
                 if role in self.roles_with_entities:
-                    if self.assignment_to_known_entities == "regex":
+                    if self.assignment_to_known_entities == "character_matching":
                         for e in self.list_of_known_entities:
                             if e in content:
                                 return None
@@ -363,7 +350,7 @@ class DynamicModel(NarrativeModelBase):
                 for i, l in enumerate(self.roles_with_embeddings):
                     if role in l:
                         vector = self.embeddings_model.get_vector(content)
-                        if len(vector) != 0:
+                        if vector is not None:
 
                             # Known entities (skipped for training)
                             if role in self.roles_with_entities:
@@ -430,7 +417,7 @@ class NarrativeModel(NarrativeModelBase):
         roles_considered: List[str] = ["ARG0", "B-V", "ARGM-MOD", "ARG1", "ARG2"],
         roles_with_entities: str = ["ARG0", "ARG1", "ARG2"],
         list_of_known_entities: List[str] = [],
-        assignment_to_known_entities: str = "regex",
+        assignment_to_known_entities: str = "character_matching",
         roles_with_embeddings: List[str] = [["ARG0", "ARG1", "ARG2"]],
         embeddings_model: Optional[Type[Embeddings]] = None,
         threshold: int = 0.1,
