@@ -16,6 +16,7 @@ class FileLogger:
     The default warnings can be integrated with the logging using the logging.captureWarnings(True) function.
     See https://docs.python.org/3/library/logging.html#integration-with-the-warnings-module .
     The logs are saved in file that is created if it does not exists or the content is truncated (write mode).
+    One can use at most one instance of the class.
 
     Parameters
     ----------
@@ -39,7 +40,15 @@ class FileLogger:
 
     """
 
+    # This class can be used only once
+    _used: bool = False
+
     def __init__(self, file: Path = Path("relatio.log"), capture_warnings: bool = True):
+        if FileLogger._used is True:
+            raise RuntimeError("Once one instanced is allowed.")
+        else:
+            FileLogger._used = False
+
         self._logger = logging.getLogger("py.warnings")
 
         self._capture_warnings: bool = capture_warnings
