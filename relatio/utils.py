@@ -277,7 +277,7 @@ def prettify(narrative) -> str:
 
 def load_sentences(input_path: str):
 
-    with open(output_path, "r") as f:
+    with open(input_path, "r") as f:
         (doc_indices, sentences) = json.load(f)
 
     return (doc_indices, sentences)
@@ -297,7 +297,7 @@ def save_entities(entity_counts, output_path: str):
 
 def load_entities(input_path: str):
 
-    with open(output_path, "rb") as f:
+    with open(input_path, "rb") as f:
         entity_counts = pk.load(f)
 
     return entity_counts
@@ -311,7 +311,7 @@ def save_roles(roles, output_path):
 
 def load_roles(input_path):
 
-    with open(output_path, "r") as f:
+    with open(input_path, "r") as f:
         roles = json.load(f)
 
     return roles
