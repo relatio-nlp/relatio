@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Type
+from copy import deepcopy
 from collections import Counter
 from tqdm import tqdm
 import warnings
@@ -55,14 +56,16 @@ class NarrativeModelBase(ABC):
 
         if self.list_of_known_entities is not None:
             if self.assignment_to_known_entities == "embeddings":
+                print("Computing vectors for known entities...")
+                self.vectors_of_known_entities = []
                 for i, entity in enumerate(self.list_of_known_entities):
                     vector = self.embeddings_model.get_vector(entity)
-                    if i == 0:
-                        self.vectors_of_known_entities = np.array([vector])
-                    else:
-                        self.vectors_of_known_entities = np.append(
-                            self.vectors_of_known_entities, [vector], axis=0
-                        )
+                    if vector is not None:
+                        self.vectors_of_known_entities.append(np.array([vector]))
+
+                self.vectors_of_known_entities = np.concatenate(
+                    self.vectors_of_known_entities
+                )
 
         self.vectors = []
         self.labels = []
@@ -82,53 +85,42 @@ class NarrativeModelBase(ABC):
 
     def _process_srl_item_for_prediction(self, role, content):
 
-        if role in self.roles_considered:
+        # Character matching of known entities
+        if role in self.roles_with_entities:
+            if self.assignment_to_known_entities == "character_matching":
+                list_of_matched_entities = []
+                for entity in self.list_of_known_entities:
+                    if is_subsequence(entity.split(), content.split()):
+                        list_of_matched_entities.append(entity)
+                if len(list_of_matched_entities) != 0:
+                    return "|".join(list_of_matched_entities)
 
-            if role in ["B-V", "B-ARGM-NEG", "B-ARGM-MOD"]:
-                return content
+        # Clustering with embeddings
+        for i, l in enumerate(self.roles_with_embeddings):
+            if role in l:
+                vector = self.embeddings_model.get_vector(content)
+                if vector is not None:
 
-            elif role in ["ARG0", "ARG1", "ARG2"]:
+                    # Known entities
+                    if role in self.roles_with_entities:
+                        if self.assignment_to_known_entities == "embeddings":
+                            distances = self.compute_distances(
+                                vector, self.vectors_of_known_entities
+                            )
+                            nmin = min(distances)
+                            if nmin <= self.threshold:
+                                entity_index = np.where(
+                                    distances == np.amin(distances)
+                                )[0][0]
+                                return self.list_of_known_entities[entity_index]
 
-                # Character matching of known entities
-                if role in self.roles_with_entities:
-                    if self.assignment_to_known_entities == "character_matching":
-                        list_of_matched_entities = []
-                        for e in self.list_of_known_entities:
-                            if is_subsequence(e.split(), content.split()):
-                                list_of_matched_entities.append(e)
-                        if len(list_of_matched_entities) != 0:
-                            return "|".join(list_of_matched_entities)
-
-                # Clustering with embeddings
-                for i, l in enumerate(self.roles_with_embeddings):
-                    if role in l:
-                        vector = self.embeddings_model.get_vector(content)
-                        if vector is not None:
-
-                            # Known entities
-                            if role in self.roles_with_entities:
-                                if self.assignment_to_known_entities == "embeddings":
-                                    distances = self.compute_distances(
-                                        vector, self.vectors_of_known_entities
-                                    )
-                                    nmin = min(distances)
-                                    if nmin <= self.threshold:
-                                        entity_index = np.where(
-                                            distances == np.amin(distances)
-                                        )[0][0]
-                                        return self.list_of_known_entities[entity_index]
-
-                            # Unknown entities
-                            if len(self.vectors[i]) != 0:
-                                distances = self.compute_distances(
-                                    vector, self.vectors[i]
-                                )
-                                nmin = min(distances)
-                                if nmin <= self.threshold:
-                                    clu = np.where(distances == np.amin(distances))[0][
-                                        0
-                                    ]
-                                    return self.labels[i][clu]
+                    # Unknown entities
+                    if len(self.vectors[i]) != 0:
+                        distances = self.compute_distances(vector, self.vectors[i])
+                        nmin = min(distances)
+                        if nmin <= self.threshold:
+                            clu = np.where(distances == np.amin(distances))[0][0]
+                            return self.labels[i][clu]
 
     def predict(
         self, list_of_srl_res, prettify: bool = False, progress_bar: bool = False
@@ -139,17 +131,22 @@ class NarrativeModelBase(ABC):
 
         """
 
+        list_of_narratives = deepcopy(list_of_srl_res)
+
         if progress_bar:
             list_of_srl_res = tqdm(list_of_srl_res)
 
-        list_of_narratives = []
-        for srl_res in list_of_srl_res:
-            narrative = {}
+        for i, srl_res in enumerate(list_of_srl_res):
             for role, content in srl_res.items():
-                pred = self._process_srl_item_for_prediction(role, content)
-                if pred is not None:
-                    narrative[role] = pred
-            list_of_narratives.append(narrative)
+                if role in self.roles_considered:
+                    if role in ["ARG0", "ARG1", "ARG2"]:
+                        pred = self._process_srl_item_for_prediction(role, content)
+                        if pred is not None:
+                            list_of_narratives[i][role] = pred
+                        else:
+                            list_of_narratives[i].pop(role, None)
+                else:
+                    list_of_narratives[i].pop(role, None)
 
         if prettify:
             list_of_narratives = [
@@ -336,14 +333,14 @@ class DynamicModel(NarrativeModelBase):
 
     def _process_srl_item_for_training(self, role, content):
 
-        if role in ["ARG0", "ARG1", "ARG2"]:
-            if role in self.roles_considered:
+        if role in self.roles_considered:
+            if role in ["ARG0", "ARG1", "ARG2"]:
 
                 # Character matching of known entities (skipped for training)
                 if role in self.roles_with_entities:
                     if self.assignment_to_known_entities == "character_matching":
                         for e in self.list_of_known_entities:
-                            if e in content:
+                            if is_subsequence(entity.split(), content.split()):
                                 return None
 
                 # Clustering with embeddings
@@ -411,10 +408,37 @@ class DynamicModel(NarrativeModelBase):
 
 
 class NarrativeModel(NarrativeModelBase):
+
+    """
+    
+    The NarrativeModel class for users.
+    
+    Args:
+        model_type: 'deterministic', 'static' and 'dynamic'
+        roles_considered: list of semantic roles to consider 
+        (default: ["ARG0", "B-V", "ARGM-MOD", "ARG1", "ARG2"])
+        roles_with_entities: roles to consider for the known entities
+        (default: ["ARG0", "ARG1", "ARG2"])
+        list_of_known_entities: a list of known entities
+        assignment_to_known_entities: character_matching or embeddings (default: character_matching)
+        roles_with_embeddings: list of lists of semantic roles to embed and cluster
+        (i.e. each list represents semantic roles that should be clustered together)
+        embeddings_model: an object of type Embeddings
+        threshold: If the assignment to known entities is performed via embeddings, we compute the distance between konwn entities and a phrase. Define the threshold below which a phrase is considered a known entitiy (default: 0.1. This is a very low threshold which requires strong similarity between the phrase and the known entities).
+        
+    """
+
     def __init__(
         self,
         model_type,
-        roles_considered: List[str] = ["ARG0", "B-V", "ARGM-MOD", "ARG1", "ARG2"],
+        roles_considered: List[str] = [
+            "ARG0",
+            "B-V",
+            "B-ARGM-MOD",
+            "B-ARGM-NEG",
+            "ARG1",
+            "ARG2",
+        ],
         roles_with_entities: str = ["ARG0", "ARG1", "ARG2"],
         list_of_known_entities: List[str] = [],
         assignment_to_known_entities: str = "character_matching",
@@ -424,12 +448,47 @@ class NarrativeModel(NarrativeModelBase):
         **kwargs,
     ):
 
+        if (
+            is_subsequence(
+                roles_considered,
+                ["ARG0", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"],
+            )
+            is False
+        ):
+            raise ValueError(
+                "Some roles_considered are not supported. Roles supported: ARG0, B-V, B-ARGM-NEG, B-ARGM-MOD, ARG1, ARG2"
+            )
+
+        if roles_with_entities is not None:
+            if is_subsequence(roles_with_entities, roles_considered) is False:
+                raise ValueError("roles_with_entities should be in roles_considered.")
+
+        if roles_with_embeddings is not None:
+            for roles in roles_with_embeddings:
+                if is_subsequence(roles, roles_considered) is False:
+                    raise ValueError(
+                        "each list in roles_with_embeddings should be a subset of roles_considered."
+                    )
+                if ["B-ARGM-NEG", "B-ARGM-MOD", "B-V"] in roles:
+                    raise ValueError(
+                        "Negations, verbs and modals cannot be embedded and clustered."
+                    )
+
+        if assignment_to_known_entities not in ["character_matching", "embeddings"]:
+            raise ValueError(
+                "Only two options for assignment_to_known_entities: character_matching or embeddings."
+            )
+
         if model_type == "dynamic":
             _MODEL_CLASS = DynamicModel
         elif model_type == "static":
             _MODEL_CLASS = StaticModel
         elif model_type == "deterministic":
             _MODEL_CLASS = DeterministicModel
+        else:
+            raise ValueError(
+                "Only three possible options for model_type: deterministic, static or dynamic."
+            )
 
         self._model_obj = _MODEL_CLASS(
             roles_considered,

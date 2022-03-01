@@ -15,14 +15,23 @@ class Preprocessor:
     """
 
     A class to preprocess a given corpus
-
     (e.g., split it into sentences, annotate semantic roles, clean the text, mine named entities)
+    
+    Args:
+        spacy_model: One of the available spacy models for the English language (default: en_core_web_sm). For a complete list, see: https://spacy.io/models/en#en_core_web_trf
+        remove_punctuation: whether to remove string.punctuation
+        remove_digits: whether to remove string.digits
+        stop_words: list of stopwords to remove
+        lowercase: whether to lower the case
+        lemmatize: whether to lemmatize 
+        n_process: Number of processes to user in nlp.pipe() for parallel computing (default: 1). Set to -1 to use all cores on the machine.
+        batch_size: Size of the batches for parallel computing (default: 1000)
 
     """
 
     def __init__(
         self,
-        spacy_model,
+        spacy_model="en_core_web_sm",
         remove_punctuation: bool = True,
         remove_digits: bool = True,
         stop_words: List[str] = [],
