@@ -9,3 +9,11 @@ repos:
         minimum_pre_commit_version: 2.9.2
         require_serial: true
         types_or: [python, pyi]
+      - id: isort
+        name: isort (python)
+        language: python
+        language_version: python3 # Should be a command that runs python3.6+
+        entry: isort --check-only
+        minimum_pre_commit_version: 2.9.2
+        require_serial: true
+        types_or: [python, pyi]
