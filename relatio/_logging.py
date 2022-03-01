@@ -50,6 +50,8 @@ class FileLogger:
             FileLogger._used = True
 
         self._logger = logging.getLogger("py.warnings")
+        # Avoid propagating the logs to the root
+        self._logger.propagate = False
 
         self._capture_warnings: bool = capture_warnings
         if capture_warnings is True:
