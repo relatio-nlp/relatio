@@ -11,12 +11,12 @@ from pathlib import Path
 
 class FileLogger:
     """
-    File logger used to capture the warnings and write the warnings to a file.
+    File logger used to capture the warnings and the root logger.
 
     The default warnings can be integrated with the logging using the logging.captureWarnings(True) function.
     See https://docs.python.org/3/library/logging.html#integration-with-the-warnings-module .
-    The logs are saved in file that is created if it does not exists or the content is truncated (write mode).
-    One can use at most one instance of the class.
+    The logs are saved to file in write mode, and one can use the same configuration for the root logger.
+    One can use at most one instance of the class and it is recommended to be called in the very begging.
 
     Parameters
     ----------
@@ -24,7 +24,10 @@ class FileLogger:
         The file path used for savings the logs.
     capture_warnings : bool, default=True
         Whether to capture the default warnings.
-
+    include_root_logger : bool, default=True
+        Whether to use the file also for the root logger.
+    level : str, default="INFO"
+        Which logging level to use (see https://docs.python.org/3/library/logging.html#logging-levels ).
 
     Attributes
     ----------
@@ -43,32 +46,35 @@ class FileLogger:
     # This class can be used only once
     _used: bool = False
 
-    def __init__(self, file: Path = Path("relatio.log"), capture_warnings: bool = True):
+    def __init__(
+        self,
+        file: Path = Path("relatio.log"),
+        capture_warnings: bool = True,
+        include_root_logger: bool = True,
+        level: str = "INFO",
+    ):
         if FileLogger._used is True:
             raise RuntimeError("Only one instance is allowed.")
         else:
             FileLogger._used = True
 
-        self._logger = logging.getLogger("py.warnings")
-        # Avoid propagating the logs to the root
-        self._logger.propagate = False
+        self.capture_warnings = capture_warnings
 
-        self._capture_warnings: bool = capture_warnings
-        if capture_warnings is True:
-            logging.captureWarnings(True)
+        format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-        # Create handlers
+        # Create handler
         self._handler = logging.FileHandler(filename=file, mode="w")
-        self._handler.setLevel(logging.WARN)
+        self._handler.setLevel(level)
+        self._handler.setFormatter(logging.Formatter(format))
 
-        # Create formatters and add it to handlers
-        format = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        self._handler.setFormatter(format)
-
-        # Add handlers to the logger
-        self._logger.addHandler(self._handler)
+        if include_root_logger is True:
+            logging.basicConfig(handlers=[self._handler], level=level, format=format)
+        else:
+            self._logger = logging.getLogger("py.warnings")
+            # Avoid propagating the logs to the root
+            self._logger.propagate = False
+            # Add handlers to the logger
+            self._logger.addHandler(self._handler)
 
     @property
     def capture_warnings(self):
