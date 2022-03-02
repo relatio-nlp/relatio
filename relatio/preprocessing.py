@@ -1,14 +1,15 @@
-from collections import Counter
-import numpy as np
-import spacy
 import time
-import pandas as pd
+from collections import Counter
 from copy import deepcopy
-from tqdm import tqdm
-from typing import Dict, List, Optional, Tuple, Union, Any
-from spacy.cli import download as spacy_download
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from relatio.utils import save_sentences, save_roles, save_entities
+import numpy as np
+import pandas as pd
+import spacy
+from spacy.cli import download as spacy_download
+from tqdm import tqdm
+
+from relatio.utils import save_entities, save_roles, save_sentences
 
 
 class Preprocessor:
@@ -16,14 +17,14 @@ class Preprocessor:
 
     A class to preprocess a given corpus
     (e.g., split it into sentences, annotate semantic roles, clean the text, mine named entities)
-    
+
     Args:
         spacy_model: One of the available spacy models for the English language (default: en_core_web_sm). For a complete list, see: https://spacy.io/models/en#en_core_web_trf
         remove_punctuation: whether to remove string.punctuation
         remove_digits: whether to remove string.digits
         stop_words: list of stopwords to remove
         lowercase: whether to lower the case
-        lemmatize: whether to lemmatize 
+        lemmatize: whether to lemmatize
         n_process: Number of processes to user in nlp.pipe() for parallel computing (default: 1). Set to -1 to use all cores on the machine.
         batch_size: Size of the batches for parallel computing (default: 1000)
 

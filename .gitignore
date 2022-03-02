@@ -29,6 +29,8 @@ myNotebooks/
 *.vscode/
 
 *.egg-info
+build/
+*.whl
 
 venv/*
 .idea/*

@@ -1,17 +1,16 @@
-from abc import ABC, abstractmethod
-from typing import Type
-from copy import deepcopy
-from collections import Counter
-from tqdm import tqdm
 import warnings
+from abc import ABC, abstractmethod
+from collections import Counter
+from copy import deepcopy
+from typing import Type
 
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
+from spacy.cli import download as spacy_download
+from tqdm import tqdm
 
 from relatio._embeddings import *
-from relatio.utils import is_subsequence, count_values, prettify
-
-from spacy.cli import download as spacy_download
+from relatio.utils import count_values, is_subsequence, prettify
 
 
 class NarrativeModelBase(ABC):
@@ -410,12 +409,12 @@ class DynamicModel(NarrativeModelBase):
 class NarrativeModel(NarrativeModelBase):
 
     """
-    
+
     The NarrativeModel class for users.
-    
+
     Args:
         model_type: 'deterministic', 'static' and 'dynamic'
-        roles_considered: list of semantic roles to consider 
+        roles_considered: list of semantic roles to consider
         (default: ["ARG0", "B-V", "ARGM-MOD", "ARG1", "ARG2"])
         roles_with_entities: roles to consider for the known entities
         (default: ["ARG0", "ARG1", "ARG2"])
@@ -425,7 +424,7 @@ class NarrativeModel(NarrativeModelBase):
         (i.e. each list represents semantic roles that should be clustered together)
         embeddings_model: an object of type Embeddings
         threshold: If the assignment to known entities is performed via embeddings, we compute the distance between konwn entities and a phrase. Define the threshold below which a phrase is considered a known entitiy (default: 0.1. This is a very low threshold which requires strong similarity between the phrase and the known entities).
-        
+
     """
 
     def __init__(

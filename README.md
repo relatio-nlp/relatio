@@ -16,7 +16,7 @@ It is highly recommended to use a virtual environment (or conda environment) for
 python -m pip install -U pip wheel setuptools
 
 # install the package
-python -m pip install git+https://github.com/relatio-nlp/relatio
+python -m pip install -U relatio
 
 # download SpaCy and NLTK additional resources
 python -m spacy download en_core_web_sm

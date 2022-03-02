@@ -29,6 +29,7 @@ class Embeddings(EmbeddingsBase):
     If sentences is used in the constructor the embeddings are weighted by the smoothed inverse frequency of each token.
     For further details, see: https://github.com/PrincetonML/SIF
     The input is expected in lowe case.
+
     Examples:
         >>> model = Embeddings("TensorFlow_USE","https://tfhub.dev/google/universal-sentence-encoder/4")
         >>> model.get_vector("hello world").shape
@@ -134,12 +135,15 @@ class Embeddings(EmbeddingsBase):
         """
         A function that computes smooth inverse frequency (SIF) weights based on word frequencies.
         (See "Arora, S., Liang, Y., & Ma, T. (2016). A simple but tough-to-beat baseline for sentence embeddings.")
+
         The sentences are used to build the counter dictionary {"word": frequency} which is further used to compute the sif weights
         Args:
             sentences: a list of sentences
             alpha: regularization parameter
+
         Returns:
             A dictionary {"word": SIF weight}
+
         """
         words_counter = count_words(sentences)
 
