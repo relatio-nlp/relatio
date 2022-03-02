@@ -159,7 +159,9 @@ class spaCyEmbeddings(EmbeddingsBase):
     def __init__(self, model: str) -> None:
         if not spacy.util.is_package(model):
             spacy_download(model)
-        self._nlp = spacy.load(model)
+        self._nlp = spacy.load(
+            model, disable=["tagger", "parser", "attribute_ruler", "lemmatizer", "ner"]
+        )
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
         return np.array(self._nlp(phrase).vector)
