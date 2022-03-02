@@ -338,7 +338,7 @@ class DynamicModel(NarrativeModelBase):
                 # Character matching of known entities (skipped for training)
                 if role in self.roles_with_entities:
                     if self.assignment_to_known_entities == "character_matching":
-                        for e in self.list_of_known_entities:
+                        for entity in self.list_of_known_entities:
                             if is_subsequence(entity.split(), content.split()):
                                 return None
 

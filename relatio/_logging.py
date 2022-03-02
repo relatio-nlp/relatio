@@ -12,18 +12,12 @@ from pathlib import Path
 class FileLogger:
     """
         File logger used to capture the warnings and the root logger.
-    <<<<<<< HEAD
-    =======
 
-    >>>>>>> origin/relatio-v0.3
         The default warnings can be integrated with the logging using the logging.captureWarnings(True) function.
         See https://docs.python.org/3/library/logging.html#integration-with-the-warnings-module .
         The logs are saved to file in write mode, and one can use the same configuration for the root logger.
         One can use at most one instance of the class and it is recommended to be called in the very begging.
-    <<<<<<< HEAD
-    =======
 
-    >>>>>>> origin/relatio-v0.3
         Parameters
         ----------
         file : pathlib.Path, default=pathlib.Path("relatio.log")
@@ -34,28 +28,16 @@ class FileLogger:
             Whether to use the file also for the root logger.
         level : str, default="INFO"
             Which logging level to use (see https://docs.python.org/3/library/logging.html#logging-levels ).
-    <<<<<<< HEAD
-    =======
 
-    >>>>>>> origin/relatio-v0.3
         Attributes
         ----------
         capture_warnings : bool
             If capture_warnings is true the warnings are logged. Otherwise they are not.
-    <<<<<<< HEAD
-    =======
 
-
-    >>>>>>> origin/relatio-v0.3
         Methods
         -------
         close()
             The file handler is properly closed.
-    <<<<<<< HEAD
-    =======
-
-
-    >>>>>>> origin/relatio-v0.3
     """
 
     # This class can be used only once
