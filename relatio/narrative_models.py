@@ -78,7 +78,8 @@ class NarrativeModelBase(ABC):
     def train(self, list_of_srl_res):
         pass
 
-    def compute_distances(self, vector, vectors):
+    @staticmethod
+    def compute_distances(vector, vectors):
         distances = cdist(vectors, vector.reshape(1, -1), metric="euclidean").flatten()
         return distances
 

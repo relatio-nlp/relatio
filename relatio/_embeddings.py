@@ -5,6 +5,7 @@
 # Copyright (c) 2020-2021 University of St.Gallen, Philine Widmer
 # Copyright (c) 2020-2021 Ecole Polytechnique, Germain Gauthier
 
+import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, List, Optional, Type, Union
@@ -24,7 +25,6 @@ class EmbeddingsBase(ABC):
 
 
 class Embeddings(EmbeddingsBase):
-    # TODO: for SIF many things can go wrong since we do the linear combination of potential nan values
     """
     If sentences is used in the constructor the embeddings are weighted by the smoothed inverse frequency of each token.
     For further details, see: https://github.com/PrincetonML/SIF
@@ -102,12 +102,22 @@ class Embeddings(EmbeddingsBase):
         tokens = phrase.split()
 
         # For phrases with one token
-        if self.use_sif is True and len(tokens) > 0:
+        if self.use_sif:
+
+            sif_tokens = []
+            for token in tokens:
+                if token in self._sif_dict:
+                    sif_tokens.append(token)
+                else:
+                    warnings.warn(
+                        f"No frequency information for token: {token}. It is not used to compute the SIF-embedding of phrase: {phrase}.",
+                        RuntimeWarning,
+                    )
 
             res = np.mean(
                 [
                     self._sif_dict[token] * self._get_default_vector(token)
-                    for token in tokens
+                    for token in sif_tokens
                 ],
                 axis=0,
             )
@@ -115,10 +125,11 @@ class Embeddings(EmbeddingsBase):
         else:
             res = self._get_default_vector(phrase)
 
-        # in case the result is fishy it will return a None
-        if res is None:
-            return None
-        elif np.isnan(res).any() or np.count_nonzero(res) == 0:
+        # In case the result is fishy it will return a None and raise a warning
+        if res is None or np.isnan(res).any() or np.count_nonzero(res) == 0:
+            warnings.warn(
+                f"Unable to compute an embedding for phrase: {phrase}.", RuntimeWarning
+            )
             return None
 
         if self.normalize:
@@ -200,7 +211,21 @@ class GensimWord2VecEmbeddings(EmbeddingsBase):
         return Word2Vec.load(path).wv
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
-        return self._model[phrase]
+
+        tokens = phrase.split()
+        embeddable_tokens = []
+        for token in tokens:
+            if token in self._vocab:
+                embeddable_tokens.append(token)
+            else:
+                warnings.warn(
+                    f"No vector for token: {token}. It is not used to compute the embedding of: {phrase}.",
+                    RuntimeWarning,
+                )
+
+        res = np.mean([self._model[token] for token in embeddable_tokens], axis=0)
+
+        return res
 
 
 class GensimPreTrainedEmbeddings(EmbeddingsBase):
@@ -217,9 +242,6 @@ class GensimPreTrainedEmbeddings(EmbeddingsBase):
         self._model = self._load_keyed_vectors(model)
         self._vocab = self._model.vocab
 
-    def _get_default_vector(self, phrase: str) -> np.ndarray:
-        return self._model[phrase]
-
     def _load_keyed_vectors(self, model):
         try:
             import gensim.downloader as api
@@ -229,3 +251,20 @@ class GensimPreTrainedEmbeddings(EmbeddingsBase):
             raise
 
         return api.load(model)
+
+    def _get_default_vector(self, phrase: str) -> np.ndarray:
+
+        tokens = phrase.split()
+        embeddable_tokens = []
+        for token in tokens:
+            if token in self._vocab:
+                embeddable_tokens.append(token)
+            else:
+                warnings.warn(
+                    f"No vector for token: {token}. It is not used to compute the embedding of: {phrase}.",
+                    RuntimeWarning,
+                )
+
+        res = np.mean([self._model[token] for token in embeddable_tokens], axis=0)
+
+        return res
