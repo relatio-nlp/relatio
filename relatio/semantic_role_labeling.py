@@ -123,3 +123,89 @@ class SRL:
 
             res.extend(res_batch)
         return res
+
+
+def _extract_role_per_sentence(
+    sentence_dict: dict, used_roles: List[str]
+) -> List[Dict[str, Union[str, bool]]]:
+
+    """
+
+    Extract the semantic roles for a given sentence.
+
+    Args:
+        srl: srl output
+        used_roles: list of semantic roles to extract
+
+    Returns:
+        List of statements with their associated roles for a given sentence
+
+    """
+
+    word_list = sentence_dict["words"]
+    sentence_role_list = []
+
+    for statement_dict in sentence_dict["verbs"]:
+        tag_list = statement_dict["tags"]
+
+        statement_role_dict: Dict[str, Union[str, bool]] = {}
+        for role in ["ARG0", "ARG1", "ARG2", "B-V", "B-ARGM-MOD"]:
+            if role in used_roles:
+                indices_role = [i for i, tok in enumerate(tag_list) if role in tok]
+                toks_role = [
+                    tok for i, tok in enumerate(word_list) if i in indices_role
+                ]
+                statement_role_dict[role] = " ".join(toks_role)
+
+        if "B-ARGM-NEG" in used_roles:
+            role_negation_value = any("B-ARGM-NEG" in tag for tag in tag_list)
+            statement_role_dict["B-ARGM-NEG"] = role_negation_value
+
+        key_to_delete = []
+        for key, value in statement_role_dict.items():
+            if not value:
+                key_to_delete.append(key)
+        for key in key_to_delete:
+            del statement_role_dict[key]
+        sentence_role_list.append(statement_role_dict)
+
+    if not sentence_role_list:
+        sentence_role_list = [{}]
+
+    return sentence_role_list
+
+
+def extract_roles(
+    srl: List[Dict[str, Any]],
+    used_roles: List[str],
+    progress_bar: bool = False,
+) -> Tuple[List[Dict[str, Union[str, bool]]], List[int]]:
+
+    """
+
+    Extract semantic roles from the SRL output.
+
+    Args:
+        srl: srl output
+        used_roles: list of semantic roles to extract
+        progress_bar: print a progress bar (default is False)
+
+    Returns:
+        List of statements and numpy array of sentence indices (to keep track of sentences)
+
+    """
+
+    statements_role_list: List[Dict[str, Union[str, bool]]] = []
+    sentence_index: List[int] = []
+
+    if progress_bar:
+        print("Extracting semantic roles...")
+        time.sleep(1)
+        srl = tqdm(srl)
+
+    for i, sentence_dict in enumerate(srl):
+        role_per_sentence = _extract_role_per_sentence(sentence_dict, used_roles)
+        sentence_index.extend([i] * len(role_per_sentence))
+        statements_role_list.extend(role_per_sentence)
+
+    return statements_role_list, np.asarray(sentence_index, dtype=np.uint32)

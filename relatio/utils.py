@@ -256,6 +256,27 @@ def count_words(sentences: List[str]) -> Counter:
     return words_counter
 
 
+def make_list_from_key(key, list_of_dicts):
+
+    """
+
+    Extract the content of a specific key in a list of dictionaries.
+    Returns a list and the corresponding indices.
+
+    """
+
+    list_from_key = []
+    indices = []
+
+    for i, statement in enumerate(list_of_dicts):
+        content = statement.get(key)
+        if content is not None:
+            list_from_key.append(content)
+            indices.append(i)
+
+    return indices, list_from_key
+
+
 def get_element(narrative, role):
     return narrative[role] if role in narrative else ""
 
@@ -275,7 +296,7 @@ def prettify(narrative) -> str:
     ARG1 = get_element(narrative, "ARG1")
     ARG2 = get_element(narrative, "ARG2")
 
-    pretty_narrative = (ARG0, NEG, V, MOD, ARG1, ARG2)
+    pretty_narrative = (ARG0, MOD, NEG, V, ARG1, ARG2)
 
     pretty_narrative = " ".join([t for t in pretty_narrative if t != ""])
 
