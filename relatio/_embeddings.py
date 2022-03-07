@@ -36,7 +36,7 @@ class Embeddings(EmbeddingsBase):
         >>> model.get_vector("hello world").shape
         (512,)
         >>> model = Embeddings("spaCy", "en_core_web_md")
-        >>> model.get_vector("") is None
+        >>> np.isnan(model.get_vector("")).any()
         True
         >>> model.get_vector("hello world").shape
         (300,)
@@ -104,7 +104,6 @@ class Embeddings(EmbeddingsBase):
     def get_vector(self, phrase: str) -> Optional[np.ndarray]:
         tokens = phrase.split()
 
-        # For phrases with one token
         if self.use_sif:
 
             sif_tokens = []
