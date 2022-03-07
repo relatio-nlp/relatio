@@ -5,6 +5,7 @@
 # Copyright (c) 2020-2021 University of St.Gallen, Philine Widmer
 # Copyright (c) 2020-2021 Ecole Polytechnique, Germain Gauthier
 
+import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, List, Optional, Type, Union
@@ -12,7 +13,9 @@ from typing import Dict, List, Optional, Type, Union
 import numpy as np
 import spacy
 from numpy.linalg import norm
+from scipy.spatial.distance import cdist
 from spacy.cli import download as spacy_download
+from tqdm import tqdm
 
 from relatio.utils import count_words
 
@@ -24,12 +27,10 @@ class EmbeddingsBase(ABC):
 
 
 class Embeddings(EmbeddingsBase):
-    # TODO: for SIF many things can go wrong since we do the linear combination of potential nan values
     """
     If sentences is used in the constructor the embeddings are weighted by the smoothed inverse frequency of each token.
     For further details, see: https://github.com/PrincetonML/SIF
     The input is expected in lowe case.
-
     Examples:
         >>> model = Embeddings("TensorFlow_USE","https://tfhub.dev/google/universal-sentence-encoder/4")
         >>> model.get_vector("hello world").shape
@@ -50,7 +51,6 @@ class Embeddings(EmbeddingsBase):
         >>> model = Embeddings("Gensim_pretrained", "glove-twitter-25", sentences = ["this is a nice world","hello world","hello everybody"])
         >>> model.get_vector("hello world").shape
         (25,)
-
     """
 
     def __init__(
@@ -89,6 +89,9 @@ class Embeddings(EmbeddingsBase):
             self._sif_dict = {}
             self._use_sif = False
 
+        # to determine the size of vectors
+        self.size_vectors = self._get_default_vector("the").shape[0]
+
     @property
     def normalize(self) -> bool:
         return self._normalize
@@ -98,29 +101,40 @@ class Embeddings(EmbeddingsBase):
         return self._use_sif
 
     # One cannot add a setter since it is added next to the child classes
-
     def get_vector(self, phrase: str) -> Optional[np.ndarray]:
         tokens = phrase.split()
 
         # For phrases with one token
-        if self.use_sif is True and len(tokens) > 0:
+        if self.use_sif:
 
+            sif_tokens = []
+            for token in tokens:
+                if token in self._sif_dict:
+                    sif_tokens.append(token)
+                else:
+                    warnings.warn(
+                        f"No frequency information for token: {token}. It is not used to compute the SIF-embedding of phrase: {phrase}.",
+                        RuntimeWarning,
+                    )
             res = np.mean(
                 [
                     self._sif_dict[token] * self._get_default_vector(token)
-                    for token in tokens
+                    for token in sif_tokens
                 ],
                 axis=0,
             )
-
         else:
             res = self._get_default_vector(phrase)
 
-        # in case the result is fishy it will return a None
-        if res is None:
-            return None
-        elif np.isnan(res).any() or np.count_nonzero(res) == 0:
-            return None
+        # In case the result is fishy it will return a vector of np.nans and raise a warning
+        if res is None or np.isnan(res).any() or np.count_nonzero(res) == 0:
+            warnings.warn(
+                f"Unable to compute an embedding for phrase: {phrase}.", RuntimeWarning
+            )
+            a = np.empty((self.size_vectors,))
+            a[:] = np.nan
+
+            return a
 
         if self.normalize:
             return res / norm(res)
@@ -130,22 +144,31 @@ class Embeddings(EmbeddingsBase):
     def _get_default_vector(self, phrase: str) -> np.ndarray:
         return self._embeddings_model._get_default_vector(phrase)
 
+    # This will require refactoring for speed (in the case of spacy and USE)
+    def _get_vectors(self, phrases: str, progress_bar: bool = False) -> np.ndarray:
+
+        if progress_bar:
+            print("Computing phrase embeddings...")
+            phrases = tqdm(phrases)
+
+        vectors = []
+        for i, phrase in enumerate(phrases):
+            vector = self.get_vector(phrase)
+            vectors.append(np.array([vector]))
+        vectors = np.concatenate(vectors)
+        return vectors
+
     @staticmethod
     def compute_sif_weights(sentences: List[str], alpha: float) -> Dict[str, float]:
-
         """
-
         A function that computes smooth inverse frequency (SIF) weights based on word frequencies.
         (See "Arora, S., Liang, Y., & Ma, T. (2016). A simple but tough-to-beat baseline for sentence embeddings.")
-
         The sentences are used to build the counter dictionary {"word": frequency} which is further used to compute the sif weights
         Args:
             sentences: a list of sentences
             alpha: regularization parameter
-
         Returns:
             A dictionary {"word": SIF weight}
-
         """
         words_counter = count_words(sentences)
 
@@ -161,7 +184,9 @@ class spaCyEmbeddings(EmbeddingsBase):
     def __init__(self, model: str) -> None:
         if not spacy.util.is_package(model):
             spacy_download(model)
-        self._nlp = spacy.load(model)
+        self._nlp = spacy.load(
+            model, disable=["tagger", "parser", "attribute_ruler", "lemmatizer", "ner"]
+        )
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
         return np.array(self._nlp(phrase).vector)
@@ -184,10 +209,7 @@ class TensorFlowUSEEmbeddings(EmbeddingsBase):
 
 
 class GensimWord2VecEmbeddings(EmbeddingsBase):
-    def __init__(
-        self,
-        path: str,
-    ):
+    def __init__(self, path: str):
 
         self._model = self._load_keyed_vectors(path)
         self._vocab = self._model.vocab
@@ -203,32 +225,34 @@ class GensimWord2VecEmbeddings(EmbeddingsBase):
         return Word2Vec.load(path).wv
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
-        return self._model[phrase]
+
+        tokens = phrase.split()
+        embeddable_tokens = []
+        for token in tokens:
+            if token in self._vocab:
+                embeddable_tokens.append(token)
+            else:
+                warnings.warn(
+                    f"No vector for token: {token}. It is not used to compute the embedding of: {phrase}.",
+                    RuntimeWarning,
+                )
+        res = np.mean([self._model[token] for token in embeddable_tokens], axis=0)
+        return res
 
 
 class GensimPreTrainedEmbeddings(EmbeddingsBase):
 
     """
-
     A class to call a pre-trained embeddings model from gensim's library.
-
     # The list of pre-trained embeddings may be browsed by typing:
-
         import gensim.downloader as api
         list(api.info()['models'].keys())
-
     """
 
-    def __init__(
-        self,
-        model: str,
-    ):
+    def __init__(self, model: str):
 
         self._model = self._load_keyed_vectors(model)
         self._vocab = self._model.vocab
-
-    def _get_default_vector(self, phrase: str) -> np.ndarray:
-        return self._model[phrase]
 
     def _load_keyed_vectors(self, model):
         try:
@@ -239,3 +263,44 @@ class GensimPreTrainedEmbeddings(EmbeddingsBase):
             raise
 
         return api.load(model)
+
+    def _get_default_vector(self, phrase: str) -> np.ndarray:
+
+        tokens = phrase.split()
+        embeddable_tokens = []
+        for token in tokens:
+            if token in self._vocab:
+                embeddable_tokens.append(token)
+            else:
+                warnings.warn(
+                    f"No vector for token: {token}. It is not used to compute the embedding of: {phrase}.",
+                    RuntimeWarning,
+                )
+        res = np.mean([self._model[token] for token in embeddable_tokens], axis=0)
+        return res
+
+
+def _compute_distances(vectors1, vectors2):
+    distances = cdist(vectors1, vectors2, metric="euclidean")
+    return distances
+
+
+def _get_min_distances(distances):
+    return np.min(distances, axis=1)
+
+
+def _get_index_min_distances(distances):
+    return np.argmin(distances, axis=1)
+
+
+def _embeddings_similarity(vectors1, vectors2, threshold: float = 100):
+    distances = _compute_distances(vectors1, vectors2)
+    index_min_distances = _get_index_min_distances(distances)
+    min_distances = _get_min_distances(distances)
+    index = list(np.where(min_distances <= threshold))[0]
+    index_min_distances = index_min_distances[index]
+    return index, index_min_distances
+
+
+def _remove_nan_vectors(vectors):
+    return vectors[~np.isnan(vectors).any(axis=1)]
