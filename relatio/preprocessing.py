@@ -36,6 +36,7 @@ class Preprocessor:
         stop_words: List[str] = [],
         lowercase: bool = True,
         lemmatize: bool = True,
+        remove_chars: Optional[List[str]] = None,
         n_process: int = 1,
         batch_size: int = 1000,
     ):
@@ -53,6 +54,7 @@ class Preprocessor:
         self.stop_words = stop_words
         self.lowercase = lowercase
         self.lemmatize = lemmatize
+        self.remove_chars = remove_chars
 
     def split_into_sentences(
         self,
@@ -128,11 +130,17 @@ class Preprocessor:
         if not self.lowercase and not self.lemmatize:
             s = [t.text for t in s]
 
+        if self.remove_chars is not None:
+            for char in self.remove_chars:
+                s = [t.replace(char, " ") for t in s]
+
         s = [t for t in s if t not in self.stop_words]
 
         s = [t.strip() for t in s if t not in self.stop_words]
 
         s = " ".join(s)
+
+        s = s.strip()
 
         return s
 

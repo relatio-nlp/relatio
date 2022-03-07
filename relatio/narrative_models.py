@@ -4,6 +4,7 @@ from collections import Counter
 from copy import deepcopy
 from typing import List, Optional, Type
 
+import numpy as np
 import spacy
 from sklearn.cluster import KMeans
 from spacy.cli import download as spacy_download
@@ -362,40 +363,41 @@ class DynamicModel(NarrativeModelBase):
         # Clustering with embeddings
         for i, l in enumerate(self.roles_with_unknown_entities):
             if role in l:
-                vector = self.embeddings_model.get_vector(content)
-                if vector is not None:
+                vector = self.embeddings_model.get_vector(content).reshape(1, -1)
+
+                # Filter for phrases with embeddings
+                if np.all(np.isnan(vector)) == False:
 
                     # Known entities (skipped for training)
                     if role in self.roles_with_known_entities:
                         if self.assignment_to_known_entities == "embeddings":
                             distances = _compute_distances(
-                                vector, self.vectors_unknown_entities_of_known_entities
+                                vector, self.vectors_known_entities
                             )
-                            nmin = min(distances)
+                            nmin = _get_min_distances(distances)
                             if nmin <= self.threshold:
                                 return None
 
-                    # Unknown entities
+                    # Unknown entities (inferred from training)
                     if len(self.vectors_unknown_entities[i]) == 0:
-                        self.vectors_unknown_entities[i] = np.array([vector])
+                        self.vectors_unknown_entities[i] = vector
                         self.vocab_unknown_entities[i][0] = Counter()
                         self.vocab_unknown_entities[i][0][content] = 1
                         self.labels_unknown_entities[i][0] = content
                     else:
-                        clu = len(
-                            self.vectors_unknown_entities[i]
-                        )  # some refactoring required here
+                        clu = len(self.vectors_unknown_entities[i])
                         distances = _compute_distances(
                             vector, self.vectors_unknown_entities[i]
                         )
-                        nmin = min(distances)
+                        nmin = _get_min_distances(distances)
                         if nmin <= self.threshold:
-                            clu = np.where(distances == np.amin(distances))[0][0]
+                            clu = _get_index_min_distances(distances)[0]
                             self.vocab_unknown_entities[i][clu][content] += 1
 
                             token_most_common = self.vocab_unknown_entities[i][
                                 clu
                             ].most_common(2)
+
                             if len(token_most_common) > 1 and (
                                 token_most_common[0][1] == token_most_common[1][1]
                             ):
@@ -407,8 +409,8 @@ class DynamicModel(NarrativeModelBase):
                                 0
                             ]
                         else:
-                            self.vectors_unknown_entities[i] = np.append(
-                                self.vectors_unknown_entities[i], [vector], axis=0
+                            self.vectors_unknown_entities[i] = np.concatenate(
+                                (self.vectors_unknown_entities[i], vector), axis=0
                             )
                             self.vocab_unknown_entities[i][clu] = Counter()
                             self.vocab_unknown_entities[i][clu][content] = 1
