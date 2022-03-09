@@ -17,6 +17,7 @@ from scipy.spatial.distance import cdist
 from spacy.cli import download as spacy_download
 from tqdm import tqdm
 
+from relatio.supported_models import language_models
 from relatio.utils import count_words
 
 
@@ -89,8 +90,10 @@ class Embeddings(EmbeddingsBase):
             self._sif_dict = {}
             self._use_sif = False
 
-        # to determine the size of vectors
-        self.size_vectors = self._get_default_vector("the").shape[0]
+        if embeddings_type != "Gensim_Word2Vec":
+            self.size_vectors = language_models[embeddings_model]["size_vectors"]
+        else:
+            self.size_vectors = self._embeddings_model.size_vectors
 
     @property
     def normalize(self) -> bool:
@@ -126,7 +129,7 @@ class Embeddings(EmbeddingsBase):
             res = self._get_default_vector(phrase)
 
         # In case the result is fishy it will return a vector of np.nans and raise a warning
-        if res is None or np.isnan(res).any() or np.count_nonzero(res) == 0:
+        if np.isnan(res).any() or np.count_nonzero(res) == 0:
             warnings.warn(
                 f"Unable to compute an embedding for phrase: {phrase}.", RuntimeWarning
             )
@@ -212,6 +215,7 @@ class GensimWord2VecEmbeddings(EmbeddingsBase):
 
         self._model = self._load_keyed_vectors(path)
         self._vocab = self._model.vocab
+        self.size_vectors = self._model[list(self._vocab)[0]].shape[0]
 
     def _load_keyed_vectors(self, path):
         try:
@@ -280,19 +284,35 @@ class GensimPreTrainedEmbeddings(EmbeddingsBase):
 
 
 def _compute_distances(vectors1, vectors2):
+    """
+    Compute pairwise distances of columns between two numpy arrays.
+    """
     distances = cdist(vectors1, vectors2, metric="euclidean")
     return distances
 
 
 def _get_min_distances(distances):
+    """
+    Returns the minimum distance per column.
+    """
     return np.min(distances, axis=1)
 
 
 def _get_index_min_distances(distances):
+    """
+    Returns the index of the minimum distance per column.
+    """
     return np.argmin(distances, axis=1)
 
 
 def _embeddings_similarity(vectors1, vectors2, threshold: float = 100):
+    """
+    Computes the pairwise distances between two numpy arrays,
+    keeps minimum distances which are below the threshold and returns
+    two arrays of indices:
+    - index are the columns which satisfy the threshold requirement
+    - index_min_distances are their associated index for the minimum distance
+    """
     distances = _compute_distances(vectors1, vectors2)
     index_min_distances = _get_index_min_distances(distances)
     min_distances = _get_min_distances(distances)
@@ -302,4 +322,7 @@ def _embeddings_similarity(vectors1, vectors2, threshold: float = 100):
 
 
 def _remove_nan_vectors(vectors):
+    """
+    Remove columns with np.nan values in a numpy array.
+    """
     return vectors[~np.isnan(vectors).any(axis=1)]
