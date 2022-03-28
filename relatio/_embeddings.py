@@ -248,7 +248,7 @@ class GensimWord2VecEmbeddings(EmbeddingsBase):
         return res
 
 
-class GensimPreTrainedEmbeddings(EmbeddingsBase):
+class GensimPreTrainedEmbeddings(GensimWord2VecEmbeddings, EmbeddingsBase):
 
     """
     A class to call a pre-trained embeddings model from gensim's library.
@@ -271,21 +271,6 @@ class GensimPreTrainedEmbeddings(EmbeddingsBase):
             raise
 
         return api.load(model)
-
-    def _get_default_vector(self, phrase: str) -> np.ndarray:
-
-        tokens = phrase.split()
-        embeddable_tokens = []
-        for token in tokens:
-            if token in self._vocab:
-                embeddable_tokens.append(token)
-            else:
-                warnings.warn(
-                    f"No vector for token: {token}. It is not used to compute the embedding of: {phrase}.",
-                    RuntimeWarning,
-                )
-        res = np.mean([self._model[token] for token in embeddable_tokens], axis=0)
-        return res
 
 
 def _compute_distances(vectors1, vectors2):
