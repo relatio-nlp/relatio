@@ -151,7 +151,7 @@ class Embeddings(EmbeddingsBase):
         return self._embeddings_model._get_default_vector(phrase)
 
     # This will require refactoring for speed (in the case of spacy and USE)
-    def _get_vectors(self, phrases: str, progress_bar: bool = False) -> np.ndarray:
+    def get_vectors(self, phrases: str, progress_bar: bool = False) -> np.ndarray:
 
         if progress_bar:
             print("Computing phrase embeddings...")
