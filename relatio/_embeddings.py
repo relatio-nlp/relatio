@@ -27,6 +27,9 @@ class EmbeddingsBase(ABC):
         pass
 
 
+# TODO: add size_vectors as a class property (now it is in Embeddings as an instance attribute)
+
+
 class Embeddings(EmbeddingsBase):
     """
     If sentences is used in the constructor the embeddings are weighted by the smoothed inverse frequency of each token.
