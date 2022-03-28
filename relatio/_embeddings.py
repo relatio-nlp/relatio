@@ -18,7 +18,7 @@ from scipy.spatial.distance import cdist
 from spacy.cli import download as spacy_download
 from tqdm import tqdm
 
-from relatio.supported_models import language_models
+from relatio.supported_models import LANGUAGE_MODELS
 from relatio.utils import count_words
 
 
@@ -95,7 +95,7 @@ class Embeddings(EmbeddingsBase):
             self._use_sif = False
 
         if embeddings_type != "Gensim_Word2Vec":
-            self.size_vectors = language_models[embeddings_model]["size_vectors"]
+            self.size_vectors = LANGUAGE_MODELS[embeddings_model]["size_vectors"]
         else:
             self.size_vectors = self._embeddings_model.size_vectors
 

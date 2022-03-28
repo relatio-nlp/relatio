@@ -1,4 +1,4 @@
-language_models = {
+LANGUAGE_MODELS = {
     "fasttext-wiki-news-subwords-300": {"language": "english", "size_vectors": 300},
     "word2vec-google-news-300": {"language": "english", "size_vectors": 300},
     "glove-wiki-gigaword-50": {"language": "english", "size_vectors": 50},
