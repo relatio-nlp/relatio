@@ -112,20 +112,16 @@ class Embeddings(EmbeddingsBase):
         tokens = phrase.split()
 
         if self.use_sif:
-
-            sif_tokens = []
             for token in tokens:
-                if token in self._sif_dict:
-                    sif_tokens.append(token)
-                else:
+                if token not in self._sif_dict:
                     warnings.warn(
-                        f"No frequency information for token: {token}. It is not used to compute the SIF-embedding of phrase: {phrase}.",
+                        f"No frequency information for token: {token}. Its corresponding weight is 1.0.",
                         RuntimeWarning,
                     )
-            res = np.mean(
+            res = np.sum(
                 [
                     self._sif_dict[token] * self._get_default_vector(token)
-                    for token in sif_tokens
+                    for token in tokens
                 ],
                 axis=0,
             )
@@ -142,7 +138,8 @@ class Embeddings(EmbeddingsBase):
 
             return a
 
-        if self.normalize:
+        # only for not using sif the vectors are normalized
+        if self.normalize and not self.use_sif:
             return res / norm(res)
         else:
             return res
@@ -179,7 +176,7 @@ class Embeddings(EmbeddingsBase):
         """
         words_counter = count_words(sentences)
 
-        sif_dict = defaultdict(lambda: 1)
+        sif_dict = defaultdict(lambda: 1.0)
 
         for word, count in words_counter.items():
             sif_dict[word] = alpha / (alpha + count)
