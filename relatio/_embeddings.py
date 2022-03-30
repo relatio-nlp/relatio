@@ -138,8 +138,7 @@ class Embeddings(EmbeddingsBase):
 
             return a
 
-        # only for not using sif the vectors are normalized
-        if self.normalize and not self.use_sif:
+        if self.normalize:
             return res / norm(res)
         else:
             return res

@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.linalg import norm
 
 from relatio import Embeddings
 
@@ -22,4 +23,4 @@ def test_get_vector_for_sif_out_of_dict():
         * spacy_model_sif._sif_dict["world"]
     )
 
-    np.testing.assert_array_equal(res, expected)
+    np.testing.assert_array_equal(res, expected / norm(expected))
