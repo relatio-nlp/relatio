@@ -8,6 +8,7 @@ minversion = "6.0"
 addopts = "-ra --doctest-modules"
 testpaths = [
     "relatio",
+    "tests"
 ]
 
 [tool.black]
