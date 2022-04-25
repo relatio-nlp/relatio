@@ -10,7 +10,7 @@ from sklearn.cluster import KMeans
 from spacy.cli import download as spacy_download
 from tqdm import tqdm
 
-from relatio._embeddings import (
+from relatio.embeddings import (
     Embeddings,
     _compute_distances,
     _embeddings_similarity,
@@ -64,7 +64,7 @@ class NarrativeModelBase(ABC):
             self.known_entities is not None
             and self.assignment_to_known_entities == "embeddings"
         ):
-            self.vectors_known_entities = self.embeddings_model._get_vectors(
+            self.vectors_known_entities = self.embeddings_model.get_vectors(
                 self.known_entities
             )
 
@@ -115,7 +115,7 @@ class NarrativeModelBase(ABC):
                 role in self.roles_with_known_entities
                 and self.assignment_to_known_entities == "embeddings"
             ):
-                vectors = self.embeddings_model._get_vectors(phrases, progress_bar)
+                vectors = self.embeddings_model.get_vectors(phrases, progress_bar)
 
                 if progress_bar:
                     print("Matching known entities (with embeddings distance)...")
@@ -136,7 +136,7 @@ class NarrativeModelBase(ABC):
                         print("Matching unknown entities (with embeddings distance)...")
 
                     if flag_computed_vectors == False:
-                        vectors = self.embeddings_model._get_vectors(
+                        vectors = self.embeddings_model.get_vectors(
                             phrases, progress_bar
                         )
 
@@ -266,7 +266,7 @@ class StaticModel(NarrativeModelBase):
                     if self.assignment_to_known_entities == "character_matching":
                         idx = self._character_matching(phrases)[0]
                     elif self.assignment_to_known_entities == "embeddings":
-                        vectors = self.embeddings_model._get_vectors(
+                        vectors = self.embeddings_model.get_vectors(
                             phrases, progress_bar
                         )
                         idx = _embeddings_similarity(
@@ -281,7 +281,7 @@ class StaticModel(NarrativeModelBase):
             phrases_to_embed = list(set(phrases_to_embed))
 
             # Remove np.nans to train the KMeans model (or it will break down)
-            vectors = self.embeddings_model._get_vectors(phrases_to_embed, progress_bar)
+            vectors = self.embeddings_model.get_vectors(phrases_to_embed, progress_bar)
             self.training_vectors[i] = _remove_nan_vectors(vectors)
 
             self._train_kmeans(i, random_state, verbose, max_iter, progress_bar)

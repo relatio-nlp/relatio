@@ -9,7 +9,15 @@ import spacy
 from spacy.cli import download as spacy_download
 from tqdm import tqdm
 
-from relatio.utils import make_list_from_key, save_entities, save_roles, save_sentences
+from relatio.supported_models import LANGUAGE_MODELS
+from relatio.utils import (
+    extract_svos_fr,
+    from_svos_to_srl_res,
+    make_list_from_key,
+    save_entities,
+    save_roles,
+    save_sentences,
+)
 
 
 class Preprocessor:
@@ -46,6 +54,7 @@ class Preprocessor:
 
         self.spacy_model = spacy_model
         self.nlp = spacy.load(spacy_model)
+        self.language = LANGUAGE_MODELS[spacy_model]["language"]
         self.nlp.add_pipe("sentencizer")
         self.n_process = n_process
         self.batch_size = batch_size
@@ -104,6 +113,34 @@ class Preprocessor:
 
         return (doc_indices, sentences)
 
+    def extract_svos(self, sentences: List[str], progress_bar: bool = False):
+
+        length = len(sentences)
+
+        spacy_docs = self.nlp.pipe(
+            sentences,
+            disable=["ner", "lemmatizer"],
+            batch_size=self.batch_size,
+            n_process=self.n_process,
+        )
+
+        if progress_bar:
+            print("Extracting SVOs...")
+            time.sleep(1)
+            spacy_docs = tqdm(spacy_docs, total=length)
+
+        all_svos = []
+        sentence_index = []
+        if self.language == "french":
+            for i, sent in enumerate(spacy_docs):
+                svos = extract_svos_fr(sent)
+                sentence_index.extend([i] * len(svos))
+                all_svos.extend(svos)
+
+        all_svos = from_svos_to_srl_res(all_svos)
+
+        return sentence_index, all_svos
+
     def clean_text(self, s, pos_tags_to_keep: Optional[List[str]] = None) -> List[str]:
 
         """
@@ -136,7 +173,7 @@ class Preprocessor:
 
         s = [t for t in s if t not in self.stop_words]
 
-        s = [t.strip() for t in s if t not in self.stop_words]
+        s = [t.strip() for t in s if t.strip() not in self.stop_words]
 
         s = " ".join(s)
 

@@ -287,10 +287,10 @@ def prettify(narrative) -> str:
     V = get_element(narrative, "B-V")
 
     NEG = get_element(narrative, "B-ARGM-NEG")
-    if NEG:
-        NEG = "not"
-    else:
-        NEG == ""
+    if NEG is True:
+        NEG = "!"
+    elif NEG is False:
+        NEG = ""
 
     MOD = get_element(narrative, "B-ARGM-MOD")
     ARG1 = get_element(narrative, "ARG1")
@@ -343,3 +343,123 @@ def load_roles(input_path):
         roles = json.load(f)
 
     return roles
+
+
+def is_negation(tok, negs=["pas", "ne", "n'"], neg_deps=["advmod"]):
+    """
+    Identify if the verb is negated in the sentence.
+    """
+    flag_negation = False
+    l1 = [right for right in tok.rights if right.dep_ in neg_deps]
+    l2 = [left for left in tok.lefts if left.dep_ in neg_deps]
+    adv_mods = l1 + l2
+    adv_mods = get_text(adv_mods)
+    for neg in negs:
+        if neg in adv_mods:
+            flag_negation = True
+    return flag_negation
+
+
+def filter_pos(sent, pos):
+    """
+    Returns all tokens with specific part of speech tags.
+    """
+    l = [tok for tok in sent if tok.pos_ in pos]
+    return l
+
+
+def get_deps(verb, deps=None):
+    """
+    Returns all dependencies of a verb.
+    """
+    l = []
+    if deps is not None:
+        l.extend([tok for tok in verb.lefts if tok.dep_ in deps])
+        l.extend([tok for tok in verb.rights if tok.dep_ in deps])
+    else:
+        l.extend([tok for tok in verb.lefts])
+        l.extend([tok for tok in verb.rights])
+    return l
+
+
+def get_text(tokens):
+    """
+    Returns text from list of spacy tokens.
+    """
+    return [tok.text for tok in tokens]
+
+
+def extract_svos_fr(sent):
+    """
+    Get SVOs from a spacy sentence (for french).
+    """
+    svos = []
+
+    all_verbs = filter_pos(sent, pos=["VERB"])
+
+    for i, verb in enumerate(all_verbs):
+
+        negation = is_negation(verb)
+
+        # subjects
+        subjs = []
+        subjs.extend(get_deps(verb, deps=["nsubj"]))  # active forms
+        subjs.extend(get_deps(verb, deps=["obl:agent"]))  # passive forms
+
+        for k, subj in enumerate(subjs):
+            if subj.text in ["qui", "qu'"]:
+                for tok in sent:
+                    for t in tok.rights:
+                        if t == verb:
+                            subjs[k] = tok
+                    for t in tok.lefts:
+                        if t == verb:
+                            subjs[k] = tok
+
+        if len(subjs) != 0:
+            subjs = [" ".join([t.text for t in subj.subtree]) for subj in subjs]
+        elif i > 0 and len(svos) > 0:
+            subjs = [svos[i - 1][0]]
+
+        # objects
+        objs = []
+        objs.extend(get_deps(verb, deps=["obj"]))  # active forms
+        objs.extend(get_deps(verb, deps=["nsubj:pass"]))  # passive forms
+
+        for k, obj in enumerate(objs):
+            if obj.text in ["que", "qu'"]:
+                for tok in sent:
+                    for t in tok.rights:
+                        if t == verb:
+                            objs[k] = tok
+                    for t in tok.lefts:
+                        if t == verb:
+                            objs[k] = tok
+
+        if len(objs) != 0:
+            objs = [" ".join([t.text for t in obj.subtree]) for obj in objs]
+
+        # packaging
+        subjs = " ".join(subjs)
+        objs = " ".join(objs)
+        verb = verb.text
+        svo = (subjs, negation, verb, objs)
+
+        svos.append(svo)
+
+    return svos
+
+
+def from_svos_to_srl_res(svos):
+    """
+    Mapping between SVO triples obtained by dependency parsing and AVP triples obtained by SRL.
+    """
+    avps = []
+    for svo in svos:
+        avp = {}
+        avp["ARG0"] = svo[0]
+        avp["B-ARGM-NEG"] = svo[1]
+        avp["B-V"] = svo[2]
+        avp["ARG1"] = svo[3]
+        avps.append(avp)
+    return avps
