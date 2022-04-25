@@ -1,0 +1,108 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+
+<style type="text/css">
+
+        #mynetwork {
+            width: 1600px;
+            height: 1000px;
+            background-color: #ffffff;
+            border: 1px solid lightgray;
+            position: relative;
+            float: left;
+        }
+
+        
+
+        
+
+        
+</style>
+
+</head>
+
+<body>
+<div id = "mynetwork"></div>
+
+
+<script type="text/javascript">
+
+    // initialize global variables.
+    var edges;
+    var nodes;
+    var network; 
+    var container;
+    var options, data;
+
+    
+    // This method is responsible for drawing the graph, returns the drawn network
+    function drawGraph() {
+        var container = document.getElementById('mynetwork');
+        
+        
+
+        // parsing and collecting nodes and edges from the python
+        nodes = new vis.DataSet([{"id": "they", "label": "they", "shape": "dot", "value": 46}, {"id": "what", "label": "what", "shape": "dot", "value": 13}, {"id": "my complete endorsement", "label": "my complete endorsement", "shape": "dot", "value": 7}, {"id": "we", "label": "we", "shape": "dot", "value": 22}, {"id": "america|great", "label": "america|great", "shape": "dot", "value": 2}, {"id": "you", "label": "you", "shape": "dot", "value": 15}, {"id": "job", "label": "job", "shape": "dot", "value": 6}, {"id": "clue", "label": "clue", "shape": "dot", "value": 1}, {"id": "it", "label": "it", "shape": "dot", "value": 13}, {"id": "military", "label": "military", "shape": "dot", "value": 1}, {"id": "nothing", "label": "nothing", "shape": "dot", "value": 2}, {"id": "country", "label": "country", "shape": "dot", "value": 5}, {"id": "amp", "label": "amp", "shape": "dot", "value": 1}, {"id": "thing", "label": "thing", "shape": "dot", "value": 4}, {"id": "people", "label": "people", "shape": "dot", "value": 1}, {"id": "democrat", "label": "democrat", "shape": "dot", "value": 1}, {"id": "opec", "label": "opec", "shape": "dot", "value": 1}, {"id": "america", "label": "america", "shape": "dot", "value": 2}, {"id": "mistake", "label": "mistake", "shape": "dot", "value": 1}, {"id": "wall", "label": "wall", "shape": "dot", "value": 3}, {"id": "something", "label": "something", "shape": "dot", "value": 2}, {"id": "that", "label": "that", "shape": "dot", "value": 1}, {"id": "this", "label": "this", "shape": "dot", "value": 1}, {"id": "jim", "label": "jim", "shape": "dot", "value": 1}, {"id": "mike", "label": "mike", "shape": "dot", "value": 1}, {"id": "taxis", "label": "taxis", "shape": "dot", "value": 1}, {"id": "scott", "label": "scott", "shape": "dot", "value": 1}, {"id": "everything", "label": "everything", "shape": "dot", "value": 2}, {"id": "border", "label": "border", "shape": "dot", "value": 4}, {"id": "idea", "label": "idea", "shape": "dot", "value": 1}, {"id": "everyone", "label": "everyone", "shape": "dot", "value": 1}, {"id": "democrats", "label": "democrats", "shape": "dot", "value": 1}, {"id": "chance", "label": "chance", "shape": "dot", "value": 1}, {"id": "campaign", "label": "campaign", "shape": "dot", "value": 1}, {"id": "your second amendment", "label": "your second amendment", "shape": "dot", "value": 1}, {"id": "establishment", "label": "establishment", "shape": "dot", "value": 1}, {"id": "china", "label": "china", "shape": "dot", "value": 3}, {"id": "deal", "label": "deal", "shape": "dot", "value": 4}, {"id": "all", "label": "all", "shape": "dot", "value": 2}, {"id": "trump", "label": "trump", "shape": "dot", "value": 1}, {"id": "progress", "label": "progress", "shape": "dot", "value": 1}, {"id": "decision", "label": "decision", "shape": "dot", "value": 1}, {"id": "dan", "label": "dan", "shape": "dot", "value": 1}, {"id": "price", "label": "price", "shape": "dot", "value": 1}, {"id": "work", "label": "work", "shape": "dot", "value": 1}, {"id": "credibility", "label": "credibility", "shape": "dot", "value": 1}, {"id": "economy", "label": "economy", "shape": "dot", "value": 1}, {"id": "tom", "label": "tom", "shape": "dot", "value": 1}, {"id": "passion", "label": "passion", "shape": "dot", "value": 1}, {"id": "law", "label": "law", "shape": "dot", "value": 1}]);
+        edges = new vis.DataSet([{"arrows": "to", "from": "they", "hidden": false, "label": "do", "to": "what", "value": 74}, {"arrows": "to", "from": "they", "hidden": false, "label": "say", "to": "what", "value": 15}, {"arrows": "to", "from": "they", "hidden": false, "label": "think", "to": "what", "value": 8}, {"arrows": "to", "from": "they", "hidden": false, "label": "know", "to": "what", "value": 7}, {"arrows": "to", "from": "they", "hidden": false, "label": "!know", "to": "what", "value": 7}, {"arrows": "to", "from": "they", "hidden": false, "label": "have", "to": "my complete endorsement", "value": 67}, {"arrows": "to", "from": "they", "hidden": false, "label": "do", "to": "job", "value": 46}, {"arrows": "to", "from": "they", "hidden": false, "label": "do", "to": "job", "value": 10}, {"arrows": "to", "from": "they", "hidden": false, "label": "!have", "to": "clue", "value": 21}, {"arrows": "to", "from": "they", "hidden": false, "label": "do", "to": "it", "value": 20}, {"arrows": "to", "from": "they", "hidden": false, "label": "get", "to": "it", "value": 20}, {"arrows": "to", "from": "they", "hidden": false, "label": "know", "to": "it", "value": 13}, {"arrows": "to", "from": "they", "hidden": false, "label": "make", "to": "it", "value": 8}, {"arrows": "to", "from": "they", "hidden": false, "label": "say", "to": "it", "value": 8}, {"arrows": "to", "from": "they", "hidden": false, "label": "!get", "to": "it", "value": 8}, {"arrows": "to", "from": "they", "hidden": false, "label": "blow", "to": "it", "value": 7}, {"arrows": "to", "from": "they", "hidden": false, "label": "love", "to": "military", "value": 20}, {"arrows": "to", "from": "they", "hidden": false, "label": "do", "to": "nothing", "value": 18}, {"arrows": "to", "from": "they", "hidden": false, "label": "have", "to": "amp", "value": 14}, {"arrows": "to", "from": "they", "hidden": false, "label": "say", "to": "thing", "value": 13}, {"arrows": "to", "from": "they", "hidden": false, "label": "do", "to": "thing", "value": 9}, {"arrows": "to", "from": "they", "hidden": false, "label": "say", "to": "they", "value": 12}, {"arrows": "to", "from": "they", "hidden": false, "label": "know", "to": "they", "value": 12}, {"arrows": "to", "from": "they", "hidden": false, "label": "make", "to": "mistake", "value": 11}, {"arrows": "to", "from": "they", "hidden": false, "label": "want", "to": "country", "value": 11}, {"arrows": "to", "from": "they", "hidden": false, "label": "love", "to": "country", "value": 7}, {"arrows": "to", "from": "they", "hidden": false, "label": "do", "to": "something", "value": 10}, {"arrows": "to", "from": "they", "hidden": false, "label": "do", "to": "something", "value": 7}, {"arrows": "to", "from": "they", "hidden": false, "label": "do", "to": "that", "value": 10}, {"arrows": "to", "from": "they", "hidden": false, "label": "do", "to": "this", "value": 10}, {"arrows": "to", "from": "they", "hidden": false, "label": "raise", "to": "taxis", "value": 9}, {"arrows": "to", "from": "they", "hidden": false, "label": "do", "to": "everything", "value": 9}, {"arrows": "to", "from": "they", "hidden": false, "label": "have", "to": "idea", "value": 9}, {"arrows": "to", "from": "they", "hidden": false, "label": "have", "to": "chance", "value": 8}, {"arrows": "to", "from": "they", "hidden": false, "label": "spy", "to": "campaign", "value": 8}, {"arrows": "to", "from": "they", "hidden": false, "label": "say", "to": "trump", "value": 7}, {"arrows": "to", "from": "they", "hidden": false, "label": "do", "to": "all", "value": 7}, {"arrows": "to", "from": "they", "hidden": false, "label": "want", "to": "border", "value": 7}, {"arrows": "to", "from": "they", "hidden": false, "label": "make", "to": "decision", "value": 7}, {"arrows": "to", "from": "they", "hidden": false, "label": "pay", "to": "price", "value": 7}, {"arrows": "to", "from": "they", "hidden": false, "label": "make", "to": "deal", "value": 7}, {"arrows": "to", "from": "they", "hidden": false, "label": "have", "to": "credibility", "value": 7}, {"arrows": "to", "from": "they", "hidden": false, "label": "!let", "to": "you", "value": 7}, {"arrows": "to", "from": "they", "hidden": false, "label": "break", "to": "law", "value": 6}, {"arrows": "to", "from": "we", "hidden": false, "label": "make", "to": "america|great", "value": 55}, {"arrows": "to", "from": "we", "hidden": false, "label": "make", "to": "america|great", "value": 50}, {"arrows": "to", "from": "we", "hidden": false, "label": "do", "to": "what", "value": 24}, {"arrows": "to", "from": "we", "hidden": false, "label": "have", "to": "country", "value": 14}, {"arrows": "to", "from": "we", "hidden": false, "label": "do", "to": "country", "value": 8}, {"arrows": "to", "from": "we", "hidden": false, "label": "do", "to": "job", "value": 12}, {"arrows": "to", "from": "we", "hidden": false, "label": "make", "to": "america", "value": 12}, {"arrows": "to", "from": "we", "hidden": false, "label": "make", "to": "america", "value": 7}, {"arrows": "to", "from": "we", "hidden": false, "label": "build", "to": "wall", "value": 11}, {"arrows": "to", "from": "we", "hidden": false, "label": "build", "to": "wall", "value": 9}, {"arrows": "to", "from": "we", "hidden": false, "label": "build", "to": "wall", "value": 7}, {"arrows": "to", "from": "we", "hidden": false, "label": "know", "to": "it", "value": 9}, {"arrows": "to", "from": "we", "hidden": false, "label": "do", "to": "it", "value": 7}, {"arrows": "to", "from": "we", "hidden": false, "label": "have", "to": "border", "value": 9}, {"arrows": "to", "from": "we", "hidden": false, "label": "have", "to": "border", "value": 6}, {"arrows": "to", "from": "we", "hidden": false, "label": "defend", "to": "your second amendment", "value": 8}, {"arrows": "to", "from": "we", "hidden": false, "label": "do", "to": "thing", "value": 7}, {"arrows": "to", "from": "we", "hidden": false, "label": "do", "to": "everything", "value": 7}, {"arrows": "to", "from": "we", "hidden": false, "label": "make", "to": "progress", "value": 7}, {"arrows": "to", "from": "we", "hidden": false, "label": "make", "to": "deal", "value": 7}, {"arrows": "to", "from": "we", "hidden": false, "label": "have", "to": "economy", "value": 7}, {"arrows": "to", "from": "you", "hidden": false, "label": "do", "to": "what", "value": 52}, {"arrows": "to", "from": "you", "hidden": false, "label": "want", "to": "what", "value": 12}, {"arrows": "to", "from": "you", "hidden": false, "label": "think", "to": "what", "value": 10}, {"arrows": "to", "from": "you", "hidden": false, "label": "get", "to": "what", "value": 8}, {"arrows": "to", "from": "you", "hidden": false, "label": "do", "to": "what", "value": 8}, {"arrows": "to", "from": "you", "hidden": false, "label": "see", "to": "what", "value": 7}, {"arrows": "to", "from": "you", "hidden": false, "label": "do", "to": "job", "value": 16}, {"arrows": "to", "from": "you", "hidden": false, "label": "get", "to": "it", "value": 13}, {"arrows": "to", "from": "you", "hidden": false, "label": "do", "to": "it", "value": 8}, {"arrows": "to", "from": "you", "hidden": false, "label": "do", "to": "thing", "value": 12}, {"arrows": "to", "from": "you", "hidden": false, "label": "have", "to": "my complete endorsement", "value": 9}, {"arrows": "to", "from": "you", "hidden": false, "label": "do", "to": "all", "value": 7}, {"arrows": "to", "from": "you", "hidden": false, "label": "do", "to": "work", "value": 7}, {"arrows": "to", "from": "you", "hidden": false, "label": "have", "to": "passion", "value": 6}, {"arrows": "to", "from": "people", "hidden": false, "label": "get", "to": "it", "value": 13}, {"arrows": "to", "from": "democrat", "hidden": false, "label": "do", "to": "nothing", "value": 13}, {"arrows": "to", "from": "opec", "hidden": false, "label": "rip", "to": "we", "value": 12}, {"arrows": "to", "from": "jim", "hidden": false, "label": "have", "to": "my complete endorsement", "value": 10}, {"arrows": "to", "from": "mike", "hidden": false, "label": "have", "to": "my complete endorsement", "value": 9}, {"arrows": "to", "from": "scott", "hidden": false, "label": "have", "to": "my complete endorsement", "value": 9}, {"arrows": "to", "from": "border", "hidden": false, "label": "do", "to": "job", "value": 8}, {"arrows": "to", "from": "everyone", "hidden": false, "label": "know", "to": "it", "value": 9}, {"arrows": "to", "from": "democrats", "hidden": false, "label": "do", "to": "what", "value": 8}, {"arrows": "to", "from": "establishment", "hidden": false, "label": "kill", "to": "country", "value": 8}, {"arrows": "to", "from": "china", "hidden": false, "label": "want", "to": "deal", "value": 8}, {"arrows": "to", "from": "china", "hidden": false, "label": "make", "to": "deal", "value": 7}, {"arrows": "to", "from": "china", "hidden": false, "label": "steal", "to": "job", "value": 6}, {"arrows": "to", "from": "dan", "hidden": false, "label": "have", "to": "my complete endorsement", "value": 7}, {"arrows": "to", "from": "tom", "hidden": false, "label": "have", "to": "my complete endorsement", "value": 7}]);
+
+        // adding nodes and edges to the graph
+        data = {nodes: nodes, edges: edges};
+
+        var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+        
+        
+
+        
+
+        network = new vis.Network(container, data, options);
+	 
+        
+
+
+        
+
+        return network;
+
+    }
+
+    drawGraph();
+
+</script>
+</body>
+</html>

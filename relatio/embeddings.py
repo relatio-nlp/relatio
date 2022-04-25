@@ -166,7 +166,6 @@ class Embeddings(EmbeddingsBase):
         A function that computes smooth inverse frequency (SIF) weights based on word frequencies.
         (See "Arora, S., Liang, Y., & Ma, T. (2016). A simple but tough-to-beat baseline for sentence embeddings.")
         The sentences are used to build the counter dictionary {"word": frequency} which is further used to compute the sif weights. If the word is not in the dictionary, 1 is returned.
-
         Args:
             sentences: a list of sentences
             alpha: regularization parameter

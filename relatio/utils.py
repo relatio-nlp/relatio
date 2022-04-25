@@ -10,62 +10,13 @@
 # ..................................................................................................................
 
 import json
-import re
-import string
+import pickle as pk
 import time
 from collections import Counter
 from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
-import spacy
-from nltk import pos_tag
-from nltk.corpus import wordnet
-from nltk.stem import SnowballStemmer, WordNetLemmatizer
 from tqdm import tqdm
-
-nlp = spacy.load("en_core_web_sm", disable=["tagger", "ner", "lemmatizer"])
-
-
-def split_into_sentences(
-    dataframe: pd.DataFrame,
-    output_path: Optional[str] = None,
-    progress_bar: bool = False,
-) -> Tuple[List[str], List[str]]:
-
-    """
-
-    A function that splits a list of documents into sentences (using the SpaCy sentence splitter).
-
-    Args:
-        dataframe: a pandas dataframe with one column "id" and one column "doc"
-        output_path: path to save the output
-        progress_bar: print a progress bar (default is False)
-
-    Returns:
-        Tuple with the list of document indices and list of sentences
-
-    """
-
-    docs = dataframe.to_dict(orient="records")
-
-    sentences: List[str] = []
-    doc_indices: List[str] = []
-
-    if progress_bar:
-        print("Splitting into sentences...")
-        time.sleep(1)
-        docs = tqdm(docs)
-
-    for doc in docs:
-        for sent in nlp(doc["doc"], disable=["tagger", "ner"]).sents:
-            sentences.append(str(sent))
-            doc_indices = doc_indices + [doc["id"]]
-
-    if output_path is not None:
-        with open(output_path, "w") as f:
-            json.dump((doc_indices, sentences), f)
-
-    return (doc_indices, sentences)
 
 
 def replace_sentences(
@@ -205,163 +156,6 @@ def group_sentences_in_batches(
     return batches
 
 
-def _get_wordnet_pos(word):
-    """Get POS tag"""
-    tag = pos_tag([word])[0][1][0].upper()
-
-    return tag
-
-
-wnl = WordNetLemmatizer()
-f_lemmatize = wnl.lemmatize
-
-
-def clean_text(
-    sentences: List[str],
-    remove_punctuation: bool = True,
-    remove_digits: bool = True,
-    remove_chars: str = "",
-    stop_words: Optional[List[str]] = None,
-    lowercase: bool = True,
-    strip: bool = True,
-    remove_whitespaces: bool = True,
-    lemmatize: bool = False,
-    stem: bool = False,
-    tags_to_keep: Optional[List[str]] = None,
-    remove_n_letter_words: Optional[int] = None,
-) -> List[str]:
-
-    """
-
-    Clean a list of sentences.
-
-    Args:
-        sentences: list of sentences
-        remove_punctuation: whether to remove string.punctuation
-        remove_digits: whether to remove string.digits
-        remove_chars: remove the given characters
-        stop_words: list of stopwords to remove
-        lowercase: whether to lower the case
-        strip: whether to strip
-        remove_whitespaces: whether to remove superfluous whitespaceing by " ".join(str.split(())
-        lemmatize: whether to lemmatize using nltk.WordNetLemmatizer
-        stem: whether to stem using nltk.SnowballStemmer("english")
-        tags_to_keep: list of grammatical tags to keep (common tags: ['V', 'N', 'J'])
-        remove_n_letter_words: drop words lesser or equal to n letters (default is None)
-
-    Returns:
-        Processed list of sentences
-
-    Examples:
-        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'])
-        ['return the factorial of n an exact integer']
-        >>> clean_text(['Learning is usefull.'])
-        ['learning is usefull']
-        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], stop_words=['factorial'])
-        ['return the of n an exact integer']
-        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], lemmatize=True)
-        ['return the factorial of n an exact integer']
-        >>> clean_text(['Learning is usefull.'],lemmatize=True)
-        ['learn be usefull']
-        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], stem=True)
-        ['return the factori of n an exact integ']
-        >>> clean_text(['Learning is usefull.'],stem=True)
-        ['learn is useful']
-        >>> clean_text(['A1b c\\n\\nde \\t fg\\rkl\\r\\n m+n'])
-        ['ab c de fg kl mn']
-        >>> clean_text(['This is a sentence with verbs and nice adjectives.'], tags_to_keep = ['V', 'J'])
-        ['is nice']
-        >>> clean_text(['This is a sentence with one and two letter words.'], remove_n_letter_words = 2)
-        ['this sentence with one and two letter words']
-
-    """
-
-    if lemmatize is True and stem is True:
-        raise ValueError("lemmatize and stemming cannot be both True")
-    if stop_words is not None and lowercase is False:
-        raise ValueError("remove stop words make sense only for lowercase")
-
-    # remove chars
-    if remove_punctuation:
-        remove_chars += string.punctuation
-    if remove_digits:
-        remove_chars += string.digits
-    if remove_chars:
-        sentences = [re.sub(f"[{remove_chars}]", "", str(sent)) for sent in sentences]
-
-    # lowercase, strip and remove superfluous white spaces
-    if lowercase:
-        sentences = [sent.lower() for sent in sentences]
-    if strip:
-        sentences = [sent.strip() for sent in sentences]
-    if remove_whitespaces:
-        sentences = [" ".join(sent.split()) for sent in sentences]
-
-    # lemmatize
-    if lemmatize:
-
-        tag_dict = {
-            "J": wordnet.ADJ,
-            "N": wordnet.NOUN,
-            "V": wordnet.VERB,
-            "R": wordnet.ADV,
-        }
-
-        sentences = [
-            " ".join(
-                [
-                    f_lemmatize(
-                        word, tag_dict.get(_get_wordnet_pos(word), wordnet.NOUN)
-                    )
-                    for word in sent.split()
-                ]
-            )
-            for sent in sentences
-        ]
-
-    # keep specific nltk tags
-    # this step should be performed before stemming, but may be performed after lemmatization
-    if tags_to_keep is not None:
-        sentences = [
-            " ".join(
-                [
-                    word
-                    for word in sent.split()
-                    if _get_wordnet_pos(word) in tags_to_keep
-                ]
-            )
-            for sent in sentences
-        ]
-
-    # stem
-    if stem:
-        stemmer = SnowballStemmer("english")
-        f_stem = stemmer.stem
-
-        sentences = [
-            " ".join([f_stem(word) for word in sent.split()]) for sent in sentences
-        ]
-
-    # drop stopwords
-    # stopwords are dropped after the bulk of preprocessing steps, so they should also be preprocessed with the same standards
-    if stop_words is not None:
-        sentences = [
-            " ".join([word for word in sent.split() if word not in stop_words])
-            for sent in sentences
-        ]
-
-    # remove short words < n
-    if remove_n_letter_words is not None:
-        sentences = [
-            " ".join(
-                [word for word in sent.split() if len(word) > remove_n_letter_words]
-            )
-            for sent in sentences
-        ]
-
-    return sentences
-
-
 def is_subsequence(v1: list, v2: list) -> bool:
 
     """
@@ -415,7 +209,7 @@ def count_values(
     if progress_bar:
         print("Computing role frequencies...")
         time.sleep(1)
-        dicts = tqdm(dicts)
+        dicts = dicts
 
     if keys is None:
         return Counter()
@@ -460,3 +254,212 @@ def count_words(sentences: List[str]) -> Counter:
     words_counter = Counter(words)
 
     return words_counter
+
+
+def make_list_from_key(key, list_of_dicts):
+
+    """
+
+    Extract the content of a specific key in a list of dictionaries.
+    Returns a list and the corresponding indices.
+
+    """
+
+    list_from_key = []
+    indices = []
+
+    for i, statement in enumerate(list_of_dicts):
+        content = statement.get(key)
+        if content is not None:
+            list_from_key.append(content)
+            indices.append(i)
+
+    return indices, list_from_key
+
+
+def get_element(narrative, role):
+    return narrative[role] if role in narrative else ""
+
+
+def prettify(narrative) -> str:
+
+    ARG0 = get_element(narrative, "ARG0")
+    V = get_element(narrative, "B-V")
+
+    NEG = get_element(narrative, "B-ARGM-NEG")
+    if NEG is True:
+        NEG = "!"
+    elif NEG is False:
+        NEG = ""
+
+    MOD = get_element(narrative, "B-ARGM-MOD")
+    ARG1 = get_element(narrative, "ARG1")
+    ARG2 = get_element(narrative, "ARG2")
+
+    pretty_narrative = (ARG0, MOD, NEG, V, ARG1, ARG2)
+
+    pretty_narrative = " ".join([t for t in pretty_narrative if t != ""])
+
+    return pretty_narrative
+
+
+def load_sentences(input_path: str):
+
+    with open(input_path, "r") as f:
+        (doc_indices, sentences) = json.load(f)
+
+    return (doc_indices, sentences)
+
+
+def save_sentences(doc_indices, sentences, output_path):
+
+    with open(output_path, "w") as f:
+        json.dump((doc_indices, sentences), f)
+
+
+def save_entities(entity_counts, output_path: str):
+
+    with open(output_path, "wb") as f:
+        pk.dump(entity_counts, f)
+
+
+def load_entities(input_path: str):
+
+    with open(input_path, "rb") as f:
+        entity_counts = pk.load(f)
+
+    return entity_counts
+
+
+def save_roles(roles, output_path):
+
+    with open(output_path, "w") as f:
+        json.dump(roles, f)
+
+
+def load_roles(input_path):
+
+    with open(input_path, "r") as f:
+        roles = json.load(f)
+
+    return roles
+
+
+def is_negation(tok, negs=["pas", "ne", "n'"], neg_deps=["advmod"]):
+    """
+    Identify if the verb is negated in the sentence.
+    """
+    flag_negation = False
+    l1 = [right for right in tok.rights if right.dep_ in neg_deps]
+    l2 = [left for left in tok.lefts if left.dep_ in neg_deps]
+    adv_mods = l1 + l2
+    adv_mods = get_text(adv_mods)
+    for neg in negs:
+        if neg in adv_mods:
+            flag_negation = True
+    return flag_negation
+
+
+def filter_pos(sent, pos):
+    """
+    Returns all tokens with specific part of speech tags.
+    """
+    l = [tok for tok in sent if tok.pos_ in pos]
+    return l
+
+
+def get_deps(verb, deps=None):
+    """
+    Returns all dependencies of a verb.
+    """
+    l = []
+    if deps is not None:
+        l.extend([tok for tok in verb.lefts if tok.dep_ in deps])
+        l.extend([tok for tok in verb.rights if tok.dep_ in deps])
+    else:
+        l.extend([tok for tok in verb.lefts])
+        l.extend([tok for tok in verb.rights])
+    return l
+
+
+def get_text(tokens):
+    """
+    Returns text from list of spacy tokens.
+    """
+    return [tok.text for tok in tokens]
+
+
+def extract_svos_fr(sent):
+    """
+    Get SVOs from a spacy sentence (for french).
+    """
+    svos = []
+
+    all_verbs = filter_pos(sent, pos=["VERB"])
+
+    for i, verb in enumerate(all_verbs):
+
+        negation = is_negation(verb)
+
+        # subjects
+        subjs = []
+        subjs.extend(get_deps(verb, deps=["nsubj"]))  # active forms
+        subjs.extend(get_deps(verb, deps=["obl:agent"]))  # passive forms
+
+        for k, subj in enumerate(subjs):
+            if subj.text in ["qui", "qu'"]:
+                for tok in sent:
+                    for t in tok.rights:
+                        if t == verb:
+                            subjs[k] = tok
+                    for t in tok.lefts:
+                        if t == verb:
+                            subjs[k] = tok
+
+        if len(subjs) != 0:
+            subjs = [" ".join([t.text for t in subj.subtree]) for subj in subjs]
+        elif i > 0 and len(svos) > 0:
+            subjs = [svos[i - 1][0]]
+
+        # objects
+        objs = []
+        objs.extend(get_deps(verb, deps=["obj"]))  # active forms
+        objs.extend(get_deps(verb, deps=["nsubj:pass"]))  # passive forms
+
+        for k, obj in enumerate(objs):
+            if obj.text in ["que", "qu'"]:
+                for tok in sent:
+                    for t in tok.rights:
+                        if t == verb:
+                            objs[k] = tok
+                    for t in tok.lefts:
+                        if t == verb:
+                            objs[k] = tok
+
+        if len(objs) != 0:
+            objs = [" ".join([t.text for t in obj.subtree]) for obj in objs]
+
+        # packaging
+        subjs = " ".join(subjs)
+        objs = " ".join(objs)
+        verb = verb.text
+        svo = (subjs, negation, verb, objs)
+
+        svos.append(svo)
+
+    return svos
+
+
+def from_svos_to_srl_res(svos):
+    """
+    Mapping between SVO triples obtained by dependency parsing and AVP triples obtained by SRL.
+    """
+    avps = []
+    for svo in svos:
+        avp = {}
+        avp["ARG0"] = svo[0]
+        avp["B-ARGM-NEG"] = svo[1]
+        avp["B-V"] = svo[2]
+        avp["ARG1"] = svo[3]
+        avps.append(avp)
+    return avps

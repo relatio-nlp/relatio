@@ -11,73 +11,44 @@
 
 import matplotlib.pyplot as plt
 import networkx as nx
+import pandas as pd
 from pyvis import network as net
 
 
-def build_graph(  # to be considered as preliminary
-    dict_edges,
-    dict_args={},
-    edge_threshold=0,
-    node_threshold=0,
-    node_size=None,
-    edge_size=None,
+def build_graph(
+    narratives,
+    top_n,
     prune_network=True,
 ):
-
-    # Network specifics
     G = nx.MultiDiGraph()
-    if edge_size == None:
-        for l in dict_edges:
-            G.add_edge(
-                l["ARG0"],
-                l["ARG1"],
-                weight=l["weight"],
-                label=l["B-V"],
-                title=" ",
-                hidden=False,
-                color=l["color"],
-            )
-    else:
-        for l in dict_edges:
-            G.add_edge(
-                l["ARG0"],
-                l["ARG1"],
-                weight=l["weight"],
-                value=l["weight"],
-                label=l["B-V"],
-                title=" ",
-                hidden=False,
-                color=l["color"],
-            )
 
-    d = nx.degree(G)  # to size nodes according to their degree
+    df = pd.DataFrame(narratives)
+    df = df.replace(False, "")
+    df = df.replace(True, "!")
+    df = df.replace(pd.NA, "")
+    df = df.value_counts().reset_index(name="counts")
+    df = df[df["ARG0"] != ""]
+    df = df[df["ARG1"] != ""]
+    df = df[df["B-V"] != ""]
+    df = df.reset_index()
 
-    for node in list(G.nodes):
-        G.nodes[node]["size"] = node_size
-        if node in dict_args:
-            G.nodes[node]["color"] = dict_args[node]
-        G.nodes[node]["hidden"] = False
-        G.nodes[node]["title"] = " "
+    temp = df.to_dict(orient="records")[0:top_n]
 
-        # Unlabel infrequent nodes
-        if d[node] < node_threshold:
-            G.nodes[node]["label"] = " "
-            G.nodes[node]["hidden"] = True
+    for l in temp:
+        G.add_edge(
+            l["ARG0"],
+            l["ARG1"],
+            value=l["counts"],
+            label=l["B-ARGM-NEG"] + l["B-V"],
+            hidden=False,
+        )
 
-    # Hide infrequent edges and edges of infrequent nodes
-    for edge in list(G.edges):
-        if G.nodes[edge[0]]["hidden"]:
-            G.edges[edge]["hidden"] = True
-        if G.nodes[edge[1]]["hidden"]:
-            G.edges[edge]["hidden"] = True
-        if G.edges[edge]["weight"] < edge_threshold:
-            G.edges[edge]["hidden"] = True
+    d = nx.degree(G)
+    for i, node in enumerate(list(G.nodes)):
+        G.nodes[node]["value"] = d[node]
 
     if prune_network:
-        # Generate connected components and select the largest:
         largest_component = max(nx.weakly_connected_components(G), key=len)
-
-        # Create a subgraph of G consisting only of this component:
         G = G.subgraph(largest_component)
 
     return G
@@ -120,8 +91,8 @@ def draw_graph(
 
     # make a pyvis network
     pyvis_graph = net.Network(notebook=notebook, directed=True)
-    pyvis_graph.width = "1000px"
-    pyvis_graph.height = "1000px"
+    pyvis_graph.width = width
+    pyvis_graph.height = height
 
     # for each node and its attributes in the networkx graph
     for node, node_attrs in networkx_graph.nodes(data=True):
