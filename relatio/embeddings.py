@@ -73,6 +73,7 @@ class Embeddings(EmbeddingsBase):
             Type[GensimWord2VecEmbeddings],
             Type[GensimPreTrainedEmbeddings],
             Type[spaCyEmbeddings],
+            Type[phraseBERTEmbeddings]
         ]
         if embeddings_type == "TensorFlow_USE":
             EmbeddingsClass = TensorFlowUSEEmbeddings
