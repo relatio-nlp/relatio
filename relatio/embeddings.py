@@ -82,6 +82,8 @@ class Embeddings(EmbeddingsBase):
             EmbeddingsClass = GensimPreTrainedEmbeddings
         elif embeddings_type == "spaCy":
             EmbeddingsClass = spaCyEmbeddings
+        elif embeddings_type == "phrase-BERT":
+            EmbeddingsClass = phraseBERTEmbeddings
         else:
             raise ValueError(f"Unknown embeddings_type={embeddings_type}")
 
@@ -311,3 +313,22 @@ def _remove_nan_vectors(vectors):
     Remove columns with np.nan values in a numpy array.
     """
     return vectors[~np.isnan(vectors).any(axis=1)]
+
+
+class phraseBERTEmbeddings(EmbeddingsBase):
+    """
+    path = "whaleloops/phrase-bert"
+    model = Embeddings("phrase-BERT", path)
+    """
+    def __init__(self, path: str) -> None:
+        try:
+            from sentence_transformers import SentenceTransformer
+
+        except ModuleNotFoundError:
+            print("Please install sentence_transformers package")
+            raise
+
+        self._model = SentenceTransformer(path)
+
+    def _get_default_vector(self, phrase: str) -> np.ndarray:
+        return self._model.encode(phrase)
