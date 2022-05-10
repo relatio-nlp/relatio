@@ -5,7 +5,7 @@ import pytest
 import numpy
 
 
-from relatio.embeddings import Embeddings
+from relatio import Embeddings
 from relatio.embeddings import phraseBERTEmbeddings
 
 

@@ -271,6 +271,25 @@ class GensimPreTrainedEmbeddings(GensimWord2VecEmbeddings, EmbeddingsBase):
         return api.load(model)
 
 
+class phraseBERTEmbeddings(EmbeddingsBase):
+    """
+    path = "whaleloops/phrase-bert"
+    model = Embeddings("phrase-BERT", path)
+    """
+    def __init__(self, path: str) -> None:
+        try:
+            from sentence_transformers import SentenceTransformer
+
+        except ModuleNotFoundError:
+            print("Please install sentence_transformers package")
+            raise
+
+        self._model = SentenceTransformer(path)
+
+    def _get_default_vector(self, phrase: str) -> np.ndarray:
+        return self._model.encode(phrase)
+
+
 def _compute_distances(vectors1, vectors2):
     """
     Compute pairwise distances of columns between two numpy arrays.
@@ -314,22 +333,3 @@ def _remove_nan_vectors(vectors):
     Remove columns with np.nan values in a numpy array.
     """
     return vectors[~np.isnan(vectors).any(axis=1)]
-
-
-class phraseBERTEmbeddings(EmbeddingsBase):
-    """
-    path = "whaleloops/phrase-bert"
-    model = Embeddings("phrase-BERT", path)
-    """
-    def __init__(self, path: str) -> None:
-        try:
-            from sentence_transformers import SentenceTransformer
-
-        except ModuleNotFoundError:
-            print("Please install sentence_transformers package")
-            raise
-
-        self._model = SentenceTransformer(path)
-
-    def _get_default_vector(self, phrase: str) -> np.ndarray:
-        return self._model.encode(phrase)
