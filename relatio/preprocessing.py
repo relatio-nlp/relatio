@@ -222,9 +222,9 @@ class Preprocessor:
                 cr_list.append(predictor.coref_resolved(sentence)) 
             except ValueError:                  #if sentence == word
                 cr_list.append(sentence)
-            except IndexError:                  #sentence doesn't contain '.'
+            except IndexError:                  #if sentence doesn't contain '.'
                 cr_list.append(sentence)
-            except RuntimeError:                #sentence isn't be null 
+            except RuntimeError:                #if sentence is null 
                 cr_list.append(sentence)
                 
         return cr_list
