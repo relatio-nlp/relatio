@@ -182,14 +182,20 @@ class Preprocessor:
         return s
 
 
-    def coreference_resolution(self, sentences: List[str], progress_bar: bool = False)-> List[str]:
+    def coreference_resolution(
+        self, 
+        sentences: List[str], 
+        model_url: str = 'https://storage.googleapis.com/allennlp-public-models/coref-spanbert-large-2020.02.27.tar.gz', 
+        progress_bar: bool = False
+    ) -> List[str]:
         """
         
         coreference resolution using AllenNLP
-        (spaCy is not compatible with ver3.0)
+        spaCy is not compatible with ver3.0 (10th May, 2022)
         Args:
                 sentences: list of sentences
                 progress_bar: print a progress bar (default is False)
+                model_url: set the url model
 
             Returns:
                 List of processed statements
@@ -202,7 +208,6 @@ class Preprocessor:
             print("Please install allennlp package")
             raise
         
-        model_url = 'https://storage.googleapis.com/allennlp-public-models/coref-spanbert-large-2020.02.27.tar.gz'
         predictor = Predictor.from_path(model_url)
         cr_list = []
 
@@ -212,14 +217,16 @@ class Preprocessor:
             disable = True
 
         print("implementing coreference resolution ...")
-        for sentence in tqdm(sentences,disable=disable):
+        for sentence in tqdm(sentences, disable=disable):
+            try:
                 cr_list.append(predictor.coref_resolved(sentence)) 
+            except ValueError:                  #if sentence == word
+                cr_list.append(sentence)
+            except IndexError:                  #sentence doesn't contain '.'
+                cr_list.append(sentence)
+            except RuntimeError:                #sentence isn't be null 
+                cr_list.append(sentence)
                 
-        # if progress_bar:
-        #     print("implementing coreference resolution ...")
-        #     time.sleep(1)
-        #     spacy_docs = tqdm(spacy_docs, total=length)
-
         return cr_list
 
 
