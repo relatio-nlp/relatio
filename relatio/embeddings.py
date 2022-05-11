@@ -73,7 +73,7 @@ class Embeddings(EmbeddingsBase):
             Type[GensimWord2VecEmbeddings],
             Type[GensimPreTrainedEmbeddings],
             Type[spaCyEmbeddings],
-            Type[phraseBERTEmbeddings]
+            Type[phraseBERTEmbeddings],
         ]
         if embeddings_type == "TensorFlow_USE":
             EmbeddingsClass = TensorFlowUSEEmbeddings
@@ -276,6 +276,7 @@ class phraseBERTEmbeddings(EmbeddingsBase):
     path = "whaleloops/phrase-bert"
     model = Embeddings("phrase-BERT", path)
     """
+
     def __init__(self, path: str) -> None:
         try:
             from sentence_transformers import SentenceTransformer
