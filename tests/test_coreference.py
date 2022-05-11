@@ -1,9 +1,7 @@
-import time
 import string
-
+import time
 
 import pytest
-
 
 from relatio import Preprocessor
 
