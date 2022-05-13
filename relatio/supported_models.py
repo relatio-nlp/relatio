@@ -19,4 +19,6 @@ LANGUAGE_MODELS = {
     "fr_core_news_sm": {"language": "french", "size_vectors": 96},
     "fr_core_news_md": {"language": "french", "size_vectors": 300},
     "fr_core_news_lg": {"language": "french", "size_vectors": 300},
+    "en_core_web_sm": {"language": "english", "size_vectors": 96},
+    "whaleloops/phrase-bert": {"language": "english", "size_vectors": 768},
 }

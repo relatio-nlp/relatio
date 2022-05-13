@@ -181,6 +181,53 @@ class Preprocessor:
 
         return s
 
+    def coreference_resolution(
+        self,
+        sentences: List[str],
+        model_url: str = "https://storage.googleapis.com/allennlp-public-models/coref-spanbert-large-2020.02.27.tar.gz",
+        progress_bar: bool = False,
+    ) -> List[str]:
+        """
+
+        coreference resolution using AllenNLP
+        spaCy is not compatible with ver3.0 (10th May, 2022)
+        Args:
+                sentences: list of sentences
+                progress_bar: print a progress bar (default is False)
+                model_url: set the url model
+
+            Returns:
+                List of processed statements
+
+        """
+        try:
+            from allennlp.predictors.predictor import Predictor
+
+        except ModuleNotFoundError:
+            print("Please install allennlp package")
+            raise
+
+        predictor = Predictor.from_path(model_url)
+        cr_list = []
+
+        if progress_bar:
+            disable = False
+        else:
+            disable = True
+
+        print("implementing coreference resolution ...")
+        for sentence in tqdm(sentences, disable=disable):
+            try:
+                cr_list.append(predictor.coref_resolved(sentence))
+            except ValueError:  # if sentence == word
+                cr_list.append(sentence)
+            except IndexError:  # if sentence doesn't contain '.'
+                cr_list.append(sentence)
+            except RuntimeError:  # if sentence is null
+                cr_list.append(sentence)
+
+        return cr_list
+
     def mine_entities(
         self,
         sentences: List[str],
