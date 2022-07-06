@@ -3,13 +3,16 @@ from abc import ABC, abstractmethod
 from collections import Counter
 from copy import deepcopy
 from typing import List, Optional, Type
-
 import numpy as np
 import spacy
 from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.metrics import make_scorer, silhouette_score
+import umap
+import hdbscan
 from spacy.cli import download as spacy_download
 from tqdm import tqdm
-
 from relatio.embeddings import (
     Embeddings,
     _compute_distances,
@@ -19,15 +22,17 @@ from relatio.embeddings import (
     _remove_nan_vectors,
 )
 from relatio.utils import count_values, is_subsequence, make_list_from_key, prettify
+import matplotlib.pyplot as plt
 
 
-class NarrativeModelBase(ABC):
+class NarrativeModel():
     """
     A general class to build a model that extracts latent narratives from a list of SRL statements.
     """
 
     def __init__(
         self,
+        model_type = 'hdbscan',
         roles_considered: List[str] = [
             "ARG0",
             "B-V",
@@ -39,11 +44,45 @@ class NarrativeModelBase(ABC):
         roles_with_known_entities: str = ["ARG0", "ARG1", "ARG2"],
         known_entities: Optional[List[str]] = None,
         assignment_to_known_entities: str = "character_matching",
-        roles_with_unknown_entities: List[List[str]] = [["ARG0", "ARG1", "ARG2"]],
+        roles_with_unknown_entities: List[str] = ["ARG0", "ARG1", "ARG2"],
         embeddings_model: Optional[Type[Embeddings]] = None,
-        threshold: int = 0.1,
+        threshold: int = 0.1
     ):
+        
+        if (
+            is_subsequence(
+                roles_considered,
+                ["ARG0", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"],
+            )
+            is False
+        ):
+            raise ValueError(
+                "Some roles_considered are not supported. Roles supported: ARG0, B-V, B-ARGM-NEG, B-ARGM-MOD, ARG1, ARG2"
+            )
 
+        if roles_with_known_entities is not None:
+            if is_subsequence(roles_with_known_entities, roles_considered) is False:
+                raise ValueError(
+                    "roles_with_known_entities should be in roles_considered."
+                )
+
+        if roles_with_unknown_entities is not None:
+            if is_subsequence(roles_with_unknown_entities, roles_considered) is False:
+                raise ValueError(
+                    "roles_with_unknown_entities should be a subset of roles_considered."
+                )
+            if ["B-ARGM-NEG", "B-ARGM-MOD", "B-V"] in roles_with_unknown_entities:
+                raise ValueError(
+                    "Negations, verbs and modals cannot be embedded and clustered."
+                )
+
+        if assignment_to_known_entities not in ["character_matching", "embeddings"]:
+            raise ValueError(
+                "Only two options for assignment_to_known_entities: character_matching or embeddings."
+            )
+            
+        
+        self.model_type = model_type
         self.roles_considered = roles_considered
         self.roles_with_unknown_entities = roles_with_unknown_entities
         self.roles_with_known_entities = roles_with_known_entities
@@ -52,11 +91,8 @@ class NarrativeModelBase(ABC):
         self.assignment_to_known_entities = assignment_to_known_entities
         self.threshold = threshold
 
-        # Default embeddings model is a small spacy model.
         if embeddings_model is None:
-            if not spacy.util.is_package("en_core_web_sm"):
-                spacy_download(spacy_model)
-            self.embeddings_model = Embeddings("spaCy", "en_core_web_sm")
+            self.embeddings_model = Embeddings("TensorFlow_USE","https://tfhub.dev/google/universal-sentence-encoder/4")
         else:
             self.embeddings_model = embeddings_model
 
@@ -68,19 +104,158 @@ class NarrativeModelBase(ABC):
                 self.known_entities
             )
 
+        self.cluster_args = []
+        self.scores = []
         self.vectors_unknown_entities = []
-        self.labels_unknown_entities = []
-        self.vocab_unknown_entities = []
+        self.labels_unknown_entities = {}
+        self.vocab_unknown_entities = {}
+        self.clustering_model = []
+        self.training_vectors = []
+        self.phrases_to_embed = []
 
-        for l in roles_with_unknown_entities:
-            self.vectors_unknown_entities.append([])
-            self.labels_unknown_entities.append({})
-            self.vocab_unknown_entities.append({})
+    def fit(
+        self, 
+        srl_res, 
+        pca_args = None, 
+        umap_args = None, 
+        cluster_args = None, 
+        progress_bar = True
+    ):
+        
+        if self.model_type == 'deterministic':
+            print('No training required, this model is deterministic!')
+        if self.model_type in ['hdbscan', 'kmeans']:
+            self.fit_static_clustering(srl_res, pca_args, umap_args, cluster_args, progress_bar)
+        if self.model_type == 'dynamic':
+            pass
 
-    @abstractmethod
-    def train(self, srl_res):
-        pass
+    def fit_static_clustering(
+        self, 
+        srl_res, 
+        pca_args, 
+        umap_args, 
+        cluster_args,
+        progress_bar
+    ):
+        
+        if progress_bar:      
+            print("Embedding phrases...")
+        
+        phrases_to_embed = []
+        counter_for_phrases = Counter()
+        
+        for role in self.roles_with_unknown_entities:
 
+            temp_counter = count_values(srl_res, keys=[role])
+            counter_for_phrases = counter_for_phrases + temp_counter
+            phrases = list(temp_counter)
+            
+            # remove known entities for the training of unknown entities
+            if role in self.roles_with_known_entities:
+                if self.assignment_to_known_entities == "character_matching":
+                    idx = self.character_matching(phrases)[0]
+                elif self.assignment_to_known_entities == "embeddings":
+                    vectors = self.embeddings_model.get_vectors(
+                        phrases, progress_bar
+                    )
+                    idx = _embeddings_similarity(
+                        vectors, self.vectors_known_entities, self.threshold
+                    )[0]
+                                    
+                phrases = [
+                    phrase for l, phrase in enumerate(phrases) if l not in idx
+                ]
+                
+                phrases_to_embed.extend(phrases)
+            
+        phrases_to_embed = sorted(list(set(phrases_to_embed)))
+        self.phrases_to_embed = phrases_to_embed
+        
+        # Remove np.nans to train the model (or it will break down)
+        vectors = self.embeddings_model.get_vectors(phrases_to_embed, progress_bar)
+        self.training_vectors = _remove_nan_vectors(vectors)
+
+        # Dimension reduction via PCA + UMAP
+        if pca_args is None:
+            
+            pca_args = {'n_components':50, 
+                        'svd_solver':'full', 
+                        'random_state':0}
+
+        self.pca = PCA(**pca_args).fit(self.training_vectors)
+        self.pca_embeddings = self.pca.transform(self.training_vectors)
+
+        if umap_args is None:
+            
+            umap_args = {'n_neighbors':15,
+                         'n_components':2,
+                         'min_dist':0.1,
+                         'random_state':0,
+                         'low_memory':False}
+
+        self.umap = umap.UMAP(**umap_args).fit(self.pca_embeddings)
+        self.umap_embeddings = self.umap.transform(self.pca_embeddings)
+
+        # Clustering
+        if progress_bar:
+            
+            print("Clustering phrases into clusters...")
+
+        if self.model_type == 'kmeans':
+
+            if cluster_args is None:              
+                cluster_args = {'n_clusters':[50,100,150,200,250], 'random_state':0}
+              
+            # Grid search
+            models = []
+            for num_clusters in cluster_args['n_clusters']:
+                kmeans = KMeans(n_clusters=num_clusters,random_state=cluster_args['random_state']).fit(self.umap_embeddings)
+                models.append(kmeans)
+
+            scores = []
+            for model in models:    
+                scores.append(silhouette_score(self.umap_embeddings, model.labels_,random_state=0))
+
+        if self.model_type == 'hdbscan':
+
+            if cluster_args is None:              
+                cluster_args = {
+                    'min_cluster_size':[10,30,50,100],
+                    'min_samples':[5,10,20],
+                    'cluster_selection_method':['eom']
+                }
+                
+            # Grid search  
+            models = []
+            scores = []
+            for i in cluster_args['min_cluster_size']:
+                for j in cluster_args['min_samples']:
+                    for h in cluster_args['cluster_selection_method']:
+                        args = {}
+                        args['min_cluster_size'] = i
+                        args['min_samples'] = j
+                        args['cluster_selection_method'] = h
+
+                        hdb = hdbscan.HDBSCAN(
+                            gen_min_span_tree=True,
+                            approx_min_span_tree = False, 
+                            prediction_data = True, 
+                            **args).fit(self.umap_embeddings)
+
+                        models.append(hdb)
+
+                        score = hdbscan.validity.validity_index(self.umap_embeddings.astype(np.float64), hdb.labels_)
+                        scores.append(score) 
+                
+        self.clustering_model = models[np.argmax(scores)]            
+        self.cluster_args = cluster_args
+        self.scores = scores
+        self.label_clusters(counter_for_phrases, phrases_to_embed, progress_bar)
+        
+        if self.model_type == 'kmeans':
+            self.vectors_unknown_entities = self.clustering_model.cluster_centers_ 
+
+            
     def predict(self, srl_res, progress_bar: bool = False):
         """
         Predict the narratives underlying SRL statements.
@@ -106,7 +281,7 @@ class NarrativeModelBase(ABC):
                 role in self.roles_with_known_entities
                 and self.assignment_to_known_entities == "character_matching"
             ):
-                index2, labels_known_entities = self._character_matching(
+                index2, labels_known_entities = self.character_matching(
                     phrases, progress_bar
                 )
 
@@ -123,29 +298,45 @@ class NarrativeModelBase(ABC):
                 index2, index_known_entities = _embeddings_similarity(
                     vectors, self.vectors_known_entities, self.threshold
                 )
-                labels_known_entities = self._label_with_known_entity(
+                labels_known_entities = self.label_with_known_entity(
                     index_known_entities
                 )
                 flag_computed_vectors = True
 
-            # Match unknown entities (with embeddings distance)
-            for k, roles in enumerate(self.roles_with_unknown_entities):
-                if role in roles and len(self.vectors_unknown_entities[k]) != 0:
+            # Predict unknown entities (with clustering model)
+            if role in self.roles_with_unknown_entities:
 
-                    if progress_bar:
-                        print("Matching unknown entities (with embeddings distance)...")
+                if progress_bar:
+                    print("Matching unknown entities (with clustering model)...")
 
-                    if flag_computed_vectors == False:
-                        vectors = self.embeddings_model.get_vectors(
-                            phrases, progress_bar
-                        )
+                if flag_computed_vectors == False:
+                    vectors = self.embeddings_model.get_vectors(
+                        phrases, progress_bar
+                    )
+                    
+                if progress_bar:
+                    print("Dimension reduction of vectors (PCA + UMAP)...")
+                    
+                pca_embeddings = self.pca.transform(vectors)
+                    
+                umap_embeddings = self.umap.transform(pca_embeddings)            
+
+                if progress_bar:
+                    print("Assignment to clusters...")
+                
+                if self.model_type == 'hdbscan':
+                    index_clusters = hdbscan.approximate_predict(self.clustering_model, umap_embeddings)[0]
+                    index3 = list(range(len(index_clusters)))
+
+                else:
 
                     index3, index_clusters = _embeddings_similarity(
-                        vectors, self.vectors_unknown_entities[k]
+                        umap_embeddings, self.vectors_unknown_entities
                     )
-                    cluster_labels = self._label_with_most_frequent_phrase(
-                        index_clusters, k
-                    )
+                    
+                cluster_labels = self.label_with_most_frequent_phrase(
+                    index_clusters
+                )
 
             # Assign labels
             if progress_bar:
@@ -165,7 +356,7 @@ class NarrativeModelBase(ABC):
 
         return narratives
 
-    def _character_matching(self, phrases, progress_bar: bool = False):
+    def character_matching(self, phrases, progress_bar: bool = False):
 
         if progress_bar:
             print("Matching known entities (with character matching)...")
@@ -185,136 +376,23 @@ class NarrativeModelBase(ABC):
 
         return index, labels_known_entities
 
-    def _label_with_known_entity(self, index):
-        return [self.known_entities[i] for i in index]
-
-    def _label_with_most_frequent_phrase(self, index, k):
-        return [self.labels_unknown_entities[k][i] for i in index]
-
-
-class DeterministicModel(NarrativeModelBase):
-    """
-    A subclass of NarrativeModel(), which does nothing more.
-    """
-
-    def train(self, srl_res):
-        print("No training required: the model is deterministic.")
-
-
-class StaticModel(NarrativeModelBase):
-    """
-    A subclass of NarrativeModel(), which mines K latent entities via a one-off clustering algorithm
-    on a training set (e.g., K-Means).
-    """
-
-    def __init__(
-        self,
-        roles_considered,
-        roles_with_known_entities,
-        known_entities,
-        assignment_to_known_entities,
-        roles_with_unknown_entities,
-        embeddings_model,
-        threshold: int,
-        n_clusters: List[int],
-    ):
-
-        super().__init__(
-            roles_considered,
-            roles_with_known_entities,
-            known_entities,
-            assignment_to_known_entities,
-            roles_with_unknown_entities,
-            embeddings_model,
-            threshold,
-        )
-
-        self.n_clusters = n_clusters
-        self.clustering_models = []
-        self.training_vectors = []
-
-        for l in roles_with_unknown_entities:
-            self.clustering_models.append({})
-            self.training_vectors.append({})
-
-    def train(
-        self,
-        srl_res,
-        random_state: int = 1,
-        verbose: int = 0,
-        max_iter: int = 300,
-        progress_bar: bool = False,
-    ):
-
-        for i, roles in enumerate(self.roles_with_unknown_entities):
-            if progress_bar:
-
-                print("Focus on roles: %s" % "-".join(roles))
-                print("Ignoring known entities...")
-
-            phrases_to_embed = []
-            counter_for_phrases = Counter()
-
-            for role in roles:
-
-                temp_counter = count_values(srl_res, keys=[role])
-                counter_for_phrases = counter_for_phrases + temp_counter
-                phrases = list(temp_counter)
-
-                # remove known entities for the training of unknown entities
-                if role in self.roles_with_known_entities:
-                    if self.assignment_to_known_entities == "character_matching":
-                        idx = self._character_matching(phrases)[0]
-                    elif self.assignment_to_known_entities == "embeddings":
-                        vectors = self.embeddings_model.get_vectors(
-                            phrases, progress_bar
-                        )
-                        idx = _embeddings_similarity(
-                            vectors, self.vectors_known_entities, self.threshold
-                        )[0]
-                    phrases = [
-                        phrase for l, phrase in enumerate(phrases) if l not in idx
-                    ]
-
-                phrases_to_embed.extend(phrases)
-
-            phrases_to_embed = list(set(phrases_to_embed))
-
-            # Remove np.nans to train the KMeans model (or it will break down)
-            vectors = self.embeddings_model.get_vectors(phrases_to_embed, progress_bar)
-            self.training_vectors[i] = _remove_nan_vectors(vectors)
-
-            self._train_kmeans(i, random_state, verbose, max_iter, progress_bar)
-            self._label_clusters(i, counter_for_phrases, phrases_to_embed, progress_bar)
-
-    def _train_kmeans(self, i, random_state, verbose, max_iter, progress_bar):
-
-        if progress_bar:
-            print("Clustering phrases into %s clusters..." % self.n_clusters[i])
-
-        kmeans = KMeans(
-            n_clusters=self.n_clusters[i],
-            random_state=random_state,
-            verbose=verbose,
-            max_iter=max_iter,
-        ).fit(self.training_vectors[i])
-
-        self.clustering_models[i] = kmeans
-        self.vectors_unknown_entities[i] = kmeans.cluster_centers_
-
-    def _label_clusters(self, i, counter_for_phrases, phrases_to_embed, progress_bar):
-
+    def label_clusters(self, counter_for_phrases, phrases_to_embed, progress_bar):
+        
         if progress_bar:
             print("Labeling the clusters by the most frequent phrases...")
-
-        for clu in range(self.n_clusters[i]):
-            self.vocab_unknown_entities[i][clu] = Counter()
-        for j, clu in enumerate(self.clustering_models[i].labels_):
-            self.vocab_unknown_entities[i][clu][
+            
+        labels = list(set(self.clustering_model.labels_))
+                    
+        for clu in labels:
+            self.vocab_unknown_entities[clu] = Counter()
+            
+        for j, clu in enumerate(self.clustering_model.labels_):
+            self.vocab_unknown_entities[clu][
                 phrases_to_embed[j]
             ] = counter_for_phrases[phrases_to_embed[j]]
-        for clu in range(self.n_clusters[i]):
-            token_most_common = self.vocab_unknown_entities[i][clu].most_common(2)
+        
+        for clu in labels:
+            token_most_common = self.vocab_unknown_entities[clu].most_common(2)
             if len(token_most_common) > 1 and (
                 token_most_common[0][1] == token_most_common[1][1]
             ):
@@ -322,207 +400,65 @@ class StaticModel(NarrativeModelBase):
                     f"Multiple labels for cluster {clu}- 2 shown: {token_most_common}. First one is picked.",
                     RuntimeWarning,
                 )
-            self.labels_unknown_entities[i][clu] = token_most_common[0][0]
+            self.labels_unknown_entities[clu] = token_most_common[0][0]    
+  
+        if self.model_type == 'hdbscan':
+            self.labels_unknown_entities[-1] = ''
 
+    def label_with_known_entity(self, index):
+        return [self.known_entities[i] for i in index]
 
-class DynamicModel(NarrativeModelBase):
-    """
-    A subclass of NarrativeModel(), which mines latent entities on-the-fly based on a dynamic clustering algorithm.
-    """
+    def label_with_most_frequent_phrase(self, index):
+        return [self.labels_unknown_entities[i] for i in index]
 
-    def __init__(
-        self,
-        roles_considered,
-        roles_with_known_entities,
-        known_entities,
-        assignment_to_known_entities,
-        roles_with_unknown_entities,
-        embeddings_model,
-        threshold: int = 0.1,
-    ):
-
-        super().__init__(
-            roles_considered,
-            roles_with_known_entities,
-            known_entities,
-            assignment_to_known_entities,
-            roles_with_unknown_entities,
-            embeddings_model,
-            threshold,
-        )
-
-    def _process_srl_item_for_training(self, role, content):
-
-        # Character matching of known entities (skipped for training)
-        if role in self.roles_with_known_entities:
-            if self.assignment_to_known_entities == "character_matching":
-                for entity in self.known_entities:
-                    if is_subsequence(entity.split(), content.split()):
-                        return None
-
-        # Clustering with embeddings
-        for i, l in enumerate(self.roles_with_unknown_entities):
-            if role in l:
-                vector = self.embeddings_model.get_vector(content).reshape(1, -1)
-
-                # Filter for phrases with embeddings
-                if np.all(np.isnan(vector)) == False:
-
-                    # Known entities (skipped for training)
-                    if role in self.roles_with_known_entities:
-                        if self.assignment_to_known_entities == "embeddings":
-                            distances = _compute_distances(
-                                vector, self.vectors_known_entities
-                            )
-                            nmin = _get_min_distances(distances)
-                            if nmin <= self.threshold:
-                                return None
-
-                    # Unknown entities (inferred from training)
-                    if len(self.vectors_unknown_entities[i]) == 0:
-                        self.vectors_unknown_entities[i] = vector
-                        self.vocab_unknown_entities[i][0] = Counter()
-                        self.vocab_unknown_entities[i][0][content] = 1
-                        self.labels_unknown_entities[i][0] = content
+    def inspect_cluster(self, label, topn = 10):
+        key = [k for k, v in self.labels_unknown_entities.items() if v == label][0]    
+        return self.vocab_unknown_entities[key].most_common(topn)
+            
+    def clusters_to_txt(self, path = 'clusters.txt', topn = 10, add_frequency_info = True):
+        with open(path, 'w') as f:
+            for k,v in self.vocab_unknown_entities.items():
+                f.write("Cluster %s"%k)
+                f.write('\n')
+                for i in v.most_common(topn):
+                    if add_frequency_info == True:
+                        f.write("%s (%s), "%(i[0],i[1]))
                     else:
-                        clu = len(self.vectors_unknown_entities[i])
-                        distances = _compute_distances(
-                            vector, self.vectors_unknown_entities[i]
-                        )
-                        nmin = _get_min_distances(distances)
-                        if nmin <= self.threshold:
-                            clu = _get_index_min_distances(distances)[0]
-                            self.vocab_unknown_entities[i][clu][content] += 1
-
-                            token_most_common = self.vocab_unknown_entities[i][
-                                clu
-                            ].most_common(2)
-
-                            if len(token_most_common) > 1 and (
-                                token_most_common[0][1] == token_most_common[1][1]
-                            ):
-                                warnings.warn(
-                                    f"Multiple labels for cluster {clu}- 2 shown: {token_most_common}. First one is picked.",
-                                    RuntimeWarning,
-                                )
-                            self.labels_unknown_entities[i][clu] = token_most_common[0][
-                                0
-                            ]
-                        else:
-                            self.vectors_unknown_entities[i] = np.concatenate(
-                                (self.vectors_unknown_entities[i], vector), axis=0
-                            )
-                            self.vocab_unknown_entities[i][clu] = Counter()
-                            self.vocab_unknown_entities[i][clu][content] = 1
-                            self.labels_unknown_entities[i][clu] = content
-
-    def train(self, srl_res, progress_bar: bool = False):
-
-        if progress_bar:
-            srl_res = tqdm(srl_res)
-
-        for srl_res in srl_res:
-            for role, content in srl_res.items():
-                if role in self.roles_considered and role in ["ARG0", "ARG1", "ARG2"]:
-                    self._process_srl_item_for_training(role, content)
-
-
-class NarrativeModel(NarrativeModelBase):
-
-    """
-    The NarrativeModel class for users.
-
-    Args:
-        model_type: 'deterministic', 'static' and 'dynamic'
-        roles_considered: list of semantic roles to consider
-        (default: ["ARG0", "B-V", "ARGM-MOD", "ARG1", "ARG2"])
-        roles_with_known_entities: roles to consider for the known entities
-        (default: ["ARG0", "ARG1", "ARG2"])
-        known_entities: a list of known entities
-        assignment_to_known_entities: character_matching or embeddings (default: character_matching)
-        roles_with_unknown_entities: list of lists of semantic roles to embed and cluster
-        (i.e. each list represents semantic roles that should be clustered together)
-        embeddings_model: an object of type Embeddings
-        threshold: If the assignment to known entities is performed via embeddings, we compute the distance between known entities and a phrase. Define the threshold below which a phrase is considered a known entitiy (default: 0.1. This is a very low threshold which requires strong similarity between the phrase and the known entities).
-    """
-
-    def __init__(
-        self,
-        model_type,
-        roles_considered: List[str] = [
-            "ARG0",
-            "B-V",
-            "B-ARGM-MOD",
-            "B-ARGM-NEG",
-            "ARG1",
-            "ARG2",
-        ],
-        roles_with_known_entities: str = ["ARG0", "ARG1", "ARG2"],
-        known_entities: List[str] = [],
-        assignment_to_known_entities: str = "character_matching",
-        roles_with_unknown_entities: List[str] = [["ARG0", "ARG1", "ARG2"]],
-        embeddings_model: Optional[Type[Embeddings]] = None,
-        threshold: int = 0.1,
-        **kwargs,
-    ):
-
-        if (
-            is_subsequence(
-                roles_considered,
-                ["ARG0", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"],
-            )
-            is False
-        ):
-            raise ValueError(
-                "Some roles_considered are not supported. Roles supported: ARG0, B-V, B-ARGM-NEG, B-ARGM-MOD, ARG1, ARG2"
-            )
-
-        if roles_with_known_entities is not None:
-            if is_subsequence(roles_with_known_entities, roles_considered) is False:
-                raise ValueError(
-                    "roles_with_known_entities should be in roles_considered."
-                )
-
-        if roles_with_unknown_entities is not None:
-            for roles in roles_with_unknown_entities:
-                if is_subsequence(roles, roles_considered) is False:
-                    raise ValueError(
-                        "each list in roles_with_unknown_entities should be a subset of roles_considered."
-                    )
-                if ["B-ARGM-NEG", "B-ARGM-MOD", "B-V"] in roles:
-                    raise ValueError(
-                        "Negations, verbs and modals cannot be embedded and clustered."
-                    )
-
-        if assignment_to_known_entities not in ["character_matching", "embeddings"]:
-            raise ValueError(
-                "Only two options for assignment_to_known_entities: character_matching or embeddings."
-            )
-
-        if model_type == "dynamic":
-            _MODEL_CLASS = DynamicModel
-        elif model_type == "static":
-            _MODEL_CLASS = StaticModel
-        elif model_type == "deterministic":
-            _MODEL_CLASS = DeterministicModel
+                        f.write("%s, "%i[0])
+                f.write('\n')
+                f.write('\n')
+    
+    def plot_clusters(self, path = None, figsize = (14, 8), s = 0.1):
+        clustered = (self.clustering_model.labels_ >= 0)
+        plt.figure(figsize=figsize, dpi=80)
+        plt.scatter(self.umap_embeddings[~clustered, 0],
+                    self.umap_embeddings[~clustered, 1],
+                    color=(0.5, 0.5, 0.5),
+                    s=s,
+                    alpha=0.5)
+        plt.scatter(self.umap_embeddings[clustered, 0],
+                    self.umap_embeddings[clustered, 1],
+                    c=self.clustering_model.labels_[clustered],
+                    s=s,
+                    cmap='Spectral')
+        if path is None: 
+            plt.show()
         else:
-            raise ValueError(
-                "Only three possible options for model_type: deterministic, static or dynamic."
-            )
+            plt.savefig(path)
+            
+    def plot_selection_metric(self, path = None, figsize = (14, 8)):
+       
+        if self.model_type == 'kmeans':
+            plt.figure(figsize=figsize)
+            plt.plot(self.cluster_args['n_clusters'], self.scores, 'bx-')
+            plt.xlabel('Number of Clusters')
+            plt.ylabel('Silhouette Score')
+                
+        if self.model_type == 'hdbscan':
+            print('coming soon...')
+            pass
 
-        self._model_obj = _MODEL_CLASS(
-            roles_considered,
-            roles_with_known_entities,
-            known_entities,
-            assignment_to_known_entities,
-            roles_with_unknown_entities,
-            embeddings_model,
-            threshold,
-            **kwargs,
-        )
-
-    def train(self, srl_res, **kwargs):
-        self._model_obj.train(srl_res, **kwargs)
-
-    def predict(self, srl_res, progress_bar: bool = False):
-        return self._model_obj.predict(srl_res, progress_bar)
+        if path is None: 
+            plt.show()
+        else:
+            plt.savefig(path)

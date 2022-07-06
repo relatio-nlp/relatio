@@ -1,0 +1,750 @@
+Cluster 0
+trumpdoral (13), loudobbs (12), potu (12), hillaryclinton (7), gstephanopoulo (6), ivankatrump (6), lamestream (6), marklevinshow (5), ncgop (5), trumppanama (5), 
+
+Cluster 1
+tom (28), george (17), george steinbrenner (5), rush (5), shep smith (5), buck (4), george floyd (4), walter reed medical center (4), weirdo tom steyer (4), jack nicklaus (3), 
+
+Cluster 2
+disaster (118), true (73), joke (29), respect (25), crisis (14), surprise (9), emergency (5), incompetence (5), informer (5), meltdown (5), 
+
+Cluster 3
+voter (87), ballot (72), voting (19), mail ballot (17), absentee ballot (16), voter fraud (15), mail voting (10), recount (9), thousand ballot (6), million ballot (5), 
+
+Cluster 4
+record (104), trade deficit (17), record high (15), record low (6), record number (6), time record (5), promise record (4), record 13th season celebapprentice (4), record 13th season star celebapprentice (4), record crowd (4), 
+
+Cluster 5
+germany (31), south korea (25), macys (17), egypt (14), embassy (14), india (10), argentina (7), pakistan (7), jerusalem (6), west africa (6), 
+
+Cluster 6
+golf (57), golf course (16), golf course world (7), golfer (6), round golf (6), championship golf course (3), cadillac world golf championship trumpdoral (2), golf champion amp friend ernie els thebig easy (2), golf course gil hanse (2), golf course history (2), 
+
+Cluster 7
+race (71), gun (59), car (43), course (39), fighter (25), ice (22), path (13), clown (11), ground (9), circuit (8), 
+
+Cluster 8
+email (51), mail (19), benghazi (15), obstructionist (9), midterm (8), emails (5), filibuster rule (5), benghazi terrorist (4), jayleno (3), repeal (3), 
+
+Cluster 9
+wall amp crime (6), citizenship (5), birthright citizenship (4), visa lottery (4), citizenship question (2), quest citizenship question census (2), visa system (2), amp crime special counsel (1), amp sanctuary criminals act (1), assault sex crime amp killing (1), 
+
+Cluster 10
+amp family (4), business amp job (3), million dollars amp (3), americas manufacturer amp worker (2), change amp investment (2), company amp job (2), friend amp (2), job amp (2), life amp (2), mining employment amp year minnesotas history (2), 
+
+Cluster 11
+congressman (15), rand paul (9), lawmaker (7), billy graham (3), candidate rand paul (3), congressman john lewis (3), congressman john ratcliffe (3), congressman ron desantis (3), congressman davebratva7th (2), congressman david kustoff (2), 
+
+Cluster 12
+deal (321), progress (73), lot (48), market (48), offer (23), plenty (11), minute (10), lot fun (9), lot idea (8), lot thing (6), 
+
+Cluster 13
+friend (83), fcc (5), friend supporter (4), friend brooklyn (3), family member friend (2), friend india (2), jp morgan (2), latinocoalition legislative summit (2), lawyer yale lawyer harvard (2), newtgingrich friend (2), 
+
+Cluster 14
+campaign (141), campaign contribution (7), people campaign (6), campaign manager (5), campaign issue (4), campaigning (4), doubt informant campaign (4), jebbush campaign (4), campaign charge (3), campaign president (3), 
+
+Cluster 15
+bush (27), donald (9), bush family (3), george bush (3), obamas budget (3), teleprompter (3), barack (2), bush debt (2), mexican president (2), mr trumps (2), 
+
+Cluster 16
+national guard (36), season (21), marine (18), air force (16), army (15), november (9), marines (6), national guard troop (5), navy (5), navy seal (5), 
+
+Cluster 17
+schiff (39), adam schiff (31), congressman adam schiff (11), shifty schiff (10), rep adam schiff (8), shifty adam schiff (7), politician adam shifty schiff (5), politician adam schiff (3), schiff story (3), shifty schiff politician (3), 
+
+Cluster 18
+warming (31), global warming (24), climate change (19), death penalty (12), scientist (3), climate (2), climate crisis (2), concept warming (2), evidence crime (2), g w scientist (2), 
+
+Cluster 19
+year (142), success (90), success significance (4), year girl (4), road success (3), secret success (3), statesman year (3), year con job (3), biz success rate (2), business success (2), 
+
+Cluster 20
+tax (16), tax return (12), tax code (9), taxes (7), tax dollar (5), tax hike (4), mortgage interest deduction (3), tax exempt status (3), income tax (2), tax car (2), 
+
+Cluster 21
+energy (30), energy resource (7), energy cost (4), energy policy (4), energy price (4), energy dominance (3), time energy (3), billion energy failure (2), electricity fuel (2), electricity price (2), 
+
+Cluster 22
+speech (82), news conference (25), announcement (18), press conference (16), national review (11), pageant (5), contestant (4), finalist (3), medal freedom (3), award fiction (2), 
+
+Cluster 23
+taxis (184), taxis car insurance (4), taxis regulation (4), million dollar taxis (3), estate taxis (2), low taxis (2), narrative taxis (2), payroll taxis (2), tax reform taxis (2), taxis amp (2), 
+
+Cluster 24
+protester (34), protest (15), blm protester (3), ows protester (3), protester sign (2), antifa group (1), buffalo protester (1), fact protest people (1), group protester (1), occupy wall street protestor today (1), 
+
+Cluster 25
+club (11), car company (8), basement (7), general motors (7), auto company (6), foxconn (5), ford motor (4), ballroom (3), frontier (3), sailor (3), 
+
+Cluster 26
+good (205), strong (104), happy (66), fantastic (62), answer (58), change (52), process (42), focus (39), goal (32), fair (21), 
+
+Cluster 27
+patriot (30), patriots (25), baltimore (18), new yorks finest (13), buffalo (5), arsenal (3), giants (3), patriot canvassers (3), people baltimore (3), kentucky derby (2), 
+
+Cluster 28
+trade (47), negotiation (44), negotiator (5), trade talk (4), wto (4), negotiation skill (3), silda negotiation (3), brexit negotiation (2), cliff negotiation (2), fair trade (2), 
+
+Cluster 29
+dollar (87), federal reserve (51), bank (39), bankruptcy (12), bankruptcy law (8), treasury (8), ariannahuff (6), euro (6), australias central bank (4), cent (4), 
+
+Cluster 30
+paper (30), thank (17), parent (14), bully (12), killer (10), puppet (8), girl (7), blood treasure (6), girlfriend (6), hack (6), 
+
+Cluster 31
+people (1688), person (127), everybody (125), anybody (52), somebody (45), lot people (14), individual (12), folk (9), way people (5), good people (4), 
+
+Cluster 32
+story (190), history (37), narrative (11), documentary (9), democracy (6), nytime story (6), socialist (5), story story (4), article story (3), course history (3), 
+
+Cluster 33
+direction (15), delegate (10), manager (6), agency (5), exec (5), director (4), executive (4), handler (4), management (4), branch (3), 
+
+Cluster 34
+impeachment (54), impeachment hoax (45), impeachment scam (11), impeach (6), articles impeachment (5), stigma impeachment (4), article impeachment (3), case impeachment (3), impeachment nonsense (3), impeachment process (3), 
+
+Cluster 35
+terrorist (49), terrorism (14), radical islamic terrorism (6), bomb (3), terror (3), terror attack (3), threat terrorism (3), war radical islamic terrorists (3), bomb maker (2), bombing (2), 
+
+Cluster 36
+john (52), elijah (11), john bolton (11), christopher steele (9), john brennan (8), john james (8), dan bishop (6), john bel edwards (6), brennan (5), general john kelly (5), 
+
+Cluster 37
+poll number (30), pollster (12), rasmussen (7), suppression poll (7), census (6), polling location (6), polling number (5), fake poll (4), fake suppression poll (4), polling (4), 
+
+Cluster 38
+interview (65), gretawire interview (13), interview himhe (3), interview ingrahamangle (3), tuesday morning interview (3), foxnew interview (2), greta interview (2), ingrahamangle interview (2), interview asavagenation (2), interview gretawire (2), 
+
+Cluster 39
+decision (108), courage (30), strategy (14), judgement (13), conflict (12), conflict interest (8), study (7), factor (4), judgment (4), bravery (2), 
+
+Cluster 40
+olympics (10), world cup (6), championship (5), actor battle (4), playoff (4), analyst (3), cher celebrity listverse (3), saturday night live talent (3), tonight episode apprentice (3), athlete (2), 
+
+Cluster 41
+ally (19), vera coking (5), dr fauci (4), brit (2), clay (2), dr (2), hickory deerhound (2), kayleigh mcenany (2), lisa page lover peter strzok (2), lover peter strzok lisa page (2), 
+
+Cluster 42
+judge (39), justice (38), justice roberts (11), department justice (10), justice dept (6), traitor (5), treason (5), federal judge (4), federal judges (4), judge jackson (3), 
+
+Cluster 43
+prime minister (11), maga (5), netanyahu (4), p m abe (4), djt (3), israelipm netanyahu (3), prime minister abe (3), prime minister netanyahu (3), angela merkel germany (2), ayatollah ali khamenei (2), 
+
+Cluster 44
+national security (13), committee (11), defense bill (9), defense (7), homeland security (7), national defense authorization act ndaa (7), super committee (5), commission (4), defense production act (4), national security excuse (4), 
+
+Cluster 45
+job (770), work (199), job number (16), jobs (9), employer (8), jobs jobs jobs (8), thousand job (6), work ethic (6), work requirement (6), task (5), 
+
+Cluster 46
+vaccine (30), moderna vaccine (4), dose vaccination baby (2), vaccination (2), vaccine therapeutic (2), company progress vaccine cure (1), credit vaccine (1), dam vaccine (1), distribution vaccine (1), doctor dose vaccine pump dose body (1), 
+
+Cluster 47
+ben carson (14), fiorina (7), lindsey graham (6), corker (5), rino (5), carson (4), manchin (3), senator schumer (3), senator schumer ambassador (3), rinos (2), 
+
+Cluster 48
+fund (21), funding (18), hostage (16), infrastructure (16), infrastructure fund (4), subsidy (4), infrastructure plan (3), nation infrastructure (3), police funding (3), usdot funding (3), 
+
+Cluster 49
+complete endorsement (206), debate (111), endorsement (82), strong endorsement (14), total endorsement (12), newsmax debate (11), support endorsement (7), debate question (6), commission presidential debates (5), debate stage (4), 
+
+Cluster 50
+hurricane (26), storm (20), hurricane dorian (7), hurricane florence (6), tornado (6), katrina (4), bp oil spill (3), hurricane irma (3), hurricane laura (3), path storm (3), 
+
+Cluster 51
+daca (53), daca wall deal (4), deal daca (4), case daca (3), daca activist hispanics (3), daca recipient (3), right daca (3), badly daca (2), daca bandwagon (2), daca decision (2), 
+
+Cluster 52
+medicare (16), social security medicare (10), social security (7), food stamp roll (3), medicare amp social security (3), medicare medicaid (3), medicare primiums (3), cadillac tax health plan (2), executive order medicare nations senior (2), medicare advantage plan (2), 
+
+Cluster 53
+drug (29), drug price (24), drug company (10), big pharma (7), drug lord (5), druggie (4), prescription medication (4), drugs (3), inflow drug (3), prescription drug (3), 
+
+Cluster 54
+colorado (13), indiana (13), louisiana (11), kentucky (10), missouri (10), tennessee (8), maine (7), people kentucky (6), alaska (5), cleveland (5), 
+
+Cluster 55
+unemployment (47), unemployment rate (16), unemployment number (10), unemployment payment (3), youth unemployment (3), july unemployment number (2), record unemployment (2), womens unemployment rate (2), asian unemployment (1), black amp unemployment history (1), 
+
+Cluster 56
+nation (135), soldier (59), pol (28), favorite (6), thousand soldier (6), nation god (5), nation people (5), national costume (5), national (4), delphi worker (3), 
+
+Cluster 57
+law amp order (8), tie amp shirt (4), dollar good amp product imbalance (3), amp place anchor norahodonnell (2), anna wintour amb court st jamess amp fundraiser ch (2), atlantic ocean amp (2), chain lottery catch amp (2), conservative amp fair medium (2), disgraced amp dirty cop (2), editorial central park ripoff amp (2), 
+
+Cluster 58
+wrong (104), lie (73), crazy (68), terrible (58), fool (50), disgrace (22), victim (20), liar (17), excuse (16), moron (16), 
+
+Cluster 59
+pre (23), shot (20), break (18), run (18), hit (14), coup (12), bust (9), manufacturer (9), touch (9), turn (9), 
+
+Cluster 60
+election (364), electoral college (11), election result (10), rigged election (7), result election (6), general election (5), election victory (4), meddling election (4), case election history (3), constitution election (3), 
+
+Cluster 61
+governor (53), election governor (3), governor arkansas (3), governor briankempga (3), governor mattbevin (3), governors states official (3), mayor amp governor (3), administration governor ricardorossello (2), governor a g (2), governor amp mayor (2), 
+
+Cluster 62
+trial (33), agreement (20), testing (20), proof (11), tester (11), knowledge (8), audit (6), test (6), individual mandate (5), confidentiality agreement (4), 
+
+Cluster 63
+stock market (65), stock (28), dow (16), recession (9), nasdaq (8), class warfare (6), 401ks (4), health (3), record breaking stock market number (3), record breaking stock market number election day (3), 
+
+Cluster 64
+omarosa (33), flotus (14), daughter ivanka (13), pastor (7), christian pastor (5), megyn kelly (3), pastor brunson (3), reverend wright (3), acting secretary chad wolf (2), admiral jackson (2), 
+
+Cluster 65
+letterman (9), tom brady (9), mark cuban (6), david letterman (5), don (4), friend bob kraft (4), judge brett kavanaugh (4), lebron (4), letterman late show (4), manti teo (4), 
+
+Cluster 66
+oil (71), gas price (35), oil price (14), gas (12), keystone (12), keystone pipeline (11), gallon gas (9), keystone xl pipeline (7), price gas (5), coal (4), 
+
+Cluster 67
+atlantic city (14), acre (4), magazine atlantic (4), mar lago (4), palm beach (4), lago (3), palm sunday (3), acre potomac river (2), anguilla (2), atlantic city closing (2), 
+
+Cluster 68
+chris (17), kevin (16), ronny (13), fredo (8), adam (7), andy (7), andy mccabe (7), derek (7), robert (6), gene (5), 
+
+Cluster 69
+john mccain (25), anthony weiner (8), paul manafort (7), mccain (5), pervert anthony weiner (5), spitzer weiner (5), podesta (4), podesta brother (4), anthony wiener (3), congressman anthony weiner (3), 
+
+Cluster 70
+fan (37), apple (26), ventilator (26), arena (16), room (16), trip (14), guest (13), dinner (11), hotel (11), land (10), 
+
+Cluster 71
+farmer (53), farmers (8), trade war (4), farmer worker company (3), trade surplus (3), additional farm agricultural products (2), billion trade (2), economy trade war (2), election farmer rancher worker loyalty (2), farm farmer (2), 
+
+Cluster 72
+james comey (31), comey (9), comey mccabe page amp lover peter group (3), leakin james comey (3), shadey james comey (3), comey mccabe (2), comey mccabe peter lover lisa page official (2), director comey amp (2), firing james comey (2), james comey leak (2), 
+
+Cluster 73
+book (116), document (37), talk (27), champion (23), copy (21), boss (19), conversation (14), rebel (12), language (8), character (5), 
+
+Cluster 74
+wall (256), section wall (10), barrier (7), concrete wall (4), fence (3), steel barrier wall (3), wall steel barrier (3), walls (3), barrier effort (2), build wall (2), 
+
+Cluster 75
+loser (62), thought prayer (41), recovery (22), hater loser (21), prayer (18), condolence (16), defeat (12), anger (8), hatred (8), loser hater (7), 
+
+Cluster 76
+clue (75), idea (56), credibility (54), mind (49), reason (38), pressure (32), attention (30), standard (27), weak (23), issue (22), 
+
+Cluster 77
+enemy (66), enemy people (25), commander chief (10), arianna huffington (4), commander chiefs trophy (4), spokesman (4), buzzfeed (3), commander chiefs (3), conde nast (3), nrcc digital director (3), 
+
+Cluster 78
+open borders (24), sanctuary cities (14), open borders crime (6), crime machine immigration (2), immigrant sanctuary cities (2), loophole open borders crimes amp drugs (2), people crime immigration (2), sanctuary cities high taxes open borders (2), strong borders (2), strong borders crime (2), 
+
+Cluster 79
+hoax (34), fake (19), fake dossier (17), subpoena (13), counsel (11), phony (9), special counsel (6), commissioner (5), unconstitutional (4), w h counsel (4), 
+
+Cluster 80
+time (323), value (23), time high (20), times (12), weather (9), establishment interest (8), profit (7), moment (6), percent (6), timing (4), 
+
+Cluster 81
+leader (129), leadership (78), courageous leader (5), leader negotiator (5), union leader (5), repubs (4), world leader (4), hrc (3), business leader (2), congressional leadership (2), 
+
+Cluster 82
+medium (277), lamestream medium (23), news medium (19), mainstream medium (7), corrupt lamestream medium (4), corrupt mainstream medium (3), corrupt news medium (3), dishonest medium (3), fake mainstream medium (3), fake medium (3), 
+
+Cluster 83
+president (626), presidency (23), oval office (11), president history (9), conversation president (6), president administration (6), prez (6), president zelensky (5), run president (5), job president (4), 
+
+Cluster 84
+week (30), tomorrow (19), night (18), tonight (17), yesterday (17), weekend (13), evening (11), friday (8), morning (8), sgt (8), 
+
+Cluster 85
+mitt romney (35), mitt (34), romney (33), romney campaign (4), presidential candidate mitt romney (3), dope karlrove mitt romney election (2), gov gary johnson (2), romney advisor (2), senator romney people (2), ann romney (1), 
+
+Cluster 86
+bob (12), rick perry (6), bob woodward (5), bobby jindal (5), governor john bel edwards (5), bob corker (4), governor jerry brown (4), huckabee (4), scott walker wacko (3), sd candidate rick weiland (3), 
+
+Cluster 87
+strzok (10), elite (7), aoc (6), ventilators (4), covid covid covid (3), dummy karlrove (3), judgejeanine pirro (3), sencapito (3), amazonwashingtonpost failingnewyorktime (2), cdc (2), 
+
+Cluster 88
+law (108), act (50), security (33), legislation (24), threat (15), safety (14), death wish (8), law order (8), safety security (5), cyber security unit (3), 
+
+Cluster 89
+collusion (83), russians (29), collusion obstruction (11), russian meddling (5), collusion delusion (4), evidence collusion (4), russian (4), collusion hoax (3), collusion thing (3), real collusion (3), 
+
+Cluster 90
+crime (176), criminal (25), crime bill (8), crime drug (3), high crimes misdemeanors (3), crime accusation (2), crime acquisition (2), crime city (2), crime germany (2), crime place (2), 
+
+Cluster 91
+ebola (33), plague (9), epidemic (8), pandemic (6), ebola patient (5), h1n1 swine flu (5), ebola quarantine (3), ebola doctor (2), ebola doctor n y west africa subway dining (2), ebola patient duncan (2), 
+
+Cluster 92
+signature (10), signature verification (8), signature match (3), signature envelope (2), signature restaurant (2), access signature (1), amp signature ballot envelope (1), check signature (1), form letter signature (1), fulton county voter signature verification process (1), 
+
+Cluster 93
+lawyer (73), prosecutor (13), justice department (9), doj (6), lawyer law firm (5), dozen prosecutor (4), prosecution (4), fake whistleblower (3), injustice (3), irs (3), 
+
+Cluster 94
+word (112), game (92), plan (56), point (56), picture (48), situation (39), dossier (29), program (21), class (20), position (19), 
+
+Cluster 95
+o k (12), a g (10), follower (10), responders (10), u k (8), e u (7), v p (7), stake (6), w h (6), 1b (5), 
+
+Cluster 96
+watergate (8), clapper intelligence head problem lot (2), intelligence official phillip mudd (2), leakers intelligence community (2), watergate time (2), clapper intelligence head (1), crime century watergate (1), intelligence official james clapper (1), law firm kremlin source (1), nixon watergate burglary keystone cop stuff (1), 
+
+Cluster 97
+street (11), hunter (7), dominion (6), company huawei product national security (4), university (4), christians (3), generals brass (3), national monuments (3), pentagon (3), samsung (3), 
+
+Cluster 98
+debt (60), spending (18), national debt (7), debt limit (5), debt president (4), government shutdown (4), debt deal (3), defense spending (3), government spending (3), cost debt (2), 
+
+Cluster 99
+wwe hall fame (10), harvard (6), baseball hall fame (5), hall fame (4), pete rose baseball hall fame (3), time leader pete rose (3), bho school cont (2), coach baby coach (2), davos switzerland (2), friend patriot nra (2), 
+
+Cluster 100
+growth (28), poverty (5), downturn (3), income housing neighborhood (3), family income (2), growth sector (2), household income (2), income housing (2), income housing suburbs (2), market crash like (2), 
+
+Cluster 101
+karl rove (17), general flynn (11), john kerry (11), eliot spitzer (10), rove (9), debbie wasserman schultz (7), spitzer (7), general petraeus (6), general qassem soleimani (6), hagel (6), 
+
+Cluster 102
+mike (32), michael (16), rick scott (9), andrew mccabe (8), eric (6), scott walker (5), son don eric (5), ron desantis (4), eric schneiderman (3), michael forbes (3), 
+
+Cluster 103
+fraud (56), total fraud (6), event fact fraud (2), fraud public (2), irregularity fraud (2), perpetrator fraud people (2), counterfeit (1), fraud abuse (1), fraud hoax (1), fraud illegality (1), 
+
+Cluster 104
+life (155), policy (41), peace (23), thousand life (8), way life (7), million life (4), californias policy (3), excitement (3), lifetime (3), politics (3), 
+
+Cluster 105
+caravan (19), plane (19), flight (13), renovation (10), airplane (9), ship (9), caravans (8), circulation (6), bus service (5), aircraft (4), 
+
+Cluster 106
+government (145), administration (144), authority (17), govt (13), gov t (7), gov (6), government program (3), position government (3), administration year (2), applicant (2), 
+
+Cluster 107
+today (60), episode (13), national anthem (9), vietnam (6), national day prayer (5), pledge allegiance (5), patriotism (4), army officer abuse prevention unit (3), ceremony (3), evangelical (3), 
+
+Cluster 108
+world (161), company (136), community (43), siege (13), hospital (11), rest world (9), tourist (6), beauty parlor owner (5), homeland (5), planet (5), 
+
+Cluster 109
+candidate (107), tea party (20), presidential election (10), approval rating (9), candidate primary (6), candidate self funding (3), approval rating number election cow (2), candidacy (2), candidate eddierispone (2), candidate jebbush (2), 
+
+Cluster 110
+ad (58), magazine (29), publicity (13), writer (13), author (10), time magazine (9), agent (7), aol (7), publisher (5), advertising (3), 
+
+Cluster 111
+taliban (18), afghanistan (15), iranians (13), assad (9), caliphate (8), mubarak (7), afghanis (5), islamist (5), syrians (5), afghan security forces (2), 
+
+Cluster 112
+twitter (59), tweet (29), facebook (11), social media (8), univision (8), people pundit television (5), social media people (5), twitter account (5), cop (4), episode apprentice (3), 
+
+Cluster 113
+violence (14), national emergency (10), riot (5), violent riots (4), civil war (3), national emergencies (2), riots (2), robb report (2), violence problem (2), case office year (1), 
+
+Cluster 114
+hole (11), lightweight agschneiderman (10), runoff (8), manufacturing sector (6), lightweight (5), manufacturing (5), drain (4), flood (4), seal (4), crane (3), 
+
+Cluster 115
+citizen (50), jail (17), prison (14), thug (12), gang (8), loophole (8), ms 13 gang member (6), loopholes (4), ms 13 (4), prison sentence (4), 
+
+Cluster 116
+poll (147), question (104), event (63), help (43), message (33), official (28), love (25), article (24), list (24), google (23), 
+
+Cluster 117
+senator (43), pocahontas (26), elizabeth warren (15), goofy elizabeth warren (14), goofy elizabeth warren pocahontas (9), elizabeth warren pocahontas (7), elizabeth pocahontas warren (6), senator goofy elizabeth warren (5), senator bob corker (4), senator luther strange (4), 
+
+Cluster 118
+wind turbine (47), windfarm (17), wind farm (16), wind (9), windmill (9), bird wind turbine (3), turbine (3), developer wind monstrosity vattenfall (2), sail wind (2), wind power (2), 
+
+Cluster 119
+business (169), entrepreneur (80), career (35), businessman (14), professional (13), staff (10), consumer (9), consumer confidence (9), business tool (7), business owner (6), 
+
+Cluster 120
+nomination (18), conservative (15), ambassador (14), liberal (11), nominee (9), appointment (5), common core (5), ambassador sondland (4), feds (4), ambassador germany richardgrenell (3), 
+
+Cluster 121
+radical left (45), radical (8), radical islam (4), radical left congresswomen (4), funding radical ideology (2), radical left crazy (2), radical left crime cancel culture (2), radical left lamestream medium (2), radical left magazine (2), statement radical left congresswomen (2), 
+
+Cluster 122
+nfl (22), football (9), sport (8), league (7), baseball (6), ncaa (6), nfl football (6), nfl player (5), dark knight (4), espn (4), 
+
+Cluster 123
+crowd (93), million people (34), majority (28), thousand people (28), group (18), audience (10), silent majority (4), crowd people (3), bird population (2), focus group (2), 
+
+Cluster 124
+tariff (89), tariffs (38), tariffs barrier (8), college application (4), tariffs trade barriers (4), dollar tariffs (3), process tariffs dollar (3), barrier tariff (2), effect tariff (2), tariff e u (2), 
+
+Cluster 125
+whistleblower (77), scam (32), snowden (26), spy (24), scandal (15), cia (12), fisa court (9), informant (7), leaker (7), fisa abuse (6), 
+
+Cluster 126
+bill (113), bill o reilly (5), bills (5), farm bill (5), bill barr (4), bill nelson (4), surprise billing (4), bill cosby (3), bill maher (3), bill o reilly oreillyfactor (3), 
+
+Cluster 127
+jon stewart (21), chris wallace (16), mark levin (15), roger (13), gary (12), roger stone (12), jason (10), roger ailes (9), henry (8), dennis rodman (7), 
+
+Cluster 128
+pelosi (31), cryin chuck schumer (17), mitch mcconnell (14), schumer (13), paul ryan (11), chuck schumer (9), mitch (9), pelosi amp co (5), schumer pelosi (5), senatemajldr mitch mcconnell (4), 
+
+Cluster 129
+bloomberg (5), cuba (4), venezuela (4), bloomberg administration (3), day people cuba destiny (3), hugo chavez (3), people venezuela (3), scaramucci (3), situation venezuela (3), acting secretary (2), 
+
+Cluster 130
+bernie sanders (53), bernie (41), crazy bernie (15), crazy bernie sanders (12), bernie supporter (6), bernie people (5), bernie sanders supporter (3), deal bernie (3), bernie sander (2), bernie voter (2), 
+
+Cluster 131
+putin (34), president putin (4), meeting president putin (2), vladimir putin (2), apology president putin (1), chemistry putin (1), effort putin loyalist (1), fact ill relationship putin (1), fact president putin cyber security unit (1), lifeline putin lifeline (1), 
+
+Cluster 132
+ronald reagan (9), jimmy carter (4), obamas coal regulation (4), obamas war coal (4), president ronald reagan (4), president jimmy carter (3), bidens handlers (2), chuck jones president united steelworkers (2), john beale person government climate change epa (2), ban maga hats (1), 
+
+Cluster 133
+troy (15), oprah (12), bret (10), memory george floyd (8), brett kavanaugh (7), alex salmond (5), mr khan (5), mr mcgahn (5), drew peterson (4), hogan gidley (3), 
+
+Cluster 134
+man amp woman (7), people amp (4), thousand amp alien (3), amp people time need (2), barclay friend amp guy (2), competitiveness factory amp warming (2), eastern oil amp gas amp (2), fort amp national monuments amp (2), heart amp prayer (2), leaders pioneers amp visionary (2), 
+
+Cluster 135
+bin laden (14), al qaeda (5), osama bin laden (5), al (4), al megrahi (3), seal bin laden (3), al frankenstien picture (2), al qaeda flag (2), al qaeda terrorist al libi (2), al baghdadi soleimani (1), 
+
+Cluster 136
+family (121), woman (102), agenda (49), wife (30), husband (29), man woman (29), student (9), envy world (6), niece (6), marriage (4), 
+
+Cluster 137
+rating (100), opportunity (47), rate (36), potential (19), month (15), possibility (7), note (5), opportunity possibility (3), credit rating (2), decade project (2), 
+
+Cluster 138
+award (20), doctor (19), medal (5), medal honor (4), aaa diamond award (3), pulitzer prize (3), ramp west point commencement speech (3), academy award (2), academy awards (2), award dining option (2), 
+
+Cluster 139
+city (63), district (15), dc (13), flight west africa (11), las vegas (10), suburb (8), town (7), greece (6), neighborhood (6), guatemala (5), 
+
+Cluster 140
+intelligence (12), intelligence community (10), intellect (3), iq (3), confidence intelligence people (2), intelligence briefing (2), intelligence doubt campaign (2), intelligence information (2), obstruction crime (2), teamwork intelligence (2), 
+
+Cluster 141
+phone (25), area (21), voice (21), movie (14), animal (13), wig (13), bar (12), field (12), hair (12), camera (10), 
+
+Cluster 142
+mess (52), shutdown (30), relationship (29), badly (19), garbage (14), dialogue (7), odd (7), outsider (7), brexit (6), hurt (6), 
+
+Cluster 143
+case (109), transcript (64), investigation (52), evidence (40), witness (35), testimony (16), investigator (12), allegation (10), accuser (4), case evidence (4), 
+
+Cluster 144
+aberdeen (4), bird windfarm aberdeen (4), shore aberdeen wind farm site (2), windfarm alexsalmond aberdeen (2), aberdeen alexsalmond (1), aberdeen tourism (1), aberdeen windfarm (1), aberdeen windfarm fiasco (1), development aberdeen turnberry (1), finance statement windfarm aberdeen (1), 
+
+Cluster 145
+office (105), meeting (69), apology (16), pardon (12), cabinet (10), desk (8), forgiveness (6), party meeting (3), activist (2), boardroom specifics (2), 
+
+Cluster 146
+miss universe pageant (15), miss universe (3), miss universe paulina vega (2), appearance miss universe pageant vietnam 6 yrs (1), celebapprentice spoiler amp miss universe pageant (1), favorite telecast miss universe pageant (1), giulianarancic amp bravoandy miss universe pageant (1), itill miss universe pageant santa (1), miss universe pageant mandalay bay resort casino (1), miss universe pageantwill (1), 
+
+Cluster 147
+jim (19), jeff sessions (15), attorney general (11), michael cohen (10), a g eric schneiderman (7), ag (6), jay powell federal reserve (6), lightweight a g eric schneiderman (6), ag schneiderman (5), attorney general jeff sessions (4), 
+
+Cluster 148
+star (30), celebrity (8), firefighter (5), county comment operation legend (2), crew member passenger southwest airlines flight (2), fame (2), forbes list (2), girlfriend lubitz co pilot plane (2), star cast (2), star celebapprentice (2), 
+
+Cluster 149
+mistake (86), action (61), sanction (33), failure (29), talk action (21), patient (16), fault (14), incompetent (12), waiver product (8), failing (7), 
+
+Cluster 150
+result (74), advantage (56), future (48), choice (32), effort (27), worth (20), past (18), consequence (17), benefit (14), commitment (12), 
+
+Cluster 151
+letter (35), freedom (19), liberty (11), contribution (7), freedom press (7), religious liberty (6), freedom caucus (5), freedom speech (4), liberty university (4), owner owner (4), 
+
+Cluster 152
+chicago (10), minneapolis (8), seattle (7), crimea (4), georgian (4), hawaii (4), hong kong problem (4), kremlin (4), paris (4), woodward (4), 
+
+Cluster 153
+place (190), hell (66), home (57), property (24), network (23), son (22), video (22), site (20), location (18), website (16), 
+
+Cluster 154
+omar (4), congresswoman omar (2), leader rep omar (2), congesswoman omar (1), frey omar (1), iihan omar member aoc (1), omar foreign relations committee (1), petition omar foreign relations committee (1), rep omar rep (1), representative ilhan omar (1), 
+
+Cluster 155
+attack (39), tribute (11), strike (7), carnage (5), gratitude nation (5), month lover strzok page text time (4), skirmish (4), slaughter (4), weapon destruction (4), attack soleimani (3), 
+
+Cluster 156
+haters amp loser (6), attack soleimani amp (3), hater amp loser (3), hydroxychloroquine amp azithromycin (3), ally amp enemy (2), amp hater loser (2), amp word way (2), case whistleblower amp (2), catch amp telease loophole (2), death amp destruction (2), 
+
+Cluster 157
+tate (8), megan (6), nicole (5), susan rice (5), arsenio (3), barbara walters (3), congresswoman wilson d (3), kelly (3), kristen stewart (3), michele bachmann (3), 
+
+Cluster 158
+politician (115), career politician (3), politician deal (2), politician figure (2), politician issue (2), interest people politician puppet (1), left politician (1), million dollar commercial politician (1), million dollar politician (1), politician adam schiffs (1), 
+
+Cluster 159
+rod (53), yankees (24), yankee (21), rod rosenstein (3), ap rocky (2), aurora colorado guy (2), james holmes aurora colorado guy people amp (2), pinstripe (2), redskin (2), rod contract (2), 
+
+Cluster 160
+airport amp paris shutdown (2), drug price reductions amp infrastructure (2), forbesinspector star amp rating (2), foxnew cable rating (2), fragrance success scent amp (2), love respect amp enthusiasm (2), responder amp emergency response team (2), shirt tie amp suit fragrance success (2), star treatment room amp spa guestroom (2), aaafivediamond amp forbesinspector star rating (1), 
+
+Cluster 161
+water (30), construction (18), machine (16), cast (13), mile (12), barrel (11), building (11), heat (11), ball (10), gut (10), 
+
+Cluster 162
+thing (592), way (194), right (157), power (69), important (53), high (49), big (36), level (29), cont (26), beginning (22), 
+
+Cluster 163
+lance armstrong (18), derek jeter (14), tiger (10), oscar (7), cliff (5), edge (5), pac (5), tiger woods (5), baseball player ryan braun (3), mayweather (3), 
+
+Cluster 164
+court (59), lawsuit (20), jury (13), court system (7), sue (4), disloyal (3), billmaher lawsuit (2), court decision (2), court decision circuit (2), courthouse (2), 
+
+Cluster 165
+number (163), politic (35), approval (12), number people (8), people year (5), crowd enthusiasm (4), number company (3), number draft pick (3), kind number (2), life people (2), 
+
+Cluster 166
+trade deal (68), nafta (22), tpp (13), trade deal world history (3), cash cow nafta (2), currency manipulation bad trade deal (2), deficiency mistake nafta (2), job tpp (2), nafta deal (2), site signing phase trade agreement deal (2), 
+
+Cluster 167
+kim jong un (38), chairman kim (19), president xi (17), son donald (10), vp (9), secret service (8), friend president xi (4), president moon south korea (4), relationship kim jong un (4), kim (3), 
+
+Cluster 168
+man (127), guy (118), god (99), child (57), vet (47), safe (43), player (38), heart (26), father (25), kid (20), 
+
+Cluster 169
+budget (34), debt ceiling (15), stimulus (14), deficit (9), food stamp (8), cbo (7), budget deal (5), welfare reform (5), sequester (4), budget deficit (3), 
+
+Cluster 170
+luther strange (13), rev wright (5), tom tiffany tomtiffanywi (4), dwyane wade cousin (3), navy fighter pilot mike garcia (3), pundit lawrence o donnell people television (3), acting chief mick mulvaney (2), businessman dale (2), cortez aoc (2), dope harry hurt book (2), 
+
+Cluster 171
+foxnew (112), alexsalmond (17), thegarybusey (17), washingtonpost (12), barbarajwalter (11), covid (11), tedcruz (11), todayshow (10), joebiden (8), tigerwood (8), 
+
+Cluster 172
+seanhannity (47), billmaher (27), usmca (17), usdot (16), mariabartiromo (14), piersmorgan (14), gretawire (10), judgejeanine (9), davidaxelrod (8), teamcavuto (8), 
+
+Cluster 173
+zero (9), zero credibility (3), zero medium credit (2), credibility failure office (1), credibility loser (1), lot power negative way (1), number zero (1), t v zero pre (1), way zero (1), zero ad (1), 
+
+Cluster 174
+fema (14), fema responders (4), fema responders law enforcement (4), team fema (3), fema responder (2), coast guard fema responder amp (1), fema amp (1), fema amp responders (1), fema government (1), fema government people oklahoma (1), 
+
+Cluster 175
+swamp (35), fire (31), plant (29), ceasefire (11), industry (10), factory (9), drain swamp (8), dirt (7), ethanol (5), strait hormuz (5), 
+
+Cluster 176
+mini mike (24), mini mike bloomberg (20), michael bloomberg mini mike (3), mini mike bloomberg amp stuff (3), secretary (3), tom steyer mini mike bloomberg (3), daughter ivanka vice president election (2), deputy secretary dan brouillette (2), juaquin castro brother candidate fool time mouth (2), michael bloomberg (2), 
+
+Cluster 177
+dummy (16), tone (8), rioter (6), ig (5), knee (5), looter (4), bobvanderplaat (3), sham (3), embrace (2), filth (2), 
+
+Cluster 178
+msnbc (20), politico (12), wsj (11), cnbc (8), chief staff (7), wall street journal (7), newsweek (6), huffington post (5), wsj wall street journal (5), nytimes (4), 
+
+Cluster 179
+apprentice (56), pundit (7), clapper (4), friend enemy (3), goldman sachs (3), solyndra (3), apprentice number (2), apprentice rating (2), horror enemy family member friend (2), lehman brothers (2), 
+
+Cluster 180
+mayor (27), governor cuomo (16), cuomo (13), mayor governor (5), chris cuomo (4), mayor san juan (4), radical left governor jayinslee mayor seattle (4), rudy giuliani (4), mayor los angeles ericgarcetti (3), politician cuomo (3), 
+
+Cluster 181
+kurds (27), united (17), amazon (10), christian (9), uk (7), muslim (6), hispanic (5), jews (5), palestinians (5), europeans (4), 
+
+Cluster 182
+fact (117), truth (91), control (46), order (31), demand (13), leak (12), offense (11), complaint (7), consent decree (7), claim (5), 
+
+Cluster 183
+opponent (55), war (45), fight (21), expert (14), battle (13), opponent christyforca25 (9), autism (8), world war (5), endless war (4), mort zuckerman (4), 
+
+Cluster 184
+libya (17), trumper (13), wall street (8), drudge (6), bergdahl (5), krauthammer (4), gitmo (3), newsmax (3), anti trumper (2), drudge report (2), 
+
+Cluster 185
+nuke (8), nuclear button (3), nuclear weapon (3), cold war (2), nuclear deal (2), nuclear option (2), nuclear test (2), nuclear test site (2), uranium (2), day nuclear weapons sanctions (1), 
+
+Cluster 186
+rnc (16), lobbyist (9), democratic national committee (5), rnc convention (3), super pac (3), big tech medium donors interest (2), campaign finance violation (2), cpac (2), democratic convention (2), democratic party (2), 
+
+Cluster 187
+economy (242), gdp (23), economy history (5), health care plan (5), job wealth (5), quarter gdp (4), world economy (4), paycheck protection program (3), countrys record jobs numbers greatness (2), economic boom (2), 
+
+Cluster 188
+team (98), troop (45), school (33), alien (15), neighbor (9), beauty (6), squad (6), crew (4), foreigner (4), holiday gift (4), 
+
+Cluster 189
+worker (60), employee (22), workforce (8), commercial (7), commerce (6), labor force (6), work people (5), company job (4), labor (4), people job (4), 
+
+Cluster 190
+money (346), credit (66), interest (31), lot money (29), payment (20), interest rate (14), wage (12), investment (11), salary (11), income (10), 
+
+Cluster 191
+news (97), lamestream media (51), reporter (51), mainstream media (31), abc (16), journalist (10), editorial (9), rate reporter (9), msm (7), network news (7), 
+
+Cluster 192
+rally (33), cbs (6), hbo (5), macys herald square (4), max red line oregon (4), usc (4), minneapolis resident (3), big rally (2), boycott macys (2), crowd arena yesterday oklahoma (2), 
+
+Cluster 193
+hill (8), pacific ocean (6), bridge toll staten island (4), west (3), atlantic ocean (2), blue water bridge port entry port huron (2), coast (2), dc press corps (2), east coast (2), highway gilcrease expressway west project (2), 
+
+Cluster 194
+drone (14), air (9), firework (9), helicopter (6), red wave (6), aircraft carrier (5), bus (5), jet (5), mile wall (5), lance (4), 
+
+Cluster 195
+graydon carter (16), carter page (7), graydon carter vanityfair (3), concern carter page (2), congressman buddy carter buddy carter (2), graydon carter boss (2), graydon carter reign vanityfair disaster (2), carter page agent (1), carter page fisa document (1), dope graydon carter (1), 
+
+Cluster 196
+chance (71), talent (32), luck (16), resource (13), passion work (6), talent surface (6), earning (5), luckier (5), skill talent (4), stamina (3), 
+
+Cluster 197
+mike pence (15), governor mike pence (8), kaine (8), tim kaine (8), vice president mike pence (4), vp mike pence (4), lincoln project (3), event vp pence secretary betsydevosed (2), huma abedin (2), joaquin castro brother candidate fool time mouth (2), 
+
+Cluster 198
+cruz (29), marco rubio (27), john kasich (20), kasich (20), rubio (13), senator marco rubio (11), ted (10), gov kasich (5), lyin ted (5), marco (4), 
+
+Cluster 199
+risk (27), rule (26), regulation (24), rule law (11), danger (8), red tape (4), settlement (4), arbitration agreement (3), decision paris accord (3), paris agreement (3), 
+
+Cluster 200
+middle east (16), envelope (8), post office (4), middle east war (3), old post office (3), post office hearing (3), dc post office (2), old post office dc hotel world (2), policeman middle east (2), usps (2), 
+
+Cluster 201
+product (49), like (31), left (26), gold (20), opposite (20), brand (19), let (19), pass (17), sale (17), wh (17), 
+
+Cluster 202
+flag (25), union (17), vacation (12), birthday (11), christmas (10), easter (10), trans pacific partnership (7), vanity fair (7), church (6), comedian (6), 
+
+Cluster 203
+brian (9), brian williams (9), brian kemp (7), sally yates (5), congresswoman kay grangercampaign (4), robert pattinson (4), andy lassner (3), bella santorum (2), book andrew jackson brian kilmeade (2), brian ross (2), 
+
+Cluster 204
+muslim brotherhood (12), college application amp record (2), ally muslim brotherhood (1), college application record amp grade (1), college record amp (1), college record amp application (1), egypt muslim brotherhood president (1), egypt muslim brotherhood representative (1), islamists egypt protest (1), muslim brotherhood dictator egypt (1), 
+
+Cluster 205
+boston killer (14), portland (13), boston (3), lt (3), boston globe (2), boston redsox (2), boston thug (2), people portland (2), portland seattle place (2), protestor boston bigotry hate (2), 
+
+Cluster 206
+day (102), european union (12), teacher (9), armed forces (6), civilian (6), memorial day (6), big day (5), eu (5), field day (5), daytime (4), 
+
+Cluster 207
+transparency (10), fda (7), opioid crisis (4), price transparency (4), fentanyl (3), pfizer (3), us fda (3), drug test (2), people drug (2), transparency accountability freedom (2), 
+
+Cluster 208
+rush limbaugh (10), jerry nadler (9), chuck hagel (7), jerry (5), jfk files (5), warren buffett (5), kerry (4), wacko john bolton (4), sean spicer star (3), acting secretary defense patrick shanahan job (2), 
+
+Cluster 209
+victory (52), comeback (13), competitor (10), boardroom (9), convention (9), glory (6), board room (3), conference (3), fulbright board (2), history season finale men (2), 
+
+Cluster 210
+death (21), prisoner (8), passport (5), mortality rate (4), death spiral (3), ex prisoner (3), background check (2), birth certificate (2), death death rate (2), death rate (2), 
+
+Cluster 211
+fortune (36), prosperity (17), club growth (15), wealth (15), billion dollar year (12), wealth deal kind (4), prosperity peace (3), prosperity success (3), monster rating (2), annual march for life (1), 
+
+Cluster 212
+pope (6), mika (3), wacky omarosa (3), boone pickens entrepreneur award (2), charlie book maga doctrine (2), daughter annies (2), daughter wedding yoga (2), dopey georgewill pundit business (2), dr martin luther king jr (2), january martin luther king jr federal holiday (2), 
+
+Cluster 213
+press (77), newspaper (14), adviser (8), representative (8), consultant (7), delegation (7), advisor (5), bbc (4), information news (4), unionleader newspaper (4), 
+
+Cluster 214
+crude (11), steel industry (9), carbon footprint (7), steel (5), carbon tax (4), steel aluminum industry (3), aluminum price (2), big steel (2), commercegov analysis steel aluminum june (2), ethanol industry (2), 
+
+Cluster 215
+coach (7), nypd (6), dumbest play history football (3), football coach (3), baby coach (2), dc police (2), lolo jones athlete (2), protest favor police officer mississippi animal (2), baseball commissioner owner (1), comeback quarterback (1), 
+
+Cluster 216
+loopholes asylum (6), drug smuggler trafficker ms 13 gang member (3), drug trafficking (3), loopholes amp asylum (3), death crime drugs human trafficking (2), drug cartel (2), drug human trafficking gang members amp criminal (2), el chapo (2), el chapo drug cartel (2), ms 13 gang member amp l a (2), 
+
+Cluster 217
+tax cut (39), tax cut bill (11), tax cuts (8), tax increase (7), massive tax cut (6), tax cuts reform (6), payroll tax cut (5), tax cuts tax reform (4), massive tax cuts (3), tax cut reform bill (3), 
+
+Cluster 218
+honor (59), racist (27), damage (25), hater (12), lowlife (11), destiny (10), abuse (9), outrage (9), harm (7), horror (7), 
+
+Cluster 219
+information (97), fun (57), public (57), momentum (41), low (33), care (23), difference (23), solution (22), term (22), hearing (21), 
+
+Cluster 220
+support (86), million (39), supporter (39), billionaire (29), thousand (28), aid (25), million dollar (13), quo (13), investor (9), assistance (8), 
+
+Cluster 221
+steve (27), matt (22), dan (21), david (18), scott (15), greg (14), mark (14), jeff (13), danny (10), jay (9), 
+
+Cluster 222
+party (70), service (41), movement (38), weapon (28), dream (23), ovation (16), warrior (12), bible (8), gift (8), space force (6), 
+
+Cluster 223
+problem (193), smart (97), trouble (27), solution problem (25), reality (24), virus (22), challenge (21), instinct (20), review (17), passion (13), 
+
+Cluster 224
+anarchist (15), antifa (12), chaos (9), anarchists amp agitator (3), equivalency kkk neo nazis amp supremacist (3), radical left antifa scum (3), agitators anarchist (2), anarchist agitator looter protester (2), anarchist agitator protestors (2), anarchists (2), 
+
+Cluster 225
+foxandfriend (119), nytime (50), oreillyfactor (32), karlrove (21), mcuban (13), ricksantorum (13), jebbush (10), oann (10), monstrosity (7), sebelius (7), 
+
+Cluster 226
+billion dollar (40), billion (29), currency (17), inflation (14), taxpayer (12), finance (6), trillion dollar (6), billions dollar (5), currency manipulation (5), trillion (5), 
+
+Cluster 227
+police (62), law enforcement (35), police officer (13), saturday night live (10), police department (6), ice officer (5), law enforcement national guard (5), law enforcement officer (5), police law enforcement (4), policeman (3), 
+
+Cluster 228
+amnesty (22), amnesty bill (2), amnesty pathway (2), fact amnesty (2), action amnesty (1), amnesty criminal (1), amnesty illegal (1), anarchy amnesty (1), barack obamas executive order amnesty (1), eagle award amnesty reporting (1), 
+
+Cluster 229
+second amendment (67), amendment (37), constitution (28), nra (18), special council (15), amendment right (6), special councel (6), 2nd amendment (5), gun control (5), life second amendment (5), 
+
+Cluster 230
+rosie (33), greta (16), michelle (9), cindy (8), joan rivers (7), sarah (6), alison grimes (5), cher (5), joni (5), karen (5), 
+
+Cluster 231
+opec (45), saudi arabia (22), arab league (9), attack saudi arabia (4), king salman saudi arabia (4), opec monopoly (3), saudi (3), saudi arabia saving extinction (3), saudis (3), arab league member (2), 
+
+Cluster 232
+jeb bush (46), jeb (42), low energy candidate like (4), jeb ad buy lobbyist (2), jeb brother george (2), jeb bush george george h w (2), jeb bush supporter (2), jeb bushs campaign manager (2), jeb endorsement lyin ted (2), jeb marco (2), 
+
+Cluster 233
+crazy nancy (26), nancy (19), cryin chuck (11), james clapper (9), bolton (8), eyes chuck todd (6), al sharpton (4), kennedy (4), eye chuck todd (3), jack welch (3), 
+
+Cluster 234
+premium (17), insurance company (7), insurance policy (5), insurer (4), health insurance (3), insurance (3), premium amp deductible (3), deductible (2), digit premium increase (2), auto insurance taxes (1), 
+
+Cluster 235
+puerto rico (25), people puerto rico (8), new yorkers (6), ny (6), palos (5), tampa (5), broward county (4), des moines register (4), bahamas (3), el paso (3), 
+
+Cluster 236
+television (22), tv (20), officer (6), emmys (4), t v commercial (4), emmy awards (3), sheriff (3), tv commercial (3), fool tv (2), group money ad (2), 
+
+Cluster 237
+blue monster (16), missile (10), rocket (6), rocket man (5), monster (4), sniper mortar fire (3), wall renovation (3), blue monster trumpdoral (2), impact little rocket man (2), little rocket man (2), 
+
+Cluster 238
+europe (31), chrysler (11), luxury (11), ford (10), fiat chrysler (9), nasa (9), asia (6), harley davidson (6), world trade center (5), island (4), 
+
+Cluster 239
+illegal (48), criminal justice reform (20), murder (9), felon (6), thousand illegal (4), criminal justice reform legislation (3), criminal drug (2), criminal justice reform bill (2), criminal justice reform unemployment level (2), murder man woman child million nazi genocide (2), 
+
+Cluster 240
+statement (94), source (85), report (48), reporting (19), ig report (13), tragedy (5), brazil process oecd membership (4), conspiracy theory (4), disaster relief (3), lie statement (3), 
+
+Cluster 241
+amp (66), complete amp total endorsement (21), deal amp (6), repeal amp (5), amp place (3), amp team (3), fact amp (3), number amp (3), wall amp (3), action amp (2), 
+
+Cluster 242
+corruption (34), corrupt (28), corrupt news (4), corruption dishonesty lamestream media (2), corruption hoax (2), mountain corruption amp dishonesty (2), additional corruption (1), allegation indictment conduct outcome election (1), authority corruption (1), ballot corruption (1), 
+
+Cluster 243
+confidence (18), enthusiasm (10), business optimism (4), combination aptitude luck (2), size companys lobbying staff (2), spirit enthusiasm (2), branding aspect enterprise (1), business disadvantage (1), career lie (1), confidence administration (1), 
+
+Cluster 244
+system (77), hand (26), head (22), lead (22), line (21), open (21), ass (20), piece (20), card (19), eye (18), 
+
+Cluster 245
+immigration (43), immigrant (41), immigration law (17), immigration reform (14), immigration laws (13), illegal immigration (12), refugee (12), migrant (11), illegal immigrants (10), chain migration (6), 
+
+Cluster 246
+charity (35), fundraiser (10), ceo (5), originator founder scam (3), bailout money (2), billmaher showbut charity (2), broadcom ceo hock tan (2), ceo charity (2), million charity (2), obligation charity (2), 
+
+Cluster 247
+winner (84), hero (55), veteran (42), competition (10), heroes (8), contest (6), universe competition (4), veterans (4), wwii vet (4), marine corps veteran (3), 
+
+Cluster 248
+price (64), charge (39), cost (20), hour (20), pay (14), lot credit (9), fee (8), loan (5), bond (4), commodity price (4), 
+
+Cluster 249
+boeing (11), pier (11), airport (8), shore (4), gm subsidy (3), meadow (3), peninsula (3), transit (3), airport taxiway ramp (2), bridge collapse fiu (2), 
+
