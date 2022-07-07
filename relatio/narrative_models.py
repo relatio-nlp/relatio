@@ -23,6 +23,7 @@ from relatio.embeddings import (
 )
 from relatio.utils import count_values, is_subsequence, make_list_from_key, prettify
 import matplotlib.pyplot as plt
+import math
 
 
 class NarrativeModel():
@@ -48,7 +49,13 @@ class NarrativeModel():
         embeddings_model: Optional[Type[Embeddings]] = None,
         threshold: int = 0.1
     ):
-        
+      
+    
+        if model_type not in ["deterministic", "kmeans", "hdbscan"]:
+            raise ValueError(
+                "Only three options for model_type: deterministic, kmeans, or hdbscan."
+            )
+    
         if (
             is_subsequence(
                 roles_considered,
@@ -138,9 +145,6 @@ class NarrativeModel():
         progress_bar
     ):
         
-        if progress_bar:      
-            print("Embedding phrases...")
-        
         phrases_to_embed = []
         counter_for_phrases = Counter()
         
@@ -153,7 +157,7 @@ class NarrativeModel():
             # remove known entities for the training of unknown entities
             if role in self.roles_with_known_entities:
                 if self.assignment_to_known_entities == "character_matching":
-                    idx = self.character_matching(phrases)[0]
+                    idx = self.character_matching(phrases, progress_bar)[0]
                 elif self.assignment_to_known_entities == "embeddings":
                     vectors = self.embeddings_model.get_vectors(
                         phrases, progress_bar
@@ -178,51 +182,86 @@ class NarrativeModel():
         # Dimension reduction via PCA + UMAP
         if pca_args is None:
             
-            pca_args = {'n_components':50, 
-                        'svd_solver':'full', 
-                        'random_state':0}
-
-        self.pca = PCA(**pca_args).fit(self.training_vectors)
-        self.pca_embeddings = self.pca.transform(self.training_vectors)
+            pca_args = {
+                'n_components':50, 
+                'svd_solver':'full'
+            }
 
         if umap_args is None:
             
-            umap_args = {'n_neighbors':15,
-                         'n_components':2,
-                         'min_dist':0.1,
-                         'random_state':0,
-                         'low_memory':False}
+            umap_args = {
+                'n_neighbors':15,
+                'n_components':2,
+                'random_state':0
+            }
+            
+        if progress_bar:
+            print("Dimension reduction via PCA + UMAP...")  
+            print('PCA parameters:')
+            print(pca_args)
+            print("UMAP parameters:")   
+            print(umap_args)
+            
+        self.pca = PCA(**pca_args).fit(self.training_vectors)
+        self.pca_embeddings = self.pca.transform(self.training_vectors)
 
         self.umap = umap.UMAP(**umap_args).fit(self.pca_embeddings)
         self.umap_embeddings = self.umap.transform(self.pca_embeddings)
 
         # Clustering
         if progress_bar:
-            
             print("Clustering phrases into clusters...")
 
         if self.model_type == 'kmeans':
 
-            if cluster_args is None:              
-                cluster_args = {'n_clusters':[50,100,150,200,250], 'random_state':0}
+            if cluster_args is None:     
+                
+                l = max(int(len(phrases_to_embed)/100),1)
+                l = min(l,1000)
+                q0 = max(int(np.quantile(list(range(l)),0.1)),1)
+                q1 = max(int(np.quantile(list(range(l)),0.25)),1)
+                q2 = max(int(np.quantile(list(range(l)),0.5)),1)
+                q3 = max(int(np.quantile(list(range(l)),0.75)),1)
+                
+                cluster_args = {
+                    'n_clusters':[q0,q1,q2,q3,l], 
+                    'random_state':0
+                }
               
             # Grid search
             models = []
             for num_clusters in cluster_args['n_clusters']:
-                kmeans = KMeans(n_clusters=num_clusters,random_state=cluster_args['random_state']).fit(self.umap_embeddings)
+                args = {}
+                args['n_clusters'] = num_clusters
+                
+                for k,v in cluster_args.items():
+                    if k not in ['n_clusters']:
+                        args[k] = v
+                        
+                kmeans = KMeans(**args).fit(self.umap_embeddings)
                 models.append(kmeans)
 
             scores = []
             for model in models:    
-                scores.append(silhouette_score(self.umap_embeddings, model.labels_,random_state=0))
+                scores.append(silhouette_score(self.umap_embeddings, model.labels_,random_state = cluster_args['random_state']))
 
         if self.model_type == 'hdbscan':
 
-            if cluster_args is None:              
+            if cluster_args is None:  
+                
+                l = max(int(math.sqrt(len(phrases_to_embed))),2)
+                l = min(l,100)
+                q1 = max(int(np.quantile(list(range(l)),0.25)),2)
+                q2 = max(int(np.quantile(list(range(l)),0.5)),2)
+                q3 = max(int(np.quantile(list(range(l)),0.75)),2)
+                
                 cluster_args = {
-                    'min_cluster_size':[10,30,50,100],
-                    'min_samples':[5,10,20],
-                    'cluster_selection_method':['eom']
+                    'min_cluster_size':[q1,q2,q3,l],
+                    'min_samples':[1,10,20],
+                    'cluster_selection_method':['eom'],
+                    'gen_min_span_tree':True,
+                    'approx_min_span_tree':False, 
+                    'prediction_data':True
                 }
                 
             # Grid search  
@@ -235,12 +274,12 @@ class NarrativeModel():
                         args['min_cluster_size'] = i
                         args['min_samples'] = j
                         args['cluster_selection_method'] = h
+                        
+                        for k,v in cluster_args.items():
+                            if k not in ['min_cluster_size', 'min_samples', 'cluster_selection_method']:
+                                args[k] = v
 
-                        hdb = hdbscan.HDBSCAN(
-                            gen_min_span_tree=True,
-                            approx_min_span_tree = False, 
-                            prediction_data = True, 
-                            **args).fit(self.umap_embeddings)
+                        hdb = hdbscan.HDBSCAN(**args).fit(self.umap_embeddings)
 
                         models.append(hdb)
 
@@ -250,6 +289,11 @@ class NarrativeModel():
         self.clustering_model = models[np.argmax(scores)]            
         self.cluster_args = cluster_args
         self.scores = scores
+        
+        if progress_bar:
+            print('Clustering parameters chosen in this range:')
+            print(cluster_args)
+        
         self.label_clusters(counter_for_phrases, phrases_to_embed, progress_bar)
         
         if self.model_type == 'kmeans':
@@ -416,6 +460,7 @@ class NarrativeModel():
         return self.vocab_unknown_entities[key].most_common(topn)
             
     def clusters_to_txt(self, path = 'clusters.txt', topn = 10, add_frequency_info = True):
+        
         with open(path, 'w') as f:
             for k,v in self.vocab_unknown_entities.items():
                 f.write("Cluster %s"%k)
@@ -429,6 +474,7 @@ class NarrativeModel():
                 f.write('\n')
     
     def plot_clusters(self, path = None, figsize = (14, 8), s = 0.1):
+        
         clustered = (self.clustering_model.labels_ >= 0)
         plt.figure(figsize=figsize, dpi=80)
         plt.scatter(self.umap_embeddings[~clustered, 0],
