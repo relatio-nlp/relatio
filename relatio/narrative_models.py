@@ -9,8 +9,6 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import make_scorer, silhouette_score
-import umap
-import hdbscan
 from spacy.cli import download as spacy_download
 from tqdm import tqdm
 from relatio.embeddings import (
@@ -22,8 +20,10 @@ from relatio.embeddings import (
     _remove_nan_vectors,
 )
 from relatio.utils import count_values, is_subsequence, make_list_from_key, prettify
+import hdbscan
 import matplotlib.pyplot as plt
 import math
+import umap
 
 
 class NarrativeModel:
