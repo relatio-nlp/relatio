@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from relatio import Preprocessor
+from relatio.preprocessing import Preprocessor
 
 
 def test_CE():
