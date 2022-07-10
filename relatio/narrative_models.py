@@ -1,16 +1,22 @@
+import math
 import warnings
 from abc import ABC, abstractmethod
 from collections import Counter
 from copy import deepcopy
 from typing import List, Optional, Type
+
+import hdbscan
+import matplotlib.pyplot as plt
 import numpy as np
 import spacy
+import umap
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import make_scorer, silhouette_score
+from sklearn.model_selection import RandomizedSearchCV
 from spacy.cli import download as spacy_download
 from tqdm import tqdm
+
 from relatio.embeddings import (
     Embeddings,
     _compute_distances,
@@ -20,10 +26,6 @@ from relatio.embeddings import (
     _remove_nan_vectors,
 )
 from relatio.utils import count_values, is_subsequence, make_list_from_key, prettify
-import hdbscan
-import matplotlib.pyplot as plt
-import math
-import umap
 
 
 class NarrativeModel:
