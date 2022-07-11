@@ -2,8 +2,9 @@
 
 A Python package to extract narrative statements from text. 
 
-* "relatio" is Latin for "storytelling".
+* "relatio" is Latin for "storytelling" (pronounced _reh-LOTT-ee-oh_).
 * Motivated, described, and applied in "[Text Semantics Capture Political and Economic Narratives" (2021)](https://arxiv.org/abs/2108.01720).
+* Interactive tutorial notebook is [here](https://colab.research.google.com/github/relatio-nlp/relatio/blob/master/tutorial/tutorial.ipynb).
 * See [here](https://sites.google.com/view/trump-narratives/trump-tweet-archive) for graphical demo of system outputs.
 
 ## Installation
