@@ -11,11 +11,12 @@ import numpy as np
 import spacy
 import umap
 from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, IncrementalPCA
 from sklearn.metrics import make_scorer, silhouette_score
 from sklearn.model_selection import RandomizedSearchCV
 from spacy.cli import download as spacy_download
 from tqdm import tqdm
+from wpca import WPCA
 
 from relatio.embeddings import (
     Embeddings,
@@ -36,6 +37,7 @@ class NarrativeModel:
     def __init__(
         self,
         model_type="hdbscan",
+        PCA_type="PCA",
         roles_considered: List[str] = [
             "ARG0",
             "B-V",
@@ -55,6 +57,11 @@ class NarrativeModel:
         if model_type not in ["deterministic", "kmeans", "hdbscan"]:
             raise ValueError(
                 "Only three options for model_type: deterministic, kmeans, or hdbscan."
+            )
+
+        if PCA_type not in ["PCA", "IncrementalPCA", "WPCA"]:
+            raise ValueError(
+                "Only three options for model_type: PCA, IncrementalPCA, or WPCA."
             )
 
         if (
@@ -90,6 +97,7 @@ class NarrativeModel:
             )
 
         self.model_type = model_type
+        self.PCA_type = PCA_type
         self.roles_considered = roles_considered
         self.roles_with_unknown_entities = roles_with_unknown_entities
         self.roles_with_known_entities = roles_with_known_entities
@@ -123,6 +131,7 @@ class NarrativeModel:
         self.vocab_unknown_entities = {}
         self.clustering_model = []
         self.training_vectors = []
+        self.unique_vectors = []
         self.phrases_to_embed = []
 
     def fit(
@@ -132,19 +141,31 @@ class NarrativeModel:
         umap_args=None,
         cluster_args=None,
         progress_bar=True,
+        weight_by_frequency=False,
     ):
 
         if self.model_type == "deterministic":
             print("No fitting required, this model is deterministic!")
         if self.model_type in ["hdbscan", "kmeans"]:
             self.fit_static_clustering(
-                srl_res, pca_args, umap_args, cluster_args, progress_bar
+                srl_res,
+                pca_args,
+                umap_args,
+                cluster_args,
+                progress_bar,
+                weight_by_frequency,
             )
         if self.model_type == "dynamic":
             pass
 
     def fit_static_clustering(
-        self, srl_res, pca_args, umap_args, cluster_args, progress_bar
+        self,
+        srl_res,
+        pca_args,
+        umap_args,
+        cluster_args,
+        progress_bar,
+        weight_by_frequency,
     ):
 
         phrases_to_embed = []
@@ -170,17 +191,25 @@ class NarrativeModel:
 
                 phrases_to_embed.extend(phrases)
 
-        phrases_to_embed = sorted(list(set(phrases_to_embed)))
-        self.phrases_to_embed = phrases_to_embed
+        if weight_by_frequency:
+            self.phrases_to_embed = phrases_to_embed
+        else:
+            phrases_to_embed = sorted(list(set(phrases_to_embed)))
+            self.phrases_to_embed = phrases_to_embed
 
         # Remove np.nans to train the model (or it will break down)
         vectors = self.embeddings_model.get_vectors(phrases_to_embed, progress_bar)
         self.training_vectors = _remove_nan_vectors(vectors)
 
         # Dimension reduction via PCA + UMAP
-        if pca_args is None:
 
-            pca_args = {"n_components": 50, "svd_solver": "full"}
+        if pca_args is None:
+            if self.PCA_type == "PCA":
+                pca_args = {"n_components": 50, "svd_solver": "full"}
+            elif self.PCA_type == "WPCA":
+                pca_args = {"n_components": 50}
+            elif self.PCA_type == "IncrementalPCA":
+                pca_args = {"n_components": 50, "batch_size": None}
 
         if umap_args is None:
 
@@ -194,7 +223,12 @@ class NarrativeModel:
             print(umap_args)
 
         self.pca_args = pca_args
-        self.pca = PCA(**pca_args).fit(self.training_vectors)
+        if self.PCA_type == "PCA":
+            self.pca = PCA(**pca_args).fit(self.training_vectors)
+        elif self.PCA_type == "WPCA":
+            self.pca = WPCA(**pca_args).fit(self.training_vectors)
+        elif self.PCA_type == "IncrementalPCA":
+            self.pca = IncrementalPCA(**pca_args).fit(self.training_vectors)
         self.pca_embeddings = self.pca.transform(self.training_vectors)
 
         self.umap_args = umap_args
@@ -229,9 +263,11 @@ class NarrativeModel:
                         args[k] = v
 
                 kmeans = KMeans(**args).fit(self.umap_embeddings)
+
                 models.append(kmeans)
 
             scores = []
+
             for model in models:
                 scores.append(
                     silhouette_score(
