@@ -35,7 +35,9 @@ class NarrativeModel:
 
     def __init__(
         self,
-        model_type="hdbscan",
+        clustering: Optional[str] = "kmeans",
+        PCA: bool = True,
+        UMAP: bool = True,
         roles_considered: List[str] = [
             "ARG0",
             "B-V",
@@ -52,10 +54,11 @@ class NarrativeModel:
         threshold: int = 0.1,
     ):
 
-        if model_type not in ["deterministic", "kmeans", "hdbscan"]:
-            raise ValueError(
-                "Only three options for model_type: deterministic, kmeans, or hdbscan."
-            )
+        if clustering is not None:
+            if clustering not in ["kmeans", "hdbscan"]:
+                raise ValueError(
+                    "Only three options for clustering: None, kmeans, or hdbscan."
+                )
 
         if (
             is_subsequence(
@@ -89,7 +92,9 @@ class NarrativeModel:
                 "Only two options for assignment_to_known_entities: character_matching or embeddings."
             )
 
-        self.model_type = model_type
+        self.clustering = clustering
+        self.PCA = PCA
+        self.UMAP = UMAP
         self.roles_considered = roles_considered
         self.roles_with_unknown_entities = roles_with_unknown_entities
         self.roles_with_known_entities = roles_with_known_entities
@@ -131,20 +136,32 @@ class NarrativeModel:
         pca_args=None,
         umap_args=None,
         cluster_args=None,
+        weight_by_frequency=False,
         progress_bar=True,
     ):
 
-        if self.model_type == "deterministic":
+        if self.clustering is None:
             print("No fitting required, this model is deterministic!")
-        if self.model_type in ["hdbscan", "kmeans"]:
+        if self.clustering in ["hdbscan", "kmeans"]:
             self.fit_static_clustering(
-                srl_res, pca_args, umap_args, cluster_args, progress_bar
+                srl_res,
+                pca_args,
+                umap_args,
+                cluster_args,
+                weight_by_frequency,
+                progress_bar,
             )
-        if self.model_type == "dynamic":
+        if self.clustering == "dynamic":
             pass
 
     def fit_static_clustering(
-        self, srl_res, pca_args, umap_args, cluster_args, progress_bar
+        self,
+        srl_res,
+        pca_args,
+        umap_args,
+        cluster_args,
+        weight_by_frequency,
+        progress_bar,
     ):
 
         phrases_to_embed = []
@@ -170,42 +187,51 @@ class NarrativeModel:
 
                 phrases_to_embed.extend(phrases)
 
-        phrases_to_embed = sorted(list(set(phrases_to_embed)))
-        self.phrases_to_embed = phrases_to_embed
+        if weight_by_frequency:
+            self.phrases_to_embed = phrases_to_embed
+        else:
+            phrases_to_embed = sorted(list(set(phrases_to_embed)))
+            self.phrases_to_embed = phrases_to_embed
 
         # Remove np.nans to train the model (or it will break down)
         vectors = self.embeddings_model.get_vectors(phrases_to_embed, progress_bar)
         self.training_vectors = _remove_nan_vectors(vectors)
 
-        # Dimension reduction via PCA + UMAP
-        if pca_args is None:
+        # Dimension reduction via PCA
+        if self.PCA:
 
-            pca_args = {"n_components": 50, "svd_solver": "full"}
+            if pca_args is None:
+                pca_args = {"n_components": 50, "svd_solver": "full"}
 
-        if umap_args is None:
+            if progress_bar:
+                print("Dimension reduction via PCA...")
+                print("PCA parameters:")
+                print(pca_args)
 
-            umap_args = {"n_neighbors": 15, "n_components": 2, "random_state": 0}
+            self.pca_args = pca_args
+            self.pca_model = PCA(**pca_args).fit(self.training_vectors)
+            self.training_vectors = self.pca_model.transform(self.training_vectors)
 
-        if progress_bar:
-            print("Dimension reduction via PCA + UMAP...")
-            print("PCA parameters:")
-            print(pca_args)
-            print("UMAP parameters:")
-            print(umap_args)
+        # Dimension reduction via UMAP
+        if self.UMAP:
 
-        self.pca_args = pca_args
-        self.pca = PCA(**pca_args).fit(self.training_vectors)
-        self.pca_embeddings = self.pca.transform(self.training_vectors)
+            if umap_args is None:
+                umap_args = {"n_neighbors": 15, "n_components": 2, "random_state": 0}
 
-        self.umap_args = umap_args
-        self.umap = umap.UMAP(**umap_args).fit(self.pca_embeddings)
-        self.umap_embeddings = self.umap.transform(self.pca_embeddings)
+            if progress_bar:
+                print("Dimension reduction via UMAP...")
+                print("UMAP parameters:")
+                print(umap_args)
+
+            self.umap_args = umap_args
+            self.umap_model = umap.UMAP(**umap_args).fit(self.training_vectors)
+            self.training_vectors = self.umap_model.transform(self.training_vectors)
 
         # Clustering
         if progress_bar:
             print("Clustering phrases into clusters...")
 
-        if self.model_type == "kmeans":
+        if self.clustering == "kmeans":
 
             if cluster_args is None:
 
@@ -228,20 +254,21 @@ class NarrativeModel:
                     if k not in ["n_clusters"]:
                         args[k] = v
 
-                kmeans = KMeans(**args).fit(self.umap_embeddings)
+                kmeans = KMeans(**args).fit(self.training_vectors)
+
                 models.append(kmeans)
 
             scores = []
             for model in models:
                 scores.append(
                     silhouette_score(
-                        self.umap_embeddings,
+                        self.training_vectors,
                         model.labels_,
                         random_state=cluster_args["random_state"],
                     )
                 )
 
-        if self.model_type == "hdbscan":
+        if self.clustering == "hdbscan":
 
             if cluster_args is None:
 
@@ -279,12 +306,12 @@ class NarrativeModel:
                             ]:
                                 args[k] = v
 
-                        hdb = hdbscan.HDBSCAN(**args).fit(self.umap_embeddings)
+                        hdb = hdbscan.HDBSCAN(**args).fit(self.training_vectors)
 
                         models.append(hdb)
 
                         score = hdbscan.validity.validity_index(
-                            self.umap_embeddings.astype(np.float64), hdb.labels_
+                            self.training_vectors.astype(np.float64), hdb.labels_
                         )
                         scores.append(score)
 
@@ -298,7 +325,7 @@ class NarrativeModel:
 
         self.label_clusters(counter_for_phrases, phrases_to_embed, progress_bar)
 
-        if self.model_type == "kmeans":
+        if self.clustering == "kmeans":
             self.vectors_unknown_entities = self.clustering_model.cluster_centers_
 
     def predict(self, srl_res, progress_bar: bool = False):
@@ -357,26 +384,35 @@ class NarrativeModel:
                 if flag_computed_vectors == False:
                     vectors = self.embeddings_model.get_vectors(phrases, progress_bar)
 
-                if progress_bar:
-                    print("Dimension reduction of vectors (PCA + UMAP)...")
+                if self.PCA:
 
-                pca_embeddings = self.pca.transform(vectors)
+                    if progress_bar:
+                        print("Dimension reduction of vectors (PCA)...")
 
-                umap_embeddings = self.umap.transform(pca_embeddings)
+                    vectors = self.pca_model.transform(vectors)
+
+                if self.UMAP:
+
+                    if progress_bar:
+                        print("Dimension reduction of vectors (UMAP)...")
+
+                    vectors = self.umap_model.transform(vectors)
 
                 if progress_bar:
                     print("Assignment to clusters...")
 
-                if self.model_type == "hdbscan":
+                if self.clustering == "hdbscan":
+
                     index_clusters = hdbscan.approximate_predict(
-                        self.clustering_model, umap_embeddings
+                        self.clustering_model, vectors
                     )[0]
+
                     index3 = list(range(len(index_clusters)))
 
                 else:
 
                     index3, index_clusters = _embeddings_similarity(
-                        umap_embeddings, self.vectors_unknown_entities
+                        vectors, self.vectors_unknown_entities
                     )
 
                 cluster_labels = self.label_with_most_frequent_phrase(index_clusters)
@@ -445,7 +481,7 @@ class NarrativeModel:
                 )
             self.labels_unknown_entities[clu] = token_most_common[0][0]
 
-        if self.model_type == "hdbscan":
+        if self.clustering == "hdbscan":
             self.labels_unknown_entities[-1] = ""
 
     def label_with_known_entity(self, index):
@@ -482,15 +518,15 @@ class NarrativeModel:
         clustered = self.clustering_model.labels_ >= 0
         plt.figure(figsize=figsize, dpi=80)
         plt.scatter(
-            self.umap_embeddings[~clustered, 0],
-            self.umap_embeddings[~clustered, 1],
+            self.training_vectors[~clustered, 0],
+            self.training_vectors[~clustered, 1],
             color=(0.5, 0.5, 0.5),
             s=s,
             alpha=0.5,
         )
         plt.scatter(
-            self.umap_embeddings[clustered, 0],
-            self.umap_embeddings[clustered, 1],
+            self.training_vectors[clustered, 0],
+            self.training_vectors[clustered, 1],
             c=self.clustering_model.labels_[clustered],
             s=s,
             cmap="Spectral",
@@ -502,12 +538,12 @@ class NarrativeModel:
 
     def plot_selection_metric(self, path=None, figsize=(14, 8)):
 
-        if self.model_type == "hdbscan":
+        if self.clustering == "hdbscan":
             raise ValueError(
                 "Plotting the selection metric is only possible for a kmeans model."
             )
 
-        if self.model_type == "kmeans":
+        if self.clustering == "kmeans":
             plt.figure(figsize=figsize)
             plt.plot(self.cluster_args["n_clusters"], self.scores, "bx-")
             plt.xlabel("Number of Clusters")

@@ -1,0 +1,108 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vis-network@latest/styles/vis-network.css" type="text/css" />
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vis-network@latest/dist/vis-network.min.js"> </script>
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+
+<style type="text/css">
+
+        #mynetwork {
+            width: 1600px;
+            height: 1000px;
+            background-color: #ffffff;
+            border: 1px solid lightgray;
+            position: relative;
+            float: left;
+        }
+
+        
+
+        
+
+        
+</style>
+
+</head>
+
+<body>
+<div id = "mynetwork"></div>
+
+
+<script type="text/javascript">
+
+    // initialize global variables.
+    var edges;
+    var nodes;
+    var network; 
+    var container;
+    var options, data;
+
+    
+    // This method is responsible for drawing the graph, returns the drawn network
+    function drawGraph() {
+        var container = document.getElementById('mynetwork');
+        
+        
+
+        // parsing and collecting nodes and edges from the python
+        nodes = new vis.DataSet([{"id": "nous", "label": "nous", "shape": "dot", "value": 8}, {"id": "gouvernement", "label": "gouvernement", "shape": "dot", "value": 12}]);
+        edges = new vis.DataSet([{"arrows": "to", "from": "nous", "hidden": false, "label": "faire", "to": "gouvernement", "value": 43}, {"arrows": "to", "from": "nous", "hidden": false, "label": "mettre", "to": "gouvernement", "value": 18}, {"arrows": "to", "from": "nous", "hidden": false, "label": "prot\u00e9ger", "to": "gouvernement", "value": 16}, {"arrows": "to", "from": "nous", "hidden": false, "label": "avoir", "to": "gouvernement", "value": 13}, {"arrows": "to", "from": "nous", "hidden": false, "label": "propose", "to": "gouvernement", "value": 11}, {"arrows": "to", "from": "nous", "hidden": false, "label": "prendre", "to": "gouvernement", "value": 11}, {"arrows": "to", "from": "nous", "hidden": false, "label": "gagner", "to": "gouvernement", "value": 11}, {"arrows": "to", "from": "nous", "hidden": false, "label": "voir", "to": "gouvernement", "value": 11}, {"arrows": "to", "from": "gouvernement", "hidden": false, "label": "faire", "to": "gouvernement", "value": 20}, {"arrows": "to", "from": "gouvernement", "hidden": false, "label": "prendre", "to": "gouvernement", "value": 12}]);
+
+        // adding nodes and edges to the graph
+        data = {nodes: nodes, edges: edges};
+
+        var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+        
+        
+
+        
+
+        network = new vis.Network(container, data, options);
+	 
+        
+
+
+        
+
+        return network;
+
+    }
+
+    drawGraph();
+
+</script>
+</body>
+</html>

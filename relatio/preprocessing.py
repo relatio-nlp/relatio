@@ -1,3 +1,4 @@
+import csv
 import time
 from collections import Counter
 from copy import deepcopy
@@ -16,7 +17,6 @@ from relatio.utils import (
     make_list_from_key,
     save_entities,
     save_roles,
-    save_sentences,
 )
 
 
@@ -32,7 +32,7 @@ class Preprocessor:
         stop_words: list of stopwords to remove
         lowercase: whether to lower the case
         lemmatize: whether to lemmatize
-        n_process: Number of processes to user in nlp.pipe() for parallel computing (default: 1). Set to -1 to use all cores on the machine.
+        n_process: Number of processes to user in nlp.pipe() for parallel computing (default: -1). Set to -1 to use all cores on the machine.
         batch_size: Size of the batches for parallel computing (default: 1000)
     """
 
@@ -45,7 +45,7 @@ class Preprocessor:
         lowercase: bool = True,
         lemmatize: bool = True,
         remove_chars: Optional[List[str]] = None,
-        n_process: int = 1,
+        n_process: int = -1,
         batch_size: int = 1000,
     ):
 
@@ -78,16 +78,16 @@ class Preprocessor:
 
         Args:
             dataframe: a pandas dataframe with one column "id" and one column "doc"
-            output_path: path to save the output
+            output_path: path to save the pandas DataFrame in a .csv format (default is None). NB: Specifying output_path is much faster than output_path = None for large datasets.
             progress_bar: print a progress bar (default is False)
 
         Returns:
-            Tuple with the list of document indices and list of sentences
+            Pandas DataFrame with  one column "id" and one column "sentence"
 
         """
 
         sentences: List[str] = []
-        doc_indices: List[str] = []
+        doc_ids: List[str] = []
 
         length = len(dataframe["doc"])
 
@@ -103,15 +103,28 @@ class Preprocessor:
             time.sleep(1)
             spacy_docs = tqdm(spacy_docs, total=length)
 
-        for i, doc in enumerate(spacy_docs):
-            for sent in doc.sents:
-                sentences.append(str(sent))
-                doc_indices = doc_indices + [dataframe["id"].iloc[i]]
+        if output_path is None:
+            for i, doc in enumerate(spacy_docs):
+                for sent in doc.sents:
+                    sentences.append(str(sent))
+                    doc_ids = doc_ids + [dataframe["id"].iloc[i]]
 
-        if output_path is not None:
-            save_sentences(doc_indices, sentences, output_path)
+            df = pd.DataFrame({"id": doc_ids, "sentence": sentences}, index=None)
 
-        return (doc_indices, sentences)
+        else:
+            with open(output_path, "w", newline="") as csvfile:
+                fieldnames = ["id", "sentence"]
+                writer = csv.writer(csvfile)
+                writer.writerow(fieldnames)
+                for i, doc in enumerate(spacy_docs):
+                    for sent in doc.sents:
+                        doc_id = dataframe["id"].iloc[i]
+                        sentence = str(sent)
+                        writer.writerow([doc_id, sentence])
+
+            df = pd.read_csv(output_path)
+
+        return df
 
     def extract_svos(self, sentences: List[str], progress_bar: bool = False):
 

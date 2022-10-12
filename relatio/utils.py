@@ -303,20 +303,6 @@ def prettify(narrative) -> str:
     return pretty_narrative
 
 
-def load_sentences(input_path: str):
-
-    with open(input_path, "r") as f:
-        (doc_indices, sentences) = json.load(f)
-
-    return (doc_indices, sentences)
-
-
-def save_sentences(doc_indices, sentences, output_path):
-
-    with open(output_path, "w") as f:
-        json.dump((doc_indices, sentences), f)
-
-
 def save_entities(entity_counts, output_path: str):
 
     with open(output_path, "wb") as f:

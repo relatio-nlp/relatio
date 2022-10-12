@@ -24,7 +24,7 @@ from allennlp_models.structured_prediction.predictors import (
 )
 from tqdm import tqdm
 
-from .utils import group_sentences_in_batches, replace_sentences
+from .utils import group_sentences_in_batches, replace_sentences, save_roles
 
 
 class SRL:
@@ -63,6 +63,7 @@ class SRL:
         max_number_words: Optional[int] = None,
         cuda_empty_cache: bool = None,
         cuda_sleep: float = None,
+        output_path: Optional[str] = None,
         progress_bar: bool = False,
     ):
         max_batch_char_length = (
@@ -122,6 +123,10 @@ class SRL:
                 self._clean_cache(cuda_sleep, cuda_empty_cache)
 
             res.extend(res_batch)
+
+        if output_path is not None:
+            save_roles(res, output_path)
+
         return res
 
 
