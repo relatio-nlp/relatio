@@ -46,19 +46,17 @@ class NarrativeModel:
             "ARG1",
             "ARG2",
         ],
-        roles_with_known_entities: str = ["ARG0", "ARG1", "ARG2"],
+        roles_with_known_entities: List[str] = ["ARG0", "ARG1", "ARG2"],
         known_entities: Optional[List[str]] = None,
         assignment_to_known_entities: str = "character_matching",
         roles_with_unknown_entities: List[str] = ["ARG0", "ARG1", "ARG2"],
         embeddings_model: Optional[Type[Embeddings]] = None,
-        threshold: int = 0.1,
+        threshold: float = 0.1,
     ):
 
         if clustering is not None:
             if clustering not in ["kmeans", "hdbscan"]:
-                raise ValueError(
-                    "Only three options for clustering: None, kmeans, or hdbscan."
-                )
+                raise ValueError("Only three options for clustering: None, kmeans, or hdbscan.")
 
         if (
             is_subsequence(
@@ -67,30 +65,20 @@ class NarrativeModel:
             )
             is False
         ):
-            raise ValueError(
-                "Some roles_considered are not supported. Roles supported: ARG0, B-V, B-ARGM-NEG, B-ARGM-MOD, ARG1, ARG2"
-            )
+            raise ValueError("Some roles_considered are not supported. Roles supported: ARG0, B-V, B-ARGM-NEG, B-ARGM-MOD, ARG1, ARG2")
 
         if roles_with_known_entities is not None:
             if is_subsequence(roles_with_known_entities, roles_considered) is False:
-                raise ValueError(
-                    "roles_with_known_entities should be in roles_considered."
-                )
+                raise ValueError("roles_with_known_entities should be in roles_considered.")
 
         if roles_with_unknown_entities is not None:
             if is_subsequence(roles_with_unknown_entities, roles_considered) is False:
-                raise ValueError(
-                    "roles_with_unknown_entities should be a subset of roles_considered."
-                )
+                raise ValueError("roles_with_unknown_entities should be a subset of roles_considered.")
             if ["B-ARGM-NEG", "B-ARGM-MOD", "B-V"] in roles_with_unknown_entities:
-                raise ValueError(
-                    "Negations, verbs and modals cannot be embedded and clustered."
-                )
+                raise ValueError("Negations, verbs and modals cannot be embedded and clustered.")
 
         if assignment_to_known_entities not in ["character_matching", "embeddings"]:
-            raise ValueError(
-                "Only two options for assignment_to_known_entities: character_matching or embeddings."
-            )
+            raise ValueError("Only two options for assignment_to_known_entities: character_matching or embeddings.")
 
         self.clustering = clustering
         self.PCA = PCA
@@ -111,13 +99,8 @@ class NarrativeModel:
         else:
             self.embeddings_model = embeddings_model
 
-        if (
-            self.known_entities is not None
-            and self.assignment_to_known_entities == "embeddings"
-        ):
-            self.vectors_known_entities = self.embeddings_model.get_vectors(
-                self.known_entities
-            )
+        if self.known_entities is not None and self.assignment_to_known_entities == "embeddings":
+            self.vectors_known_entities = self.embeddings_model.get_vectors(self.known_entities)
 
         self.pca_args = []
         self.umap_args = []
@@ -179,9 +162,7 @@ class NarrativeModel:
                     idx = self.character_matching(phrases, progress_bar)[0]
                 elif self.assignment_to_known_entities == "embeddings":
                     vectors = self.embeddings_model.get_vectors(phrases, progress_bar)
-                    idx = _embeddings_similarity(
-                        vectors, self.vectors_known_entities, self.threshold
-                    )[0]
+                    idx = _embeddings_similarity(vectors, self.vectors_known_entities, self.threshold)[0]
 
                 phrases = [phrase for l, phrase in enumerate(phrases) if l not in idx]
 
@@ -310,9 +291,7 @@ class NarrativeModel:
 
                         models.append(hdb)
 
-                        score = hdbscan.validity.validity_index(
-                            self.training_vectors.astype(np.float64), hdb.labels_
-                        )
+                        score = hdbscan.validity.validity_index(self.training_vectors.astype(np.float64), hdb.labels_)
                         scores.append(score)
 
         self.clustering_model = models[np.argmax(scores)]
@@ -349,30 +328,18 @@ class NarrativeModel:
             index3 = []
 
             # Match known entities (with character matching)
-            if (
-                role in self.roles_with_known_entities
-                and self.assignment_to_known_entities == "character_matching"
-            ):
-                index2, labels_known_entities = self.character_matching(
-                    phrases, progress_bar
-                )
+            if role in self.roles_with_known_entities and self.assignment_to_known_entities == "character_matching":
+                index2, labels_known_entities = self.character_matching(phrases, progress_bar)
 
             # Match known entities (with embeddings distance)
-            if (
-                role in self.roles_with_known_entities
-                and self.assignment_to_known_entities == "embeddings"
-            ):
+            if role in self.roles_with_known_entities and self.assignment_to_known_entities == "embeddings":
                 vectors = self.embeddings_model.get_vectors(phrases, progress_bar)
 
                 if progress_bar:
                     print("Matching known entities (with embeddings distance)...")
 
-                index2, index_known_entities = _embeddings_similarity(
-                    vectors, self.vectors_known_entities, self.threshold
-                )
-                labels_known_entities = self.label_with_known_entity(
-                    index_known_entities
-                )
+                index2, index_known_entities = _embeddings_similarity(vectors, self.vectors_known_entities, self.threshold)
+                labels_known_entities = self.label_with_known_entity(index_known_entities)
                 flag_computed_vectors = True
 
             # Predict unknown entities (with clustering model)
@@ -403,17 +370,13 @@ class NarrativeModel:
 
                 if self.clustering == "hdbscan":
 
-                    index_clusters = hdbscan.approximate_predict(
-                        self.clustering_model, vectors
-                    )[0]
+                    index_clusters = hdbscan.approximate_predict(self.clustering_model, vectors)[0]
 
                     index3 = list(range(len(index_clusters)))
 
                 else:
 
-                    index3, index_clusters = _embeddings_similarity(
-                        vectors, self.vectors_unknown_entities
-                    )
+                    index3, index_clusters = _embeddings_similarity(vectors, self.vectors_unknown_entities)
 
                 cluster_labels = self.label_with_most_frequent_phrase(index_clusters)
 
@@ -466,15 +429,11 @@ class NarrativeModel:
             self.vocab_unknown_entities[clu] = Counter()
 
         for j, clu in enumerate(self.clustering_model.labels_):
-            self.vocab_unknown_entities[clu][phrases_to_embed[j]] = counter_for_phrases[
-                phrases_to_embed[j]
-            ]
+            self.vocab_unknown_entities[clu][phrases_to_embed[j]] = counter_for_phrases[phrases_to_embed[j]]
 
         for clu in labels:
             token_most_common = self.vocab_unknown_entities[clu].most_common(2)
-            if len(token_most_common) > 1 and (
-                token_most_common[0][1] == token_most_common[1][1]
-            ):
+            if len(token_most_common) > 1 and (token_most_common[0][1] == token_most_common[1][1]):
                 warnings.warn(
                     f"Multiple labels for cluster {clu}- 2 shown: {token_most_common}. First one is picked.",
                     RuntimeWarning,
@@ -511,9 +470,7 @@ class NarrativeModel:
     def plot_clusters(self, path=None, figsize=(14, 8), s=0.1):
 
         if self.umap_args["n_components"] != 2:
-            raise ValueError(
-                "Cluster visualization is only possible for UMAP with two components."
-            )
+            raise ValueError("Cluster visualization is only possible for UMAP with two components.")
 
         clustered = self.clustering_model.labels_ >= 0
         plt.figure(figsize=figsize, dpi=80)
@@ -539,9 +496,7 @@ class NarrativeModel:
     def plot_selection_metric(self, path=None, figsize=(14, 8)):
 
         if self.clustering == "hdbscan":
-            raise ValueError(
-                "Plotting the selection metric is only possible for a kmeans model."
-            )
+            raise ValueError("Plotting the selection metric is only possible for a kmeans model.")
 
         if self.clustering == "kmeans":
             plt.figure(figsize=figsize)

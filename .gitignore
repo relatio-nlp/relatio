@@ -39,3 +39,5 @@ tutorial/sentences.json
 tutorial/entities.pkl
 tutorial/postproc_roles.json
 tutorial/relatio.log
+
+myenv/

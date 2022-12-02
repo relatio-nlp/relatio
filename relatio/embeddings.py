@@ -40,6 +40,9 @@ class Embeddings(EmbeddingsBase):
         >>> model = Embeddings("TensorFlow_USE","https://tfhub.dev/google/universal-sentence-encoder/4")
         >>> model.get_vector("hello world").shape
         (512,)
+        >>> model = Embeddings("multilingual_USE","https://tfhub.dev/google/universal-sentence-encoder-multilingual/3")
+        >>> model.get_vector("hello world").shape
+        (512,)
         >>> model = Embeddings("spaCy", "en_core_web_md")
         >>> np.isnan(model.get_vector("")).any()
         True
@@ -61,7 +64,7 @@ class Embeddings(EmbeddingsBase):
     def __init__(
         self,
         embeddings_type: str,
-        embeddings_model: Union[Path, str],
+        embeddings_model: str,
         normalize: bool = True,
         sentences: Optional[List[str]] = None,
         alpha: float = 0.001,
@@ -70,13 +73,16 @@ class Embeddings(EmbeddingsBase):
 
         EmbeddingsClass: Union[
             Type[TensorFlowUSEEmbeddings],
+            Type[MultilingualUSEEmbeddings],
             Type[GensimWord2VecEmbeddings],
             Type[GensimPreTrainedEmbeddings],
             Type[spaCyEmbeddings],
-            Type[phraseBERTEmbeddings],
+            Type[PhraseBERTEmbeddings],
         ]
         if embeddings_type == "TensorFlow_USE":
             EmbeddingsClass = TensorFlowUSEEmbeddings
+        elif embeddings_type == "multilingual_USE":
+            EmbeddingsClass = MultilingualUSEEmbeddings
         elif embeddings_type == "Gensim_Word2Vec":
             EmbeddingsClass = GensimWord2VecEmbeddings
         elif embeddings_type == "Gensim_pretrained":
@@ -84,7 +90,7 @@ class Embeddings(EmbeddingsBase):
         elif embeddings_type == "spaCy":
             EmbeddingsClass = spaCyEmbeddings
         elif embeddings_type == "phrase-BERT":
-            EmbeddingsClass = phraseBERTEmbeddings
+            EmbeddingsClass = PhraseBERTEmbeddings
         else:
             raise ValueError(f"Unknown embeddings_type={embeddings_type}")
 
@@ -122,10 +128,7 @@ class Embeddings(EmbeddingsBase):
                         RuntimeWarning,
                     )
             res = np.sum(
-                [
-                    self._sif_dict[token] * self._get_default_vector(token)
-                    for token in tokens
-                ],
+                [self._sif_dict[token] * self._get_default_vector(token) for token in tokens],
                 axis=0,
             )
         else:
@@ -133,9 +136,7 @@ class Embeddings(EmbeddingsBase):
 
         # In case the result is fishy it will return a vector of np.nans and raise a warning
         if np.isnan(res).any() or np.count_nonzero(res) == 0:
-            warnings.warn(
-                f"Unable to compute an embedding for phrase: {phrase}.", RuntimeWarning
-            )
+            warnings.warn(f"Unable to compute an embedding for phrase: {phrase}.", RuntimeWarning)
             a = np.empty((self.size_vectors,))
             a[:] = np.nan
 
@@ -189,16 +190,30 @@ class spaCyEmbeddings(EmbeddingsBase):
     def __init__(self, model: str) -> None:
         if not spacy.util.is_package(model):
             spacy_download(model)
-        self._nlp = spacy.load(
-            model, disable=["tagger", "parser", "attribute_ruler", "lemmatizer", "ner"]
-        )
+        self._nlp = spacy.load(model, disable=["tagger", "parser", "attribute_ruler", "lemmatizer", "ner"])
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
         return np.array(self._nlp(phrase).vector)
 
 
 class TensorFlowUSEEmbeddings(EmbeddingsBase):
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: str = "https://tfhub.dev/google/universal-sentence-encoder/4") -> None:
+        try:
+            import tensorflow_hub as hub
+        except ModuleNotFoundError:
+            print("Please install tensorflow_hub package")
+            raise
+        self._embed = hub.load(path)
+
+    def _get_default_vector(self, phrase: str) -> np.ndarray:
+        return self._embed([phrase]).numpy()[0]
+
+    def get_vector(self, phrase: str) -> np.ndarray:
+        return self._get_default_vector(phrase)
+
+
+class MultilingualUSEEmbeddings(EmbeddingsBase):
+    def __init__(self, path: str = "https://tfhub.dev/google/universal-sentence-encoder-multilingual/3") -> None:
         try:
             import tensorflow_hub as hub
         except ModuleNotFoundError:
@@ -271,7 +286,7 @@ class GensimPreTrainedEmbeddings(GensimWord2VecEmbeddings, EmbeddingsBase):
         return api.load(model)
 
 
-class phraseBERTEmbeddings(EmbeddingsBase):
+class PhraseBERTEmbeddings(EmbeddingsBase):
     """
     path = "whaleloops/phrase-bert"
     model = Embeddings("phrase-BERT", path)

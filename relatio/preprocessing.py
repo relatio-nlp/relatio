@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import spacy
 from spacy.cli import download as spacy_download
+from spacy.tokens import Doc
 from tqdm import tqdm
 
 from relatio.supported_models import LANGUAGE_MODELS
@@ -197,49 +198,56 @@ class Preprocessor:
     def coreference_resolution(
         self,
         sentences: List[str],
-        model_url: str = "https://storage.googleapis.com/allennlp-public-models/coref-spanbert-large-2020.02.27.tar.gz",
         progress_bar: bool = False,
     ) -> List[str]:
         """
-
-        coreference resolution using AllenNLP
-        spaCy is not compatible with ver3.0 (10th May, 2022)
+        coreference resolution using spaCy (v0.6.1)
         Args:
                 sentences: list of sentences
                 progress_bar: print a progress bar (default is False)
-                model_url: set the url model
-
-            Returns:
-                List of processed statements
-
+        Returns:
+            List of sentences with cereference resolution
         """
         try:
-            from allennlp.predictors.predictor import Predictor
+            import spacy
+
+            nlp = spacy.load("en_coreference_web_trf")
 
         except ModuleNotFoundError:
-            print("Please install allennlp package")
+            print("Please install spacy")
+            raise
+        except OSError:
+            print("Please download 'en_coreference_web_tf' pipeline")
             raise
 
-        predictor = Predictor.from_path(model_url)
-        cr_list = []
+        def resolve_references(doc: Doc) -> str:
+            token_mention_dict = {}
+            output_string = ""
+            clusters = [val for key, val in doc.spans.items() if key.startswith("coref_clusters")]
+            for cluster in clusters:
+                first_span = cluster[0]
+                for mention_span in list(cluster)[1:]:
+                    token_mention_dict[mention_span[0].idx] = first_span.text + mention_span[0].whitespace_
+                    for token in mention_span[1:]:
+                        token_mention_dict[token.idx] = ""
+            for token in doc:
+                if token.idx in token_mention_dict:
+                    output_string += token_mention_dict[token.idx]
+                else:
+                    output_string += token.text + token.whitespace_
+            return output_string
 
         if progress_bar:
             disable = False
         else:
             disable = True
-
-        print("implementing coreference resolution ...")
+        print("resolving reference with coref output ...")
+        coreference_output_list = []
         for sentence in tqdm(sentences, disable=disable):
-            try:
-                cr_list.append(predictor.coref_resolved(sentence))
-            except ValueError:  # if sentence == word
-                cr_list.append(sentence)
-            except IndexError:  # if sentence doesn't contain '.'
-                cr_list.append(sentence)
-            except RuntimeError:  # if sentence is null
-                cr_list.append(sentence)
+            doc = nlp(sentence)
+            coreference_output_list.append(resolve_references(doc))
 
-        return cr_list
+        return coreference_output_list
 
     def mine_entities(
         self,
@@ -267,9 +275,7 @@ class Preprocessor:
 
         entities_all = []
 
-        spacy_sentences = self.nlp.pipe(
-            sentences, batch_size=self.batch_size, n_process=self.n_process
-        )
+        spacy_sentences = self.nlp.pipe(sentences, batch_size=self.batch_size, n_process=self.n_process)
 
         length = len(sentences)
 
@@ -295,9 +301,7 @@ class Preprocessor:
 
     def clean_roles(self, roles, max_length, pos_tags_to_keep, progress_bar):
 
-        spacy_roles = self.nlp.pipe(
-            roles, batch_size=self.batch_size, n_process=self.n_process
-        )
+        spacy_roles = self.nlp.pipe(roles, batch_size=self.batch_size, n_process=self.n_process)
 
         length = len(roles)
 
