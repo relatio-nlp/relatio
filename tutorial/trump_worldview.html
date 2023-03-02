@@ -1,0 +1,155 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 1000px;
+                 height: 1000px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "hidden": false, "id": "democrat", "label": "democrat", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "border", "label": "border", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "god", "label": "god", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "usa", "label": "usa", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "stock market", "label": "stock market", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "best", "label": "best", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "people", "label": "people", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "thing", "label": "thing", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "help", "label": "help", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "care", "label": "care", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "biden", "label": "biden", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "money", "label": "money", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "election", "label": "election", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "john", "label": "john", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "law", "label": "law", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "rating", "label": "rating", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "china", "label": "china", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "job", "label": "job", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "poll", "label": "poll", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "obama", "label": "obama", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "republican", "label": "republican", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "house", "label": "house", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "construction", "label": "construction", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "nancy pelosi", "label": "nancy pelosi", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "deal", "label": "deal", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "fed", "label": "fed", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "dems", "label": "dems", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "true", "label": "true", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "melania", "label": "melania", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "disgrace", "label": "disgrace", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "fake news", "label": "fake news", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "amaze", "label": "amaze", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "president", "label": "president", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "crime", "label": "crime", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "american", "label": "american", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "word", "label": "word", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "team", "label": "team", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "dummy", "label": "dummy", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "tariff", "label": "tariff", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "illegal immigrant", "label": "illegal immigrant", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "courage", "label": "courage", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "america", "label": "america", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "great honor", "label": "great honor", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "life", "label": "life", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "mexico", "label": "mexico", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "school", "label": "school", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "syria", "label": "syria", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "lie", "label": "lie", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "result", "label": "result", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "business", "label": "business", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "tough", "label": "tough", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "whistleblower", "label": "whistleblower", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "economy", "label": "economy", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "rosie", "label": "rosie", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "great", "label": "great", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "badly", "label": "badly", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "nyc", "label": "nyc", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "bankrupt", "label": "bankrupt", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "vote", "label": "vote", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "witch hunt", "label": "witch hunt", "shape": "dot", "size": 10, "title": " "}, {"color": "#97c2fc", "hidden": false, "id": "win", "label": "win", "shape": "dot", "size": 10, "title": " "}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "want", "title": " ", "to": "border", "weight": 23}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "stand", "title": " ", "to": "border", "weight": 5}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "steal", "title": " ", "to": "election", "weight": 7}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "want", "title": " ", "to": "help", "weight": 5}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "close", "title": " ", "to": "president", "weight": 5}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "send", "title": " ", "to": "crime", "weight": 5}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "fire", "title": " ", "to": "money", "weight": 4}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "change", "title": " ", "to": "illegal immigrant", "weight": 4}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "want", "title": " ", "to": "tariff", "weight": 4}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "work", "title": " ", "to": "result", "weight": 4}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "work", "title": " ", "to": "lie", "weight": 3}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "want", "title": " ", "to": "amaze", "weight": 3}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "run", "title": " ", "to": "witch hunt", "weight": 3}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "want", "title": " ", "to": "win", "weight": 3}, {"arrows": "to", "color": null, "from": "democrat", "hidden": false, "label": "waste", "title": " ", "to": "people", "weight": 3}, {"arrows": "to", "color": null, "from": "border", "hidden": false, "label": "think", "title": " ", "to": "crime", "weight": 4}, {"arrows": "to", "color": null, "from": "god", "hidden": false, "label": "sign", "title": " ", "to": "usa", "weight": 13}, {"arrows": "to", "color": null, "from": "usa", "hidden": false, "label": "pay", "title": " ", "to": "rating", "weight": 3}, {"arrows": "to", "color": null, "from": "stock market", "hidden": false, "label": "hit", "title": " ", "to": "best", "weight": 10}, {"arrows": "to", "color": null, "from": "stock market", "hidden": false, "label": "hit", "title": " ", "to": "people", "weight": 9}, {"arrows": "to", "color": null, "from": "best", "hidden": false, "label": "want", "title": " ", "to": "help", "weight": 10}, {"arrows": "to", "color": null, "from": "best", "hidden": false, "label": "cover", "title": " ", "to": "best", "weight": 6}, {"arrows": "to", "color": null, "from": "people", "hidden": false, "label": "want", "title": " ", "to": "thing", "weight": 10}, {"arrows": "to", "color": null, "from": "people", "hidden": false, "label": "negate", "title": " ", "to": "thing", "weight": 9}, {"arrows": "to", "color": null, "from": "people", "hidden": false, "label": "look", "title": " ", "to": "thing", "weight": 4}, {"arrows": "to", "color": null, "from": "people", "hidden": false, "label": "want", "title": " ", "to": "border", "weight": 7}, {"arrows": "to", "color": null, "from": "people", "hidden": false, "label": "pay", "title": " ", "to": "rating", "weight": 6}, {"arrows": "to", "color": null, "from": "people", "hidden": false, "label": "want", "title": " ", "to": "help", "weight": 6}, {"arrows": "to", "color": null, "from": "people", "hidden": false, "label": "know", "title": " ", "to": "people", "weight": 4}, {"arrows": "to", "color": null, "from": "people", "hidden": false, "label": "send", "title": " ", "to": "tariff", "weight": 4}, {"arrows": "to", "color": null, "from": "people", "hidden": false, "label": "look", "title": " ", "to": "economy", "weight": 3}, {"arrows": "to", "color": null, "from": "people", "hidden": false, "label": "look", "title": " ", "to": "great", "weight": 3}, {"arrows": "to", "color": null, "from": "people", "hidden": false, "label": "buy", "title": " ", "to": "deal", "weight": 3}, {"arrows": "to", "color": null, "from": "people", "hidden": false, "label": "want", "title": " ", "to": "care", "weight": 3}, {"arrows": "to", "color": null, "from": "thing", "hidden": false, "label": "look", "title": " ", "to": "thing", "weight": 8}, {"arrows": "to", "color": null, "from": "thing", "hidden": false, "label": "think", "title": " ", "to": "true", "weight": 5}, {"arrows": "to", "color": null, "from": "care", "hidden": false, "label": "kill", "title": " ", "to": "people", "weight": 8}, {"arrows": "to", "color": null, "from": "biden", "hidden": false, "label": "fire", "title": " ", "to": "money", "weight": 7}, {"arrows": "to", "color": null, "from": "election", "hidden": false, "label": "look", "title": " ", "to": "thing", "weight": 4}, {"arrows": "to", "color": null, "from": "john", "hidden": false, "label": "know", "title": " ", "to": "law", "weight": 7}, {"arrows": "to", "color": null, "from": "john", "hidden": false, "label": "help", "title": " ", "to": "dummy", "weight": 4}, {"arrows": "to", "color": null, "from": "john", "hidden": false, "label": "drop", "title": " ", "to": "people", "weight": 4}, {"arrows": "to", "color": null, "from": "john", "hidden": false, "label": "help", "title": " ", "to": "america", "weight": 4}, {"arrows": "to", "color": null, "from": "john", "hidden": false, "label": "work", "title": " ", "to": "team", "weight": 3}, {"arrows": "to", "color": null, "from": "china", "hidden": false, "label": "steal", "title": " ", "to": "job", "weight": 6}, {"arrows": "to", "color": null, "from": "china", "hidden": false, "label": "buy", "title": " ", "to": "construction", "weight": 5}, {"arrows": "to", "color": null, "from": "china", "hidden": false, "label": "want", "title": " ", "to": "deal", "weight": 5}, {"arrows": "to", "color": null, "from": "china", "hidden": false, "label": "subsidize", "title": " ", "to": "word", "weight": 4}, {"arrows": "to", "color": null, "from": "china", "hidden": false, "label": "rig", "title": " ", "to": "stock market", "weight": 4}, {"arrows": "to", "color": null, "from": "china", "hidden": false, "label": "want", "title": " ", "to": "badly", "weight": 3}, {"arrows": "to", "color": null, "from": "poll", "hidden": false, "label": "look", "title": " ", "to": "thing", "weight": 6}, {"arrows": "to", "color": null, "from": "poll", "hidden": false, "label": "look", "title": " ", "to": "great", "weight": 3}, {"arrows": "to", "color": null, "from": "obama", "hidden": false, "label": "spy", "title": " ", "to": "election", "weight": 6}, {"arrows": "to", "color": null, "from": "obama", "hidden": false, "label": "want", "title": " ", "to": "money", "weight": 4}, {"arrows": "to", "color": null, "from": "obama", "hidden": false, "label": "work", "title": " ", "to": "team", "weight": 4}, {"arrows": "to", "color": null, "from": "obama", "hidden": false, "label": "release", "title": " ", "to": "school", "weight": 4}, {"arrows": "to", "color": null, "from": "obama", "hidden": false, "label": "attack", "title": " ", "to": "syria", "weight": 4}, {"arrows": "to", "color": null, "from": "obama", "hidden": false, "label": "want", "title": " ", "to": "syria", "weight": 3}, {"arrows": "to", "color": null, "from": "republican", "hidden": false, "label": "win", "title": " ", "to": "house", "weight": 5}, {"arrows": "to", "color": null, "from": "house", "hidden": false, "label": "vote", "title": " ", "to": "tariff", "weight": 4}, {"arrows": "to", "color": null, "from": "nancy pelosi", "hidden": false, "label": "win", "title": " ", "to": "election", "weight": 5}, {"arrows": "to", "color": null, "from": "deal", "hidden": false, "label": "send", "title": " ", "to": "money", "weight": 3}, {"arrows": "to", "color": null, "from": "fed", "hidden": false, "label": "low", "title": " ", "to": "rating", "weight": 5}, {"arrows": "to", "color": null, "from": "fed", "hidden": false, "label": "flood", "title": " ", "to": "stock market", "weight": 3}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "lose", "title": " ", "to": "election", "weight": 5}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "want", "title": " ", "to": "money", "weight": 4}, {"arrows": "to", "color": null, "from": "dems", "hidden": false, "label": "want", "title": " ", "to": "border", "weight": 4}, {"arrows": "to", "color": null, "from": "melania", "hidden": false, "label": "send", "title": " ", "to": "disgrace", "weight": 5}, {"arrows": "to", "color": null, "from": "melania", "hidden": false, "label": "kill", "title": " ", "to": "american", "weight": 4}, {"arrows": "to", "color": null, "from": "melania", "hidden": false, "label": "send", "title": " ", "to": "great honor", "weight": 4}, {"arrows": "to", "color": null, "from": "fake news", "hidden": false, "label": "try", "title": " ", "to": "amaze", "weight": 5}, {"arrows": "to", "color": null, "from": "fake news", "hidden": false, "label": "want", "title": " ", "to": "thing", "weight": 3}, {"arrows": "to", "color": null, "from": "president", "hidden": false, "label": "win", "title": " ", "to": "tough", "weight": 3}, {"arrows": "to", "color": null, "from": "president", "hidden": false, "label": "apologize", "title": " ", "to": "america", "weight": 3}, {"arrows": "to", "color": null, "from": "american", "hidden": false, "label": "know", "title": " ", "to": "people", "weight": 3}, {"arrows": "to", "color": null, "from": "tariff", "hidden": false, "label": "work", "title": " ", "to": "word", "weight": 4}, {"arrows": "to", "color": null, "from": "courage", "hidden": false, "label": "win", "title": " ", "to": "team", "weight": 4}, {"arrows": "to", "color": null, "from": "america", "hidden": false, "label": "force", "title": " ", "to": "true", "weight": 3}, {"arrows": "to", "color": null, "from": "america", "hidden": false, "label": "look", "title": " ", "to": "thing", "weight": 3}, {"arrows": "to", "color": null, "from": "life", "hidden": false, "label": "know", "title": " ", "to": "people", "weight": 4}, {"arrows": "to", "color": null, "from": "mexico", "hidden": false, "label": "stop", "title": " ", "to": "border", "weight": 4}, {"arrows": "to", "color": null, "from": "mexico", "hidden": false, "label": "arrest", "title": " ", "to": "illegal immigrant", "weight": 3}, {"arrows": "to", "color": null, "from": "syria", "hidden": false, "label": "kill", "title": " ", "to": "lie", "weight": 4}, {"arrows": "to", "color": null, "from": "business", "hidden": false, "label": "allow", "title": " ", "to": "china", "weight": 4}, {"arrows": "to", "color": null, "from": "business", "hidden": false, "label": "pay", "title": " ", "to": "tariff", "weight": 3}, {"arrows": "to", "color": null, "from": "whistleblower", "hidden": false, "label": "look", "title": " ", "to": "people", "weight": 3}, {"arrows": "to", "color": null, "from": "economy", "hidden": false, "label": "set", "title": " ", "to": "best", "weight": 3}, {"arrows": "to", "color": null, "from": "rosie", "hidden": false, "label": "protect", "title": " ", "to": "law", "weight": 3}, {"arrows": "to", "color": null, "from": "nyc", "hidden": false, "label": "lead", "title": " ", "to": "border", "weight": 3}, {"arrows": "to", "color": null, "from": "bankrupt", "hidden": false, "label": "izing", "title": " ", "to": "vote", "weight": 3}, {"arrows": "to", "color": null, "from": "bankrupt", "hidden": false, "label": "pay", "title": " ", "to": "money", "weight": 3}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
