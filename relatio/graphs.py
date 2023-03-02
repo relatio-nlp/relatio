@@ -23,7 +23,6 @@ def build_graph(  # to be considered as preliminary
     edge_size=None,
     prune_network=True,
 ):
-
     # Network specifics
     G = nx.MultiDiGraph()
     if edge_size == None:

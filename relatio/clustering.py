@@ -27,7 +27,6 @@ from .utils import count_values, count_words
 
 
 def compute_sif_weights(words_counter: dict, alpha: Optional[float] = 0.001) -> dict:
-
     """
 
     A function that computes smooth inverse frequency (SIF) weights based on word frequencies.
@@ -85,7 +84,6 @@ class SIF_word2vec:
         alpha: Optional[float] = 0.001,
         normalize: bool = True,
     ):
-
         self._model = self._load_keyed_vectors(path)
 
         self._words_counter = count_words(sentences)
@@ -132,7 +130,6 @@ class SIF_keyed_vectors(SIF_word2vec):
 
 
 def get_vector(tokens: List[str], model: Union[USE, SIF_word2vec, SIF_keyed_vectors]):
-
     """
 
     A function that computes an embedding vector for a list of tokens.
@@ -178,7 +175,6 @@ def get_vectors(
     model: Union[USE, SIF_word2vec, SIF_keyed_vectors],
     used_roles=List[str],
 ):
-
     """
 
     A function to train a K-Means model on the corpus.
@@ -218,7 +214,6 @@ def train_cluster_model(
     random_state: Optional[int] = 0,
     verbose: Optional[int] = 0,
 ):
-
     """
 
     Train a kmeans model on the corpus.
@@ -252,7 +247,6 @@ def get_clusters(
     progress_bar: bool = False,
     suffix: str = "_lowdim",
 ) -> List[dict]:
-
     """
 
     Predict clusters based on a pre-trained kmeans model.
@@ -300,7 +294,6 @@ def get_clusters(
 def label_clusters_most_freq(
     clustering_res: List[dict], postproc_roles: List[dict]
 ) -> dict:
-
     """
 
     A function which labels clusters by their most frequent term.
@@ -341,7 +334,6 @@ def label_clusters_most_freq(
 
 
 def label_clusters_most_similar(kmeans, model) -> dict:
-
     """
 
     A function which labels clusters by the term closest to the centroid in the embedding

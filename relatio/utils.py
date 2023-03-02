@@ -31,7 +31,6 @@ def split_into_sentences(
     output_path: Optional[str] = None,
     progress_bar: bool = False,
 ) -> Tuple[List[str], List[str]]:
-
     """
 
     A function that splits a list of documents into sentences (using the SpaCy sentence splitter).
@@ -73,7 +72,6 @@ def replace_sentences(
     max_sentence_length: Optional[int] = None,
     max_number_words: Optional[int] = None,
 ) -> List[str]:
-
     """
 
     Replace long sentences in list of sentences by empty strings.
@@ -132,7 +130,6 @@ def group_sentences_in_batches(
     max_batch_char_length: Optional[int] = None,
     batch_size: Optional[int] = None,
 ) -> List[List[str]]:
-
     """
 
     Group sentences in batches of given total character length or size (number of sentences).
@@ -174,7 +171,6 @@ def group_sentences_in_batches(
     if max_batch_char_length is not None and batch_size is not None:
         raise ValueError("max_batch_char_length and batch_size are mutually exclusive.")
     elif max_batch_char_length is not None:
-
         # longer sentences are replaced with an empty string
         sentences = replace_sentences(
             sentences, max_sentence_length=max_batch_char_length
@@ -230,7 +226,6 @@ def clean_text(
     tags_to_keep: Optional[List[str]] = None,
     remove_n_letter_words: Optional[int] = None,
 ) -> List[str]:
-
     """
 
     Clean a list of sentences.
@@ -299,7 +294,6 @@ def clean_text(
 
     # lemmatize
     if lemmatize:
-
         tag_dict = {
             "J": wordnet.ADJ,
             "N": wordnet.NOUN,
@@ -363,7 +357,6 @@ def clean_text(
 
 
 def is_subsequence(v1: list, v2: list) -> bool:
-
     """
 
     Check whether v1 is a subset of v2.
@@ -389,7 +382,6 @@ def is_subsequence(v1: list, v2: list) -> bool:
 def count_values(
     dicts: List[Dict], keys: Optional[list] = None, progress_bar: bool = False
 ) -> Counter:
-
     """
 
     Get a counter with the values of a list of dictionaries, with the conssidered keys given as argument.
@@ -432,7 +424,6 @@ def count_values(
 
 
 def count_words(sentences: List[str]) -> Counter:
-
     """
 
     A function that computes word frequencies in a list of sentences.

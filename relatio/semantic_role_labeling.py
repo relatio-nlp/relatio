@@ -128,7 +128,6 @@ class SRL:
 def extract_roles(
     srl: List[Dict[str, Any]], used_roles: List[str], progress_bar: bool = False
 ) -> Tuple[List[Dict[str, Union[str, bool]]], List[int]]:
-
     """
 
     A function that extracts semantic roles from the SRL output.
@@ -162,7 +161,6 @@ def extract_roles(
 def extract_role_per_sentence(
     sentence_dict: dict, used_roles: List[str]
 ) -> List[Dict[str, Union[str, bool]]]:
-
     """
 
     A function that extracts the semantic roles for a given sentence.
@@ -225,7 +223,6 @@ def process_roles(
     remove_n_letter_words: Optional[int] = None,
     progress_bar: bool = False,
 ) -> List[Dict[str, List]]:
-
     """
 
     Takes a list of raw extracted semantic roles and cleans the text.
@@ -282,7 +279,6 @@ def process_roles(
 def rename_arguments(
     statements: List[dict], progress_bar: bool = False, suffix: str = "_highdim"
 ):
-
     """
 
     Takes a list of dictionaries and renames the keys of the dictionary with an extra user-specified suffix.

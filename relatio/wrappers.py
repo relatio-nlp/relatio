@@ -44,7 +44,6 @@ def run_srl(
     output_path: Optional[str] = None,
     progress_bar: bool = False,
 ):
-
     """
 
     A wrapper function to run semantic role labeling on a corpus.
@@ -119,7 +118,6 @@ def build_narrative_model(
     dimension_reduce_verbs: Optional[bool] = True,
     progress_bar: bool = False,
 ):
-
     """
 
     A wrapper function to build the narrative model from a sample of the corpus.
@@ -249,7 +247,6 @@ def build_narrative_model(
 
     # Verb Counts
     if dimension_reduce_verbs:
-
         if (output_path is not None) and os.path.isfile(
             "%sverb_counts.pk" % output_path
         ):
@@ -268,7 +265,6 @@ def build_narrative_model(
 
     # Named Entities
     if roles_with_entities is not None:
-
         if (output_path is not None) and os.path.isfile("%sentities.pk" % output_path):
             with open("%sentities.pk" % output_path, "rb") as f:
                 entities = pk.load(f)
@@ -339,7 +335,6 @@ def build_narrative_model(
         narrative_model["cluster_labels_most_freq"] = []
 
         for i, roles in enumerate(roles_with_embeddings):
-
             labels_most_similar_list = []
             kmeans_list = []
             labels_most_freq_list = []
@@ -347,7 +342,6 @@ def build_narrative_model(
             vecs = get_vectors(postproc_roles, model, used_roles=roles)
 
             for num in n_clusters[i]:
-
                 if (output_path is not None) and os.path.isfile(
                     output_path + "kmeans_%s_%s.pk" % (i, num)
                 ):
@@ -403,7 +397,6 @@ def get_narratives(
     cluster_labeling: Optional[str] = "most_frequent",
     progress_bar: bool = False,
 ):
-
     """
 
     A wrapper function to obtain the final mined narratives.
@@ -489,9 +482,7 @@ def get_narratives(
 
     # Embeddings
     if narrative_model["roles_with_embeddings"] is not None:
-
         for l, roles in enumerate(narrative_model["roles_with_embeddings"]):
-
             clustering_res = get_clusters(
                 postproc_roles,
                 narrative_model["embeddings_model"],

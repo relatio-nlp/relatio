@@ -39,7 +39,6 @@ def mine_entities(
     remove_n_letter_words: Optional[int] = None,
     progress_bar: bool = False,
 ) -> Counter:
-
     """
 
     A function that goes through sentences and counts named entities found in the corpus.
@@ -98,7 +97,6 @@ def map_entities(  # the output could be a list of dictionaries (for consistency
     top_n_entities: Optional[int] = None,
     progress_bar: bool = False,
 ) -> Tuple[dict, List[dict]]:
-
     """
 
     A function that goes through statements and identifies pre-defined named entities within processed semantic roles.
