@@ -1,9 +1,10 @@
 import string
-import time
 
 import pytest
 
 from relatio.preprocessing import Preprocessor
+
+# import time
 
 
 def test_CE():

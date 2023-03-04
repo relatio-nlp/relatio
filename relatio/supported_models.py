@@ -13,7 +13,7 @@ LANGUAGE_MODELS = {
         "language": "english",
         "size_vectors": 512,
     },
-    "https://tfhub.dev/google/universal-sentence-encoder-multilingual/3": {
+    "sentence-transformers/distiluse-base-multilingual-cased-v2": {
         "language": "multilingual",
         "size_vectors": 512,
     },

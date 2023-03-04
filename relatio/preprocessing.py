@@ -1,10 +1,11 @@
 import csv
 import time
 from collections import Counter
-from copy import deepcopy
-from typing import Any, Dict, List, Optional, Tuple, Union
 
-import numpy as np
+# from copy import deepcopy
+from typing import Dict, List, Optional, Tuple  # , Any, Union
+
+# import numpy as np
 import pandas as pd
 import spacy
 from spacy.cli import download as spacy_download
@@ -71,7 +72,7 @@ class Preprocessor:
         dataframe: pd.DataFrame,
         output_path: Optional[str] = None,
         progress_bar: bool = False,
-    ) -> Tuple[List[str], List[str]]:
+    ) -> pd.DataFrame:
 
         """
 
@@ -127,7 +128,7 @@ class Preprocessor:
 
         return df
 
-    def extract_svos(self, sentences: List[str], progress_bar: bool = False):
+    def extract_svos(self, sentences: List[str], progress_bar: bool = False) -> Tuple[List[int], List[str]]:
 
         length = len(sentences)
 
@@ -150,6 +151,11 @@ class Preprocessor:
                 svos = extract_svos_fr(sent)
                 sentence_index.extend([i] * len(svos))
                 all_svos.extend(svos)
+        # elif self.language == "english":
+        #     for i, sent in enumerate(spacy_docs):
+        #         svos = extract_svos_en(sent)
+        #         sentence_index.extend([i] * len(svos))
+        #         all_svos.extend(svos)
 
         all_svos = from_svos_to_srl_res(all_svos)
 
@@ -164,10 +170,10 @@ class Preprocessor:
         """
 
         if self.remove_punctuation:
-            s = [t for t in s if t.is_punct == False]
+            s = [t for t in s if t.is_punct is False]
 
         if self.remove_digits:
-            s = [t for t in s if t.is_digit == False]
+            s = [t for t in s if t.is_digit is False]
 
         if pos_tags_to_keep:
             s = [t for t in s if t.pos_ in pos_tags_to_keep]
@@ -198,6 +204,7 @@ class Preprocessor:
     def coreference_resolution(
         self,
         sentences: List[str],
+        spacy_model: str = "en_coreference_web_trf",
         progress_bar: bool = False,
     ) -> List[str]:
         """
@@ -208,17 +215,10 @@ class Preprocessor:
         Returns:
             List of sentences with cereference resolution
         """
-        try:
-            import spacy
+        if not spacy.util.is_package(spacy_model):
+            spacy_download(spacy_model)
 
-            nlp = spacy.load("en_coreference_web_trf")
-
-        except ModuleNotFoundError:
-            print("Please install spacy")
-            raise
-        except OSError:
-            print("Please download 'en_coreference_web_tf' pipeline")
-            raise
+        nlp = spacy.load(spacy_model)
 
         def resolve_references(doc: Doc) -> str:
             token_mention_dict = {}
@@ -287,9 +287,10 @@ class Preprocessor:
         for sentence in spacy_sentences:
             for ent in sentence.ents:
                 if ent.label_ in ent_labels:
-                    entity = ent.text
                     if clean_entities:
                         entity = self.clean_text(ent)
+                    else:
+                        entity = ent.text
                     entities_all.append(entity)
 
         entity_counts = Counter(entities_all)
@@ -354,7 +355,7 @@ class Preprocessor:
                 pos_tags_to_keep[role] = dict_of_pos_tags_to_keep[role]
 
         length = len(statements)
-        clean_statements = [{} for i in range(length)]
+        clean_statements: List[dict] = [{} for i in range(length)]
 
         for role in ["ARG0", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"]:
 

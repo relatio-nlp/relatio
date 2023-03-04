@@ -3,13 +3,15 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import Counter
 from copy import deepcopy
-from typing import List, Optional, Type
+from pathlib import Path
+from typing import List, Optional, Type, Union
 
 import hdbscan
 import matplotlib.pyplot as plt
 import numpy as np
 import spacy
 import umap
+from mpl_toolkits.mplot3d import Axes3D
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import make_scorer, silhouette_score
@@ -50,7 +52,8 @@ class NarrativeModel:
         known_entities: Optional[List[str]] = None,
         assignment_to_known_entities: str = "character_matching",
         roles_with_unknown_entities: List[str] = ["ARG0", "ARG1", "ARG2"],
-        embeddings_model: Optional[Type[Embeddings]] = None,
+        embeddings_type: str = None,
+        embeddings_model: Union[Path, str] = None,
         threshold: float = 0.1,
     ):
 
@@ -65,7 +68,9 @@ class NarrativeModel:
             )
             is False
         ):
-            raise ValueError("Some roles_considered are not supported. Roles supported: ARG0, B-V, B-ARGM-NEG, B-ARGM-MOD, ARG1, ARG2")
+            raise ValueError(
+                "Some roles_considered are not supported. Roles supported: ARG0, B-V, B-ARGM-NEG, B-ARGM-MOD, ARG1, ARG2"
+            )
 
         if roles_with_known_entities is not None:
             if is_subsequence(roles_with_known_entities, roles_considered) is False:
@@ -91,13 +96,13 @@ class NarrativeModel:
         self.assignment_to_known_entities = assignment_to_known_entities
         self.threshold = threshold
 
-        if embeddings_model is None:
+        if embeddings_type is None:
             self.embeddings_model = Embeddings(
                 "TensorFlow_USE",
                 "https://tfhub.dev/google/universal-sentence-encoder/4",
             )
         else:
-            self.embeddings_model = embeddings_model
+            self.embeddings_model = Embeddings(embeddings_type=embeddings_type, embeddings_model=embeddings_model)
 
         if self.known_entities is not None and self.assignment_to_known_entities == "embeddings":
             self.vectors_known_entities = self.embeddings_model.get_vectors(self.known_entities)
@@ -119,6 +124,7 @@ class NarrativeModel:
         pca_args=None,
         umap_args=None,
         cluster_args=None,
+        max_num_clusters=None,
         weight_by_frequency=False,
         progress_bar=True,
     ):
@@ -205,7 +211,7 @@ class NarrativeModel:
                 print(umap_args)
 
             self.umap_args = umap_args
-            self.umap_model = umap.UMAP(**umap_args).fit(self.training_vectors)
+            self.umap_model = umap.umap_.UMAP(**umap_args).fit(self.training_vectors)
             self.training_vectors = self.umap_model.transform(self.training_vectors)
 
         # Clustering
@@ -271,6 +277,8 @@ class NarrativeModel:
             # Grid search
             models = []
             scores = []
+            plot_args = {}
+            plot_args["min_cluster_size"], plot_args["min_samples"], plot_args["score"] = [], [], []
             for i in cluster_args["min_cluster_size"]:
                 for j in cluster_args["min_samples"]:
                     for h in cluster_args["cluster_selection_method"]:
@@ -288,15 +296,27 @@ class NarrativeModel:
                                 args[k] = v
 
                         hdb = hdbscan.HDBSCAN(**args).fit(self.training_vectors)
-
                         models.append(hdb)
-
                         score = hdbscan.validity.validity_index(self.training_vectors.astype(np.float64), hdb.labels_)
                         scores.append(score)
+                        plot_args["min_cluster_size"].append(i)
+                        plot_args["min_samples"].append(j)
+                        plot_args["score"].append(score)
+
+            best_score_args = {}
+            max_index = np.argmax(scores)
+            best_score_args["min_cluster_size"] = plot_args["min_cluster_size"][max_index]
+            best_score_args["min_samples"] = plot_args["min_samples"][max_index]
+            best_score_args["score"] = plot_args["score"][max_index]
+
+            self.plot_args = plot_args
+            self.best_score_args = best_score_args
 
         self.clustering_model = models[np.argmax(scores)]
         self.cluster_args = cluster_args
         self.scores = scores
+        self.args = args
+        
 
         if progress_bar:
             print("Clustering parameters chosen in this range:")
@@ -338,7 +358,9 @@ class NarrativeModel:
                 if progress_bar:
                     print("Matching known entities (with embeddings distance)...")
 
-                index2, index_known_entities = _embeddings_similarity(vectors, self.vectors_known_entities, self.threshold)
+                index2, index_known_entities = _embeddings_similarity(
+                    vectors, self.vectors_known_entities, self.threshold
+                )
                 labels_known_entities = self.label_with_known_entity(index_known_entities)
                 flag_computed_vectors = True
 
@@ -440,6 +462,9 @@ class NarrativeModel:
                 )
             self.labels_unknown_entities[clu] = token_most_common[0][0]
 
+            if self.labels_unknown_entities[clu] == "":
+                self.labels_unknown_entities[clu] = token_most_common[1][0]
+
         if self.clustering == "hdbscan":
             self.labels_unknown_entities[-1] = ""
 
@@ -496,7 +521,37 @@ class NarrativeModel:
     def plot_selection_metric(self, path=None, figsize=(14, 8)):
 
         if self.clustering == "hdbscan":
-            raise ValueError("Plotting the selection metric is only possible for a kmeans model.")
+            # raise ValueError("Plotting the selection metric is only possible for a kmeans model.")"
+            textstr = "\n".join(
+                (
+                    "cluster_selection_method:{}".format(self.args["cluster_selection_method"]),
+                    "gen_min_span_tree:{}".format(self.args["gen_min_span_tree"]),
+                    "approx_min_span_tree:{}".format(self.args["approx_min_span_tree"]),
+                    "prediction_data:{}".format(self.args["prediction_data"]),
+                )
+            )
+            fig = plt.figure()
+            ax = Axes3D(fig)
+            ax.set_xlabel("Minimum cluster size")
+            ax.set_ylabel("Minimum samples")
+            ax.set_zlabel("DBCV Score")
+            ax.scatter(
+                self.plot_args["min_cluster_size"],
+                self.plot_args["min_samples"],
+                self.plot_args["score"],
+                "o",
+                s=[(i + 1) * 100 for i in self.plot_args["score"]],
+                c="#808080",
+            )
+            ax.scatter(
+                self.best_score_args["min_cluster_size"],
+                self.best_score_args["min_samples"],
+                self.best_score_args["score"],
+                "o",
+                s=[(self.best_score_args["score"] + 1) * 100],
+                c="#2ca02c",
+            )
+            ax.text2D(-0.05, -0.1, textstr, horizontalalignment="center", fontsize=8, verticalalignment="top")
 
         if self.clustering == "kmeans":
             plt.figure(figsize=figsize)
