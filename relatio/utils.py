@@ -13,10 +13,12 @@ import json
 import pickle as pk
 import time
 from collections import Counter
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
-import pandas as pd
+from torch.cuda import is_available
+from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
+from transformers import BartForConditionalGeneration, BartTokenizer
 
 
 def replace_sentences(
@@ -276,10 +278,118 @@ def make_list_from_key(key, list_of_dicts):
 
     return indices, list_from_key
 
+class FixGrammarDataset(Dataset):
+    """ torch.utils.data.Dataset subclass which holds the narratives to be grammar-fixed. """
+    
+    def __init__(self, 
+                 narratives: List[str], 
+                 tokenizer):
+        """ 
+        
+        Initializer for the Dataset object.
+        
+        Tokenizes all narratives so that they can be fed to the language model.
+
+        Args:
+            narratives (List[str]): a list of narratives to be grammar-fixed.
+            tokenizer: the appropriate tokenizer from the Huggingface library.
+        
+        Returns:
+            the dataset object.
+        """
+
+        self.max_length = 100
+        self.padding = 'max_length'
+        self.truncation = True
+        self.return_tensors = 'pt'
+
+        # Encode inputs
+        self.input_ids = []
+        self.attn_masks = []
+        for narrative in narratives:
+            inp_encoded = tokenizer(narrative, 
+                                    max_length=self.max_length, 
+                                    padding=self.padding, 
+                                    truncation=self.truncation, 
+                                    return_tensors=self.return_tensors)
+            self.input_ids.append(inp_encoded['input_ids'][0])
+            self.attn_masks.append(inp_encoded['attention_mask'][0])
+
+    def __len__(self):
+        return len(self.input_ids)
+
+    def __getitem__(self, idx):
+        return self.input_ids[idx], self.attn_masks[idx]
+
+def fix_grammars(narratives: List[str]):
+    """ 
+
+    TODO: should I delete the ML stuff when the fct is done (to make space in memory)?
+
+    Fixes the grammars of the given list of narratives.
+    
+    Args:
+        narratives: a list of narratives to be grammar-fixed. 
+
+    Returns:
+        outputs: a list with the same narratives as in the input, but their grammars are fixed.
+
+    """
+    narratives = [handle_negation(n) for n in narratives] # handle the '!'s in narratives
+    device = 'cuda' if is_available() else 'cpu'
+    tokenizer = BartTokenizer.from_pretrained('facebook/bart-base')
+    model = BartForConditionalGeneration.from_pretrained('egek-7/relatio-fix-grammar').to(device)
+    model.eval()
+    dataset = FixGrammarDataset(narratives, tokenizer)
+    dataloader = DataLoader(dataset, batch_size=5, shuffle=False)
+    model.eval()
+    outputs = []
+        
+    for sample in tqdm(dataloader):
+        input_ids, attn_mask = sample[0], sample[1]
+        model_kwargs = {
+            'inputs': input_ids.to(device),
+            'attention_mask': attn_mask.to(device),
+            'num_beams': 4,
+            'max_length': 100,
+            #'return_dict_in_generate': True # transformers.generation_utils.BeamSearchEncoderDecoderOutput
+        }
+        
+        output_ids = model.generate(**model_kwargs)
+        out = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
+        outputs += out
+
+    return outputs
+
+def handle_selection(narrative: Dict[str, str]) -> Dict[str, str]:
+    """ 
+    
+    Modifies the arguments of the given narrative so that all '|'s are removed.
+     
+    For each argument with multiple options, all options except the first one are removed, 
+    regardless of whether | stands for the logical "and" or logical "or".
+    
+    """
+    arguments = ['ARG0', 'ARG1', 'ARG2']
+    for arg in arguments:
+        value = narrative.get(arg)
+        if value is not None and '|' in value:
+            narrative[arg] = value[:value.index('|')]
+    return narrative
+
+def handle_negation(narrative: str) -> str:
+    """ Modifies the given narrative so that all '!'s are replaced with 'not-'. """
+
+    if '!' in narrative:
+        split = narrative.split(' ')
+        neg_idx = split.index('!')
+        split[neg_idx+1] = "not-" + split[neg_idx+1]
+        split.pop(neg_idx)
+        narrative = ' '.join(split)
+    return narrative
 
 def get_element(narrative, role):
     return narrative[role] if role in narrative else ""
-
 
 def prettify(narrative) -> str:
 
@@ -302,6 +412,44 @@ def prettify(narrative) -> str:
 
     return pretty_narrative
 
+def prettify_narratives(narratives: List[Dict], fix_grammar: bool = False):
+    """ 
+    
+    'Prettifies' a given list of narratives.
+    
+    Converts each narrative from a dictionary to a (grammatically incorrect)
+    human-readable phrase. The grammar can optionally be corrected. It takes
+    roughly one minute to correct the grammars of around 250 narratives.
+
+    Args:
+        narratives (List[Dict]): list of narratives.
+        fix_grammar (bool): if True, the prettified narratives will be 
+            grammatically correct. False by default.
+
+    Returns:
+        pretty_narratives (Counter[str]): a counter over the prettified list of narratives.
+    
+    """
+
+    prettifiable_narratives = []
+    for narrative in narratives:
+        if narrative.get('ARG0') is not None:
+            if narrative.get('B-V') is not None:
+                if narrative.get('ARG1') is not None:
+                    prettifiable_narratives.append(narrative)
+    
+    if fix_grammar:
+        prettifiable_narratives = [handle_selection(n) for n in prettifiable_narratives] # handle the '|'s in narratives
+    
+    pretty_narratives = []
+    for narrative in prettifiable_narratives:    
+        pretty_narratives.append(prettify(narrative))
+
+    if fix_grammar:
+        pretty_narratives = fix_grammars(pretty_narratives)
+    
+    pretty_narratives = Counter(pretty_narratives)
+    return pretty_narratives
 
 def save_entities(entity_counts, output_path: str):
 
