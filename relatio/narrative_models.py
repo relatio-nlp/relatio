@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import spacy
 import umap
+from kneed import KneeLocator
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import make_scorer, silhouette_score
@@ -23,7 +24,6 @@ from relatio.embeddings import (
     _embeddings_similarity,
     _get_index_min_distances,
     _get_min_distances,
-    _remove_nan_vectors,
 )
 from relatio.utils import count_values, is_subsequence, make_list_from_key, prettify
 
@@ -53,7 +53,6 @@ class NarrativeModel:
         embeddings_model: Optional[Type[Embeddings]] = None,
         threshold: int = 0.1,
     ):
-
         if clustering is not None:
             if clustering not in ["kmeans", "hdbscan"]:
                 raise ValueError(
@@ -119,16 +118,16 @@ class NarrativeModel:
                 self.known_entities
             )
 
-        self.pca_args = []
-        self.umap_args = []
-        self.cluster_args = []
-        self.scores = []
-        self.vectors_unknown_entities = []
-        self.labels_unknown_entities = {}
-        self.vocab_unknown_entities = {}
-        self.clustering_model = []
+        self.pca_args = {}
+        self.umap_args = {}
+        self.cluster_args = {}
         self.training_vectors = []
         self.phrases_to_embed = []
+        self.scores = {}
+        self.labels_unknown_entities = []
+        self.vocab_unknown_entities = []
+        self.clustering_models = []
+        self.index_optimal_model = None
 
     def fit(
         self,
@@ -139,7 +138,6 @@ class NarrativeModel:
         weight_by_frequency=False,
         progress_bar=True,
     ):
-
         if self.clustering is None:
             print("No fitting required, this model is deterministic!")
         if self.clustering in ["hdbscan", "kmeans"]:
@@ -163,17 +161,15 @@ class NarrativeModel:
         weight_by_frequency,
         progress_bar,
     ):
-
         phrases_to_embed = []
         counter_for_phrases = Counter()
 
         for role in self.roles_with_unknown_entities:
-
             temp_counter = count_values(srl_res, keys=[role])
             counter_for_phrases = counter_for_phrases + temp_counter
             phrases = list(temp_counter)
 
-            # remove known entities for the training of unknown entities
+            # Rremove known entities for the training of unknown entities
             if role in self.roles_with_known_entities:
                 if self.assignment_to_known_entities == "character_matching":
                     idx = self.character_matching(phrases, progress_bar)[0]
@@ -187,19 +183,20 @@ class NarrativeModel:
 
                 phrases_to_embed.extend(phrases)
 
-        if weight_by_frequency:
-            self.phrases_to_embed = phrases_to_embed
-        else:
+        if not weight_by_frequency:
             phrases_to_embed = sorted(list(set(phrases_to_embed)))
-            self.phrases_to_embed = phrases_to_embed
 
-        # Remove np.nans to train the model (or it will break down)
         vectors = self.embeddings_model.get_vectors(phrases_to_embed, progress_bar)
-        self.training_vectors = _remove_nan_vectors(vectors)
+
+        # Remove np.nans to train the model (or it will break down) and only keep phrases that have a vector (or it will mess up labels)
+        idx = [i[0] for i in np.argwhere(np.isnan(vectors).any(axis=1))]
+        self.phrases_to_embed = [
+            phrase for i, phrase in enumerate(phrases_to_embed) if i not in idx
+        ]
+        self.training_vectors = vectors[~np.isnan(vectors).any(axis=1)]
 
         # Dimension reduction via PCA
         if self.PCA:
-
             if pca_args is None:
                 pca_args = {"n_components": 50, "svd_solver": "full"}
 
@@ -214,7 +211,6 @@ class NarrativeModel:
 
         # Dimension reduction via UMAP
         if self.UMAP:
-
             if umap_args is None:
                 umap_args = {"n_neighbors": 15, "n_components": 2, "random_state": 0}
 
@@ -232,9 +228,7 @@ class NarrativeModel:
             print("Clustering phrases into clusters...")
 
         if self.clustering == "kmeans":
-
             if cluster_args is None:
-
                 l = max(int(len(phrases_to_embed) / 100), 1)
                 l = min(l, 1000)
                 q0 = max(int(np.quantile(list(range(l)), 0.1)), 1)
@@ -243,6 +237,10 @@ class NarrativeModel:
                 q3 = max(int(np.quantile(list(range(l)), 0.75)), 1)
 
                 cluster_args = {"n_clusters": [q0, q1, q2, q3, l], "random_state": 0}
+
+            if progress_bar:
+                print("Clustering parameters chosen in this range:")
+                print(cluster_args)
 
             # Grid search
             models = []
@@ -268,10 +266,45 @@ class NarrativeModel:
                     )
                 )
 
+            self.scores["silhouette"] = scores
+
+            l = np.argmax(self.scores["silhouette"])
+            k = cluster_args["n_clusters"][l]
+
+            print(
+                "The silhouette score suggests the optimal number of clusters is {0}. This corresponds to index {1}.".format(
+                    k, l
+                )
+            )
+
+            scores = []
+            for model in models:
+                scores.append(model.inertia_)
+
+            self.scores["inertia"] = scores
+
+            kneedle = KneeLocator(
+                cluster_args["n_clusters"],
+                self.scores["inertia"],
+                curve="convex",
+                direction="decreasing",
+            )
+
+            k = kneedle.knee
+            if k is None:
+                raise Warning(
+                    "Not enough clustering scenarios to find the elbow. Defaulting to silhouette score."
+                )
+            else:
+                l = [i for i, n in enumerate(cluster_args["n_clusters"]) if n == k][0]
+                print(
+                    "The elbow method (inertia score) suggests the optimal number of clusters is {0}. This corresponds to index {1}.".format(
+                        k, l
+                    )
+                )
+
         if self.clustering == "hdbscan":
-
             if cluster_args is None:
-
                 l = max(int(math.sqrt(len(phrases_to_embed))), 2)
                 l = min(l, 100)
                 q1 = max(int(np.quantile(list(range(l)), 0.25)), 2)
@@ -286,6 +319,10 @@ class NarrativeModel:
                     "approx_min_span_tree": False,
                     "prediction_data": True,
                 }
+
+            if progress_bar:
+                print("Clustering parameters chosen in this range:")
+                print(cluster_args)
 
             # Grid search
             models = []
@@ -315,28 +352,50 @@ class NarrativeModel:
                         )
                         scores.append(score)
 
-        self.clustering_model = models[np.argmax(scores)]
+            self.scores["DBCV"] = scores
+
+            l = np.argmax(self.scores["DBCV"])
+            print(
+                "The DBCV score suggests the index of the optimal clustering model is {0}.".format(
+                    l
+                )
+            )
+
+        self.index_optimal_model = l
+        self.clustering_models = models
         self.cluster_args = cluster_args
-        self.scores = scores
 
-        if progress_bar:
-            print("Clustering parameters chosen in this range:")
-            print(cluster_args)
+        print("Labeling the clusters by the most frequent phrases...")
+        self.vocab_unknown_entities = [{} for i, m in enumerate(self.clustering_models)]
+        self.labels_unknown_entities = [
+            {} for i, m in enumerate(self.clustering_models)
+        ]
+        for index_clustering_model, clustering_model in enumerate(
+            self.clustering_models
+        ):
+            self.label_clusters(
+                counter_for_phrases,
+                phrases_to_embed,
+                index_clustering_model,
+                progress_bar,
+            )
 
-        self.label_clusters(counter_for_phrases, phrases_to_embed, progress_bar)
-
-        if self.clustering == "kmeans":
-            self.vectors_unknown_entities = self.clustering_model.cluster_centers_
-
-    def predict(self, srl_res, progress_bar: bool = False):
+    def predict(
+        self,
+        srl_res,
+        index_clustering_model: Optional[int] = None,
+        progress_bar: bool = False,
+    ):
         """
-        Predict the narratives underlying SRL statements.
+        Predict the narratives underlying statements.
         """
+
+        if index_clustering_model is None:
+            clustering_model = self.clustering_models[self.index_optimal_model]
 
         narratives = deepcopy(srl_res)
 
         for role in self.roles_considered:
-
             if role in ["B-ARGM-NEG", "B-ARGM-MOD", "B-V"]:
                 continue
 
@@ -344,30 +403,49 @@ class NarrativeModel:
                 print("\nPredicting entities for role: %s..." % role)
 
             flag_computed_vectors = False
-            index1, phrases = make_list_from_key(role, srl_res)
-            index2 = []
-            index3 = []
+            srl_index, phrases = make_list_from_key(role, srl_res)
+            all_labels = ["" for i in phrases]
 
             # Match known entities (with character matching)
             if (
                 role in self.roles_with_known_entities
                 and self.assignment_to_known_entities == "character_matching"
             ):
-                index2, labels_known_entities = self.character_matching(
+                idx, labels_known_entities = self.character_matching(
                     phrases, progress_bar
                 )
+
+                for i, k in enumerate(idx):
+                    all_labels[k] = labels_known_entities[i]
+
+                phrase_index, phrases_to_embed = [
+                    i for i, p in enumerate(phrases) if i not in idx
+                ], [p for i, p in enumerate(phrases) if i not in idx]
 
             # Match known entities (with embeddings distance)
             if (
                 role in self.roles_with_known_entities
                 and self.assignment_to_known_entities == "embeddings"
             ):
-                vectors = self.embeddings_model.get_vectors(phrases, progress_bar)
+                phrases_to_embed = phrases.copy()
+                phrase_index = [i for i, p in enumerate(phrases_to_embed)]
+
+                vectors = self.embeddings_model.get_vectors(
+                    phrases_to_embed, progress_bar
+                )
+                nan_index = np.argwhere(np.isnan(vectors).any(axis=1))
+                vectors = vectors[~np.isnan(vectors).any(axis=1)]
+                phrase_index = [i for i in phrase_index if i not in nan_index]
+                phrases_to_embed = [
+                    phrase
+                    for i, phrase in enumerate(phrases_to_embed)
+                    if i in phrase_index
+                ]
 
                 if progress_bar:
                     print("Matching known entities (with embeddings distance)...")
 
-                index2, index_known_entities = _embeddings_similarity(
+                idx, index_known_entities = _embeddings_similarity(
                     vectors, self.vectors_known_entities, self.threshold
                 )
                 labels_known_entities = self.label_with_known_entity(
@@ -375,24 +453,34 @@ class NarrativeModel:
                 )
                 flag_computed_vectors = True
 
+                for i, k in enumerate(idx):
+                    all_labels[phrase_index[k]] = labels_known_entities[i]
+
             # Predict unknown entities (with clustering model)
             if role in self.roles_with_unknown_entities:
-
                 if progress_bar:
                     print("Matching unknown entities (with clustering model)...")
 
                 if flag_computed_vectors == False:
-                    vectors = self.embeddings_model.get_vectors(phrases, progress_bar)
+                    vectors = self.embeddings_model.get_vectors(
+                        phrases_to_embed, progress_bar
+                    )
+                    nan_index = np.argwhere(np.isnan(vectors).any(axis=1))
+                    vectors = vectors[~np.isnan(vectors).any(axis=1)]
+                    phrase_index = [i for i in phrase_index if i not in nan_index]
+                    phrases_to_embed = [
+                        phrase
+                        for i, phrase in enumerate(phrases_to_embed)
+                        if i in phrase_index
+                    ]
 
                 if self.PCA:
-
                     if progress_bar:
                         print("Dimension reduction of vectors (PCA)...")
 
                     vectors = self.pca_model.transform(vectors)
 
                 if self.UMAP:
-
                     if progress_bar:
                         print("Dimension reduction of vectors (UMAP)...")
 
@@ -402,41 +490,34 @@ class NarrativeModel:
                     print("Assignment to clusters...")
 
                 if self.clustering == "hdbscan":
-
-                    index_clusters = hdbscan.approximate_predict(
-                        self.clustering_model, vectors
+                    cluster_index = hdbscan.approximate_predict(
+                        clustering_model, vectors
                     )[0]
 
-                    index3 = list(range(len(index_clusters)))
+                    idx = list(range(len(cluster_index)))
 
                 else:
-
-                    index3, index_clusters = _embeddings_similarity(
-                        vectors, self.vectors_unknown_entities
+                    idx, cluster_index = _embeddings_similarity(
+                        vectors, clustering_model.cluster_centers_
                     )
 
-                cluster_labels = self.label_with_most_frequent_phrase(index_clusters)
+                cluster_labels = self.label_with_most_frequent_phrase(
+                    cluster_index, index_clustering_model
+                )
 
-            # Assign labels
-            if progress_bar:
-                print("Assigning labels to matches...")
+                for i, k in enumerate(idx):
+                    all_labels[phrase_index[k]] = cluster_labels[i]
 
-            all_labels = ["" for i in phrases]
-            for i, k in enumerate(index2):
-                all_labels[k] = labels_known_entities[i]
-            for i, k in enumerate(index3):
-                if all_labels[k] == "":
-                    all_labels[k] = cluster_labels[i]
+            # Assign labels to AVP/SVO statements
             for i, k in enumerate(phrases):
                 if all_labels[i] != "":
-                    narratives[index1[i]][role] = all_labels[i]
-                elif role in narratives[index1[i]]:
-                    narratives[index1[i]].pop(role)
+                    narratives[srl_index[i]][role] = all_labels[i]
+                elif role in narratives[srl_index[i]]:
+                    narratives[srl_index[i]].pop(role)
 
         return narratives
 
     def character_matching(self, phrases, progress_bar: bool = False):
-
         if progress_bar:
             print("Matching known entities (with character matching)...")
             phrases = tqdm(phrases)
@@ -455,23 +536,33 @@ class NarrativeModel:
 
         return index, labels_known_entities
 
-    def label_clusters(self, counter_for_phrases, phrases_to_embed, progress_bar):
+    def label_clusters(
+        self,
+        counter_for_phrases,
+        phrases_to_embed,
+        index_clustering_model: int,
+        progress_bar: bool = False,
+    ):
+        labels = list(set(self.clustering_models[index_clustering_model].labels_))
 
-        if progress_bar:
-            print("Labeling the clusters by the most frequent phrases...")
-
-        labels = list(set(self.clustering_model.labels_))
+        print(labels)
 
         for clu in labels:
-            self.vocab_unknown_entities[clu] = Counter()
+            self.vocab_unknown_entities[index_clustering_model][clu] = Counter()
 
-        for j, clu in enumerate(self.clustering_model.labels_):
-            self.vocab_unknown_entities[clu][phrases_to_embed[j]] = counter_for_phrases[
+        print(self.vocab_unknown_entities)
+
+        for j, clu in enumerate(self.clustering_models[index_clustering_model].labels_):
+            self.vocab_unknown_entities[index_clustering_model][clu][
                 phrases_to_embed[j]
-            ]
+            ] = counter_for_phrases[phrases_to_embed[j]]
+
+        print(self.vocab_unknown_entities)
 
         for clu in labels:
-            token_most_common = self.vocab_unknown_entities[clu].most_common(2)
+            token_most_common = self.vocab_unknown_entities[index_clustering_model][
+                clu
+            ].most_common(2)
             if len(token_most_common) > 1 and (
                 token_most_common[0][1] == token_most_common[1][1]
             ):
@@ -479,25 +570,53 @@ class NarrativeModel:
                     f"Multiple labels for cluster {clu}- 2 shown: {token_most_common}. First one is picked.",
                     RuntimeWarning,
                 )
-            self.labels_unknown_entities[clu] = token_most_common[0][0]
+            self.labels_unknown_entities[index_clustering_model][
+                clu
+            ] = token_most_common[0][0]
+
+        print(self.vocab_unknown_entities)
 
         if self.clustering == "hdbscan":
-            self.labels_unknown_entities[-1] = ""
+            self.labels_unknown_entities[index_clustering_model][-1] = ""
 
     def label_with_known_entity(self, index):
         return [self.known_entities[i] for i in index]
 
-    def label_with_most_frequent_phrase(self, index):
-        return [self.labels_unknown_entities[i] for i in index]
+    def label_with_most_frequent_phrase(
+        self, index, index_clustering_model: Optional[int] = None
+    ):
+        if index_clustering_model is None:
+            index_clustering_model = self.index_optimal_model
 
-    def inspect_cluster(self, label, topn=10):
-        key = [k for k, v in self.labels_unknown_entities.items() if v == label][0]
-        return self.vocab_unknown_entities[key].most_common(topn)
+        return [self.labels_unknown_entities[index_clustering_model][i] for i in index]
 
-    def clusters_to_txt(self, path="clusters.txt", topn=10, add_frequency_info=True):
+    def inspect_cluster(
+        self, label, index_clustering_model: Optional[int] = None, topn=10
+    ):
+        if index_clustering_model is None:
+            index_clustering_model = self.index_optimal_model
+
+        key = [
+            k
+            for k, v in self.labels_unknown_entities[index_clustering_model].items()
+            if v == label
+        ][0]
+        return self.vocab_unknown_entities[index_clustering_model][key].most_common(
+            topn
+        )
+
+    def clusters_to_txt(
+        self,
+        index_clustering_model: Optional[int] = None,
+        path="clusters.txt",
+        topn=10,
+        add_frequency_info=True,
+    ):
+        if index_clustering_model is None:
+            index_clustering_model = self.index_optimal_model
 
         with open(path, "w") as f:
-            for k, v in self.vocab_unknown_entities.items():
+            for k, v in self.vocab_unknown_entities[index_clustering_model].items():
                 f.write("Cluster %s" % k)
                 f.write("\n")
                 for i in v.most_common(topn):
@@ -508,46 +627,81 @@ class NarrativeModel:
                 f.write("\n")
                 f.write("\n")
 
-    def plot_clusters(self, path=None, figsize=(14, 8), s=0.1):
+    def plot_clusters(
+        self,
+        index_clustering_model: Optional[int] = None,
+        path=None,
+        figsize=(14, 8),
+        s=0.1,
+    ):
+        if index_clustering_model is None:
+            index_clustering_model = self.index_optimal_model
 
         if self.umap_args["n_components"] != 2:
-            raise ValueError(
-                "Cluster visualization is only possible for UMAP with two components."
+            umap_args = {"n_neighbors": 15, "n_components": 2, "random_state": 0}
+            umap_model = umap.UMAP(**umap_args).fit(self.training_vectors)
+            vectors = umap_model.transform(self.training_vectors)
+            clustered = self.clustering_models[index_clustering_model].labels_ >= 0
+            plt.figure(figsize=figsize, dpi=80)
+            plt.scatter(
+                vectors[~clustered, 0],
+                vectors[~clustered, 1],
+                color=(0.5, 0.5, 0.5),
+                s=s,
+                alpha=0.5,
+            )
+            plt.scatter(
+                vectors[clustered, 0],
+                vectors[clustered, 1],
+                c=self.clustering_models[index_clustering_model].labels_[clustered],
+                s=s,
+                cmap="Spectral",
+            )
+        else:
+            clustered = self.clustering_models[index_clustering_model].labels_ >= 0
+            plt.figure(figsize=figsize, dpi=80)
+            plt.scatter(
+                self.training_vectors[~clustered, 0],
+                self.training_vectors[~clustered, 1],
+                color=(0.5, 0.5, 0.5),
+                s=s,
+                alpha=0.5,
+            )
+            plt.scatter(
+                self.training_vectors[clustered, 0],
+                self.training_vectors[clustered, 1],
+                c=self.clustering_models[index_clustering_model].labels_[clustered],
+                s=s,
+                cmap="Spectral",
             )
 
-        clustered = self.clustering_model.labels_ >= 0
-        plt.figure(figsize=figsize, dpi=80)
-        plt.scatter(
-            self.training_vectors[~clustered, 0],
-            self.training_vectors[~clustered, 1],
-            color=(0.5, 0.5, 0.5),
-            s=s,
-            alpha=0.5,
-        )
-        plt.scatter(
-            self.training_vectors[clustered, 0],
-            self.training_vectors[clustered, 1],
-            c=self.clustering_model.labels_[clustered],
-            s=s,
-            cmap="Spectral",
-        )
         if path is None:
             plt.show()
         else:
             plt.savefig(path)
 
-    def plot_selection_metric(self, path=None, figsize=(14, 8)):
-
+    def plot_selection_metric(self, metric: str, path=None, figsize=(14, 8)):
         if self.clustering == "hdbscan":
-            raise ValueError(
-                "Plotting the selection metric is only possible for a kmeans model."
-            )
+            if metric == "DBCV":
+                pass  # shimpei's code here
+            else:
+                raise ValueError("This metric is not available for HDBSCAN.")
 
         if self.clustering == "kmeans":
-            plt.figure(figsize=figsize)
-            plt.plot(self.cluster_args["n_clusters"], self.scores, "bx-")
-            plt.xlabel("Number of Clusters")
-            plt.ylabel("Silhouette Score")
+            if metric == "silhouette":
+                plt.figure(figsize=figsize)
+                plt.plot(
+                    self.cluster_args["n_clusters"], self.scores["silhouette"], "bx-"
+                )
+                plt.xlabel("Number of Clusters")
+                plt.ylabel("Silhouette Score")
+            elif metric == "inertia":
+                plt.figure(figsize=figsize)
+                plt.plot(self.cluster_args["n_clusters"], self.scores["inertia"], "bx-")
+                plt.xlabel("Number of Clusters")
+                plt.ylabel("Inertia")
+            else:
+                raise ValueError("This metric is not available for KMeans.")
 
         if path is None:
             plt.show()

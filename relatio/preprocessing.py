@@ -8,16 +8,19 @@ import numpy as np
 import pandas as pd
 import spacy
 from spacy.cli import download as spacy_download
+from spacy.language import Language
+from spacy.tokens import Token
 from tqdm import tqdm
 
-from relatio.supported_models import LANGUAGE_MODELS
-from relatio.utils import (
+from relatio.dependency_parsing import (
+    extract_svos_en,
     extract_svos_fr,
     from_svos_to_srl_res,
-    make_list_from_key,
-    save_entities,
-    save_roles,
 )
+from relatio.supported_models import LANGUAGE_MODELS
+from relatio.utils import make_list_from_key, save_entities, save_roles
+
+Token.set_extension("noun_chunk", default=None)
 
 
 class Preprocessor:
@@ -48,7 +51,6 @@ class Preprocessor:
         n_process: int = -1,
         batch_size: int = 1000,
     ):
-
         if not spacy.util.is_package(spacy_model):
             spacy_download(spacy_model)
 
@@ -71,7 +73,6 @@ class Preprocessor:
         output_path: Optional[str] = None,
         progress_bar: bool = False,
     ) -> Tuple[List[str], List[str]]:
-
         """
 
         Split a list of documents into sentences (using the SpaCy sentence splitter).
@@ -126,8 +127,14 @@ class Preprocessor:
 
         return df
 
-    def extract_svos(self, sentences: List[str], progress_bar: bool = False):
-
+    def extract_svos(
+        self,
+        sentences: List[str],
+        expand_nouns: bool = True,
+        only_triplets: bool = True,
+        custom_extraction_function=None,
+        progress_bar: bool = False,
+    ):
         length = len(sentences)
 
         spacy_docs = self.nlp.pipe(
@@ -144,18 +151,31 @@ class Preprocessor:
 
         all_svos = []
         sentence_index = []
-        if self.language == "french":
-            for i, sent in enumerate(spacy_docs):
-                svos = extract_svos_fr(sent)
-                sentence_index.extend([i] * len(svos))
-                all_svos.extend(svos)
+
+        for i, sent in enumerate(spacy_docs):
+            if expand_nouns:
+                for noun_chunk in sent.noun_chunks:
+                    for token in noun_chunk:
+                        token._.noun_chunk = noun_chunk
+
+            if custom_extraction_function:
+                svos = custom_extraction_function(sent)
+            elif self.language == "french":
+                svos = extract_svos_fr(sent, expand_nouns, only_triplets)
+            elif self.language == "english":
+                svos = extract_svos_en(sent, expand_nouns, only_triplets)
+            else:
+                raise ValueError(
+                    "No Subject-Verb-Object (SVO) extraction function pre-coded for this language. Please provide a custom extraction function."
+                )
+            sentence_index.extend([i] * len(svos))
+            all_svos.extend(svos)
 
         all_svos = from_svos_to_srl_res(all_svos)
 
         return sentence_index, all_svos
 
     def clean_text(self, s, pos_tags_to_keep: Optional[List[str]] = None) -> List[str]:
-
         """
 
         Clean a string of text.
@@ -249,7 +269,6 @@ class Preprocessor:
         output_path: Optional[str] = None,
         progress_bar: bool = False,
     ) -> Counter:
-
         """
 
         Go through sentences and counts named entities found in the corpus.
@@ -294,7 +313,6 @@ class Preprocessor:
         return entity_counts
 
     def clean_roles(self, roles, max_length, pos_tags_to_keep, progress_bar):
-
         spacy_roles = self.nlp.pipe(
             roles, batch_size=self.batch_size, n_process=self.n_process
         )
@@ -323,7 +341,6 @@ class Preprocessor:
         output_path: Optional[str] = None,
         progress_bar: bool = False,
     ) -> List[Dict[str, List]]:
-
         """
 
         Takes a list of raw extracted semantic roles and cleans the text.
@@ -353,7 +370,6 @@ class Preprocessor:
         clean_statements = [{} for i in range(length)]
 
         for role in ["ARG0", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"]:
-
             indices, roles = make_list_from_key(role, statements)
 
             if role != "B-ARGM-NEG":

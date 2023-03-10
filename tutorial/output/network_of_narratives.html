@@ -1,0 +1,155 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 1600px;
+                 height: 1000px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "steve", "label": "steve", "shape": "dot", "value": 3}, {"color": "#97c2fc", "id": "my complete and total endorsement", "label": "my complete and total endorsement", "shape": "dot", "value": 11}, {"color": "#97c2fc", "id": "we", "label": "we", "shape": "dot", "value": 70}, {"color": "#97c2fc", "id": "a fantastic job", "label": "a fantastic job", "shape": "dot", "value": 6}, {"color": "#97c2fc", "id": "state", "label": "state", "shape": "dot", "value": 2}, {"color": "#97c2fc", "id": "amp", "label": "amp", "shape": "dot", "value": 13}, {"color": "#97c2fc", "id": "the election", "label": "the election", "shape": "dot", "value": 7}, {"color": "#97c2fc", "id": "the people", "label": "the people", "shape": "dot", "value": 8}, {"color": "#97c2fc", "id": "jim", "label": "jim", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "georgia", "label": "georgia", "shape": "dot", "value": 2}, {"color": "#97c2fc", "id": "more", "label": "more", "shape": "dot", "value": 5}, {"color": "#97c2fc", "id": "big tech", "label": "big tech", "shape": "dot", "value": 8}, {"color": "#97c2fc", "id": "they", "label": "they", "shape": "dot", "value": 14}, {"color": "#97c2fc", "id": "america", "label": "america", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "biden", "label": "biden", "shape": "dot", "value": 3}, {"color": "#97c2fc", "id": "senate", "label": "senate", "shape": "dot", "value": 2}, {"color": "#97c2fc", "id": "nothing", "label": "nothing", "shape": "dot", "value": 4}, {"color": "#97c2fc", "id": "case", "label": "case", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "job", "label": "job", "shape": "dot", "value": 3}, {"color": "#97c2fc", "id": "vote", "label": "vote", "shape": "dot", "value": 4}, {"color": "#97c2fc", "id": "order", "label": "order", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "the second amendment", "label": "the second amendment", "shape": "dot", "value": 6}, {"color": "#97c2fc", "id": "joe", "label": "joe", "shape": "dot", "value": 2}, {"color": "#97c2fc", "id": "wisconsin", "label": "wisconsin", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "an outsider", "label": "an outsider", "shape": "dot", "value": 4}, {"color": "#97c2fc", "id": "republicans", "label": "republicans", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "republican", "label": "republican", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "david", "label": "david", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "biden|joe biden|joe", "label": "biden|joe biden|joe", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "michigan", "label": "michigan", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "fraud", "label": "fraud", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "usa", "label": "usa", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "florida", "label": "florida", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "vet", "label": "vet", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "ohio", "label": "ohio", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "arizona", "label": "arizona", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "our country", "label": "our country", "shape": "dot", "value": 1}, {"color": "#97c2fc", "id": "the supreme court|court", "label": "the supreme court|court", "shape": "dot", "value": 2}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": "steve", "hidden": false, "label": "have", "to": "my complete and total endorsement", "value": 35}, {"arrows": "to", "from": "steve", "hidden": false, "label": "have", "to": "senate", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "do", "to": "we", "value": 7}, {"arrows": "to", "from": "we", "hidden": false, "label": "have", "to": "we", "value": 4}, {"arrows": "to", "from": "we", "hidden": false, "label": "win", "to": "we", "value": 3}, {"arrows": "to", "from": "we", "hidden": false, "label": "see", "to": "we", "value": 3}, {"arrows": "to", "from": "we", "hidden": false, "label": "love", "to": "we", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "come", "to": "we", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "get", "to": "we", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "give", "to": "we", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "know", "to": "we", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "told", "to": "we", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "have", "to": "a fantastic job", "value": 5}, {"arrows": "to", "from": "we", "hidden": false, "label": "make", "to": "a fantastic job", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "do", "to": "a fantastic job", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "win", "to": "state", "value": 5}, {"arrows": "to", "from": "we", "hidden": false, "label": "create", "to": "amp", "value": 5}, {"arrows": "to", "from": "we", "hidden": false, "label": "have", "to": "amp", "value": 4}, {"arrows": "to", "from": "we", "hidden": false, "label": "protect", "to": "amp", "value": 4}, {"arrows": "to", "from": "we", "hidden": false, "label": "want", "to": "amp", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "take", "to": "amp", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "won", "to": "the election", "value": 4}, {"arrows": "to", "from": "we", "hidden": false, "label": "have", "to": "the election", "value": 4}, {"arrows": "to", "from": "we", "hidden": false, "label": "win", "to": "the election", "value": 4}, {"arrows": "to", "from": "we", "hidden": false, "label": "lose", "to": "the election", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "finish", "to": "the people", "value": 4}, {"arrows": "to", "from": "we", "hidden": false, "label": "round", "to": "the people", "value": 4}, {"arrows": "to", "from": "we", "hidden": false, "label": "get", "to": "the people", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "have", "to": "the people", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "win", "to": "georgia", "value": 3}, {"arrows": "to", "from": "we", "hidden": false, "label": "have", "to": "more", "value": 3}, {"arrows": "to", "from": "we", "hidden": false, "label": "do", "to": "more", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "have", "to": "big tech", "value": 3}, {"arrows": "to", "from": "we", "hidden": false, "label": "make", "to": "big tech", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "low", "to": "my complete and total endorsement", "value": 3}, {"arrows": "to", "from": "we", "hidden": false, "label": "have", "to": "my complete and total endorsement", "value": 3}, {"arrows": "to", "from": "we", "hidden": false, "label": "give", "to": "my complete and total endorsement", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "cut", "to": "my complete and total endorsement", "value": 1}, {"arrows": "to", "from": "we", "hidden": false, "label": "sound", "to": "they", "value": 3}, {"arrows": "to", "from": "we", "hidden": false, "label": "play", "to": "they", "value": 3}, {"arrows": "to", "from": "we", "hidden": false, "label": "control", "to": "they", "value": 1}, {"arrows": "to", "from": "we", "hidden": false, "label": "make", "to": "america", "value": 3}, {"arrows": "to", "from": "we", "hidden": false, "label": "need", "to": "steve", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "present", "to": "case", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "present", "to": "job", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "receive", "to": "vote", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "find", "to": "vote", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "win", "to": "vote", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "end", "to": "the second amendment", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "support", "to": "the second amendment", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "achieve", "to": "the second amendment", "value": 1}, {"arrows": "to", "from": "we", "hidden": false, "label": "have", "to": "nothing", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "win", "to": "michigan", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "show", "to": "fraud", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "spell", "to": "vet", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "win", "to": "arizona", "value": 2}, {"arrows": "to", "from": "we", "hidden": false, "label": "defend", "to": "our country", "value": 1}, {"arrows": "to", "from": "we", "hidden": false, "label": "deliver", "to": "an outsider", "value": 1}, {"arrows": "to", "from": "a fantastic job", "hidden": false, "label": "love", "to": "they", "value": 2}, {"arrows": "to", "from": "amp", "hidden": false, "label": "do", "to": "a fantastic job", "value": 2}, {"arrows": "to", "from": "amp", "hidden": false, "label": "have", "to": "my complete and total endorsement", "value": 2}, {"arrows": "to", "from": "amp", "hidden": false, "label": "run", "to": "the people", "value": 2}, {"arrows": "to", "from": "the election", "hidden": false, "label": "have", "to": "my complete and total endorsement", "value": 2}, {"arrows": "to", "from": "the election", "hidden": false, "label": "win", "to": "florida", "value": 2}, {"arrows": "to", "from": "the election", "hidden": false, "label": "win", "to": "ohio", "value": 2}, {"arrows": "to", "from": "the people", "hidden": false, "label": "take", "to": "amp", "value": 2}, {"arrows": "to", "from": "the people", "hidden": false, "label": "have", "to": "big tech", "value": 2}, {"arrows": "to", "from": "jim", "hidden": false, "label": "have", "to": "my complete and total endorsement", "value": 4}, {"arrows": "to", "from": "georgia", "hidden": false, "label": "watch", "to": "amp", "value": 2}, {"arrows": "to", "from": "more", "hidden": false, "label": "get", "to": "more", "value": 2}, {"arrows": "to", "from": "more", "hidden": false, "label": "end", "to": "the second amendment", "value": 2}, {"arrows": "to", "from": "big tech", "hidden": false, "label": "cover", "to": "biden", "value": 2}, {"arrows": "to", "from": "big tech", "hidden": false, "label": "have", "to": "senate", "value": 2}, {"arrows": "to", "from": "they", "hidden": false, "label": "do", "to": "we", "value": 3}, {"arrows": "to", "from": "they", "hidden": false, "label": "rake", "to": "nothing", "value": 2}, {"arrows": "to", "from": "they", "hidden": false, "label": "do", "to": "nothing", "value": 2}, {"arrows": "to", "from": "they", "hidden": false, "label": "pick", "to": "big tech", "value": 2}, {"arrows": "to", "from": "they", "hidden": false, "label": "have", "to": "big tech", "value": 2}, {"arrows": "to", "from": "they", "hidden": false, "label": "keep", "to": "job", "value": 2}, {"arrows": "to", "from": "they", "hidden": false, "label": "want", "to": "job", "value": 2}, {"arrows": "to", "from": "they", "hidden": false, "label": "allow", "to": "amp", "value": 1}, {"arrows": "to", "from": "they", "hidden": false, "label": "allow", "to": "state", "value": 1}, {"arrows": "to", "from": "they", "hidden": false, "label": "allow", "to": "the people", "value": 1}, {"arrows": "to", "from": "biden", "hidden": false, "label": "receive", "to": "amp", "value": 2}, {"arrows": "to", "from": "biden", "hidden": false, "label": "get", "to": "vote", "value": 2}, {"arrows": "to", "from": "nothing", "hidden": false, "label": "know", "to": "we", "value": 2}, {"arrows": "to", "from": "order", "hidden": false, "label": "have", "to": "my complete and total endorsement", "value": 2}, {"arrows": "to", "from": "the second amendment", "hidden": false, "label": "have", "to": "my complete and total endorsement", "value": 2}, {"arrows": "to", "from": "joe", "hidden": false, "label": "eviscerate", "to": "wisconsin", "value": 2}, {"arrows": "to", "from": "joe", "hidden": false, "label": "eviscerate", "to": "an outsider", "value": 2}, {"arrows": "to", "from": "an outsider", "hidden": false, "label": "treat", "to": "usa", "value": 2}, {"arrows": "to", "from": "an outsider", "hidden": false, "label": "do", "to": "we", "value": 2}, {"arrows": "to", "from": "republicans", "hidden": false, "label": "find", "to": "big tech", "value": 2}, {"arrows": "to", "from": "republican", "hidden": false, "label": "confirm", "to": "we", "value": 2}, {"arrows": "to", "from": "david", "hidden": false, "label": "have", "to": "my complete and total endorsement", "value": 2}, {"arrows": "to", "from": "biden|joe biden|joe", "hidden": false, "label": "proposing", "to": "amp", "value": 2}, {"arrows": "to", "from": "the supreme court|court", "hidden": false, "label": "show", "to": "a fantastic job", "value": 1}, {"arrows": "to", "from": "the supreme court|court", "hidden": false, "label": "show", "to": "the second amendment", "value": 1}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

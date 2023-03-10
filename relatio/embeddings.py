@@ -37,6 +37,8 @@ class Embeddings(EmbeddingsBase):
     For further details, see: https://github.com/PrincetonML/SIF
     The input is expected in lowe case.
     Examples:
+        >>> import tensorflow as tf
+        >>> tf.config.experimental.enable_tensor_float_32_execution(False)
         >>> model = Embeddings("TensorFlow_USE","https://tfhub.dev/google/universal-sentence-encoder/4")
         >>> model.get_vector("hello world").shape
         (512,)
@@ -67,7 +69,6 @@ class Embeddings(EmbeddingsBase):
         alpha: float = 0.001,
         **kwargs,
     ) -> None:
-
         EmbeddingsClass: Union[
             Type[TensorFlowUSEEmbeddings],
             Type[GensimWord2VecEmbeddings],
@@ -151,7 +152,6 @@ class Embeddings(EmbeddingsBase):
 
     # This will require refactoring for speed (in the case of spacy and USE)
     def get_vectors(self, phrases: str, progress_bar: bool = False) -> np.ndarray:
-
         if progress_bar:
             print("Computing phrase embeddings...")
             phrases = tqdm(phrases)
@@ -215,7 +215,6 @@ class TensorFlowUSEEmbeddings(EmbeddingsBase):
 
 class GensimWord2VecEmbeddings(EmbeddingsBase):
     def __init__(self, path: str):
-
         self._model = self._load_keyed_vectors(path)
         self._vocab = self._model.vocab
         self.size_vectors = self._model[list(self._vocab)[0]].shape[0]
@@ -231,7 +230,6 @@ class GensimWord2VecEmbeddings(EmbeddingsBase):
         return Word2Vec.load(path).wv
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
-
         tokens = phrase.split()
         embeddable_tokens = []
         for token in tokens:
@@ -256,7 +254,6 @@ class GensimPreTrainedEmbeddings(GensimWord2VecEmbeddings, EmbeddingsBase):
     """
 
     def __init__(self, model: str):
-
         self._model = self._load_keyed_vectors(model)
         self._vocab = self._model.vocab
 
@@ -327,10 +324,3 @@ def _embeddings_similarity(vectors1, vectors2, threshold: float = 100):
     index = list(np.where(min_distances <= threshold))[0]
     index_min_distances = index_min_distances[index]
     return index, index_min_distances
-
-
-def _remove_nan_vectors(vectors):
-    """
-    Remove columns with np.nan values in a numpy array.
-    """
-    return vectors[~np.isnan(vectors).any(axis=1)]
