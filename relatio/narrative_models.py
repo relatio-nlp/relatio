@@ -1,34 +1,23 @@
 import math
 import warnings
-from abc import ABC, abstractmethod
 from collections import Counter
 from copy import deepcopy
 from pathlib import Path
-from typing import List, Optional, Type, Union
+from typing import List, Optional, Union
 
 import hdbscan
 import matplotlib.pyplot as plt
 import numpy as np
-import spacy
 import umap
-
-from mpl_toolkits.mplot3d import Axes3D
 from kneed import KneeLocator
+from mpl_toolkits.mplot3d import Axes3D
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.metrics import make_scorer, silhouette_score
-from sklearn.model_selection import RandomizedSearchCV
-from spacy.cli import download as spacy_download
+from sklearn.metrics import silhouette_score
 from tqdm import tqdm
 
-from relatio.embeddings import (
-    Embeddings,
-    _compute_distances,
-    _embeddings_similarity,
-    _get_index_min_distances,
-    _get_min_distances,
-)
-from relatio.utils import count_values, is_subsequence, make_list_from_key, prettify
+from relatio.embeddings import Embeddings, _embeddings_similarity
+from relatio.utils import count_values, is_subsequence, make_list_from_key
 
 
 class NarrativeModel:
@@ -178,9 +167,7 @@ class NarrativeModel:
 
         # Remove np.nans to train the model (or it will break down) and only keep phrases that have a vector (or it will mess up labels)
         idx = [i[0] for i in np.argwhere(np.isnan(vectors).any(axis=1))]
-        self.phrases_to_embed = [
-            phrase for i, phrase in enumerate(phrases_to_embed) if i not in idx
-        ]
+        self.phrases_to_embed = [phrase for i, phrase in enumerate(phrases_to_embed) if i not in idx]
         self.training_vectors = vectors[~np.isnan(vectors).any(axis=1)]
 
         # Dimension reduction via PCA
@@ -280,9 +267,7 @@ class NarrativeModel:
 
             k = kneedle.knee
             if k is None:
-                raise Warning(
-                    "Not enough clustering scenarios to find the elbow. Defaulting to silhouette score."
-                )
+                raise Warning("Not enough clustering scenarios to find the elbow. Defaulting to silhouette score.")
             else:
                 l = [i for i, n in enumerate(cluster_args["n_clusters"]) if n == k][0]
                 print(
@@ -351,11 +336,7 @@ class NarrativeModel:
             self.best_score_args = best_score_args
             self.scores["DBCV"] = scores
             l = np.argmax(self.scores["DBCV"])
-            print(
-                "The DBCV score suggests the index of the optimal clustering model is {0}.".format(
-                    l
-                )
-            )
+            print("The DBCV score suggests the index of the optimal clustering model is {0}.".format(l))
 
         self.clustering_model = models[np.argmax(scores)]
         self.cluster_args = cluster_args
@@ -367,12 +348,8 @@ class NarrativeModel:
 
         print("Labeling the clusters by the most frequent phrases...")
         self.vocab_unknown_entities = [{} for i, m in enumerate(self.clustering_models)]
-        self.labels_unknown_entities = [
-            {} for i, m in enumerate(self.clustering_models)
-        ]
-        for index_clustering_model, clustering_model in enumerate(
-            self.clustering_models
-        ):
+        self.labels_unknown_entities = [{} for i, m in enumerate(self.clustering_models)]
+        for index_clustering_model, clustering_model in enumerate(self.clustering_models):
             self.label_clusters(
                 counter_for_phrases,
                 phrases_to_embed,
@@ -407,47 +384,31 @@ class NarrativeModel:
             all_labels = ["" for i in phrases]
 
             # Match known entities (with character matching)
-            if (
-                role in self.roles_with_known_entities
-                and self.assignment_to_known_entities == "character_matching"
-            ):
-                idx, labels_known_entities = self.character_matching(
-                    phrases, progress_bar
-                )
+            if role in self.roles_with_known_entities and self.assignment_to_known_entities == "character_matching":
+                idx, labels_known_entities = self.character_matching(phrases, progress_bar)
 
                 for i, k in enumerate(idx):
                     all_labels[k] = labels_known_entities[i]
 
-                phrase_index, phrases_to_embed = [
-                    i for i, p in enumerate(phrases) if i not in idx
-                ], [p for i, p in enumerate(phrases) if i not in idx]
+                phrase_index, phrases_to_embed = [i for i, p in enumerate(phrases) if i not in idx], [
+                    p for i, p in enumerate(phrases) if i not in idx
+                ]
 
             # Match known entities (with embeddings distance)
-            if (
-                role in self.roles_with_known_entities
-                and self.assignment_to_known_entities == "embeddings"
-            ):
+            if role in self.roles_with_known_entities and self.assignment_to_known_entities == "embeddings":
                 phrases_to_embed = phrases.copy()
                 phrase_index = [i for i, p in enumerate(phrases_to_embed)]
 
-                vectors = self.embeddings_model.get_vectors(
-                    phrases_to_embed, progress_bar
-                )
+                vectors = self.embeddings_model.get_vectors(phrases_to_embed, progress_bar)
                 nan_index = np.argwhere(np.isnan(vectors).any(axis=1))
                 vectors = vectors[~np.isnan(vectors).any(axis=1)]
                 phrase_index = [i for i in phrase_index if i not in nan_index]
-                phrases_to_embed = [
-                    phrase
-                    for i, phrase in enumerate(phrases_to_embed)
-                    if i in phrase_index
-                ]
+                phrases_to_embed = [phrase for i, phrase in enumerate(phrases_to_embed) if i in phrase_index]
 
                 if progress_bar:
                     print("Matching known entities (with embeddings distance)...")
 
-                idx, index_known_entities = _embeddings_similarity(
-                    vectors, self.vectors_known_entities, self.threshold
-                )
+                idx, index_known_entities = _embeddings_similarity(vectors, self.vectors_known_entities, self.threshold)
                 labels_known_entities = self.label_with_known_entity(index_known_entities)
                 flag_computed_vectors = True
 
@@ -460,17 +421,11 @@ class NarrativeModel:
                     print("Matching unknown entities (with clustering model)...")
 
                 if flag_computed_vectors == False:
-                    vectors = self.embeddings_model.get_vectors(
-                        phrases_to_embed, progress_bar
-                    )
+                    vectors = self.embeddings_model.get_vectors(phrases_to_embed, progress_bar)
                     nan_index = np.argwhere(np.isnan(vectors).any(axis=1))
                     vectors = vectors[~np.isnan(vectors).any(axis=1)]
                     phrase_index = [i for i in phrase_index if i not in nan_index]
-                    phrases_to_embed = [
-                        phrase
-                        for i, phrase in enumerate(phrases_to_embed)
-                        if i in phrase_index
-                    ]
+                    phrases_to_embed = [phrase for i, phrase in enumerate(phrases_to_embed) if i in phrase_index]
 
                 if self.PCA:
                     if progress_bar:
@@ -488,19 +443,13 @@ class NarrativeModel:
                     print("Assignment to clusters...")
 
                 if self.clustering == "hdbscan":
-                    cluster_index = hdbscan.approximate_predict(
-                        clustering_model, vectors
-                    )[0]
+                    cluster_index = hdbscan.approximate_predict(clustering_model, vectors)[0]
                     idx = list(range(len(cluster_index)))
 
                 else:
-                    idx, cluster_index = _embeddings_similarity(
-                        vectors, clustering_model.cluster_centers_
-                    )
+                    idx, cluster_index = _embeddings_similarity(vectors, clustering_model.cluster_centers_)
 
-                cluster_labels = self.label_with_most_frequent_phrase(
-                    cluster_index, index_clustering_model
-                )
+                cluster_labels = self.label_with_most_frequent_phrase(cluster_index, index_clustering_model)
 
                 for i, k in enumerate(idx):
                     all_labels[phrase_index[k]] = cluster_labels[i]
@@ -550,31 +499,25 @@ class NarrativeModel:
         print(self.vocab_unknown_entities)
 
         for j, clu in enumerate(self.clustering_models[index_clustering_model].labels_):
-            self.vocab_unknown_entities[index_clustering_model][clu][
+            self.vocab_unknown_entities[index_clustering_model][clu][phrases_to_embed[j]] = counter_for_phrases[
                 phrases_to_embed[j]
-            ] = counter_for_phrases[phrases_to_embed[j]]
+            ]
 
         print(self.vocab_unknown_entities)
 
         for clu in labels:
-            token_most_common = self.vocab_unknown_entities[index_clustering_model][
-                clu
-            ].most_common(2)
-            if len(token_most_common) > 1 and (
-                token_most_common[0][1] == token_most_common[1][1]
-            ):
+            token_most_common = self.vocab_unknown_entities[index_clustering_model][clu].most_common(2)
+            if len(token_most_common) > 1 and (token_most_common[0][1] == token_most_common[1][1]):
                 warnings.warn(
                     f"Multiple labels for cluster {clu}- 2 shown: {token_most_common}. First one is picked.",
                     RuntimeWarning,
                 )
-            self.labels_unknown_entities[index_clustering_model][
-                clu
-            ] = token_most_common[0][0]
+            self.labels_unknown_entities[index_clustering_model][clu] = token_most_common[0][0]
 
         print(self.vocab_unknown_entities)
 
-            if self.labels_unknown_entities[clu] == "":
-                self.labels_unknown_entities[clu] = token_most_common[1][0]
+        if self.labels_unknown_entities[clu] == "":
+            self.labels_unknown_entities[clu] = token_most_common[1][0]
 
         if self.clustering == "hdbscan":
             self.labels_unknown_entities[index_clustering_model][-1] = ""
@@ -582,28 +525,18 @@ class NarrativeModel:
     def label_with_known_entity(self, index):
         return [self.known_entities[i] for i in index]
 
-    def label_with_most_frequent_phrase(
-        self, index, index_clustering_model: Optional[int] = None
-    ):
+    def label_with_most_frequent_phrase(self, index, index_clustering_model: Optional[int] = None):
         if index_clustering_model is None:
             index_clustering_model = self.index_optimal_model
 
         return [self.labels_unknown_entities[index_clustering_model][i] for i in index]
 
-    def inspect_cluster(
-        self, label, index_clustering_model: Optional[int] = None, topn=10
-    ):
+    def inspect_cluster(self, label, index_clustering_model: Optional[int] = None, topn=10):
         if index_clustering_model is None:
             index_clustering_model = self.index_optimal_model
 
-        key = [
-            k
-            for k, v in self.labels_unknown_entities[index_clustering_model].items()
-            if v == label
-        ][0]
-        return self.vocab_unknown_entities[index_clustering_model][key].most_common(
-            topn
-        )
+        key = [k for k, v in self.labels_unknown_entities[index_clustering_model].items() if v == label][0]
+        return self.vocab_unknown_entities[index_clustering_model][key].most_common(topn)
 
     def clusters_to_txt(
         self,
@@ -719,9 +652,7 @@ class NarrativeModel:
         if self.clustering == "kmeans":
             if metric == "silhouette":
                 plt.figure(figsize=figsize)
-                plt.plot(
-                    self.cluster_args["n_clusters"], self.scores["silhouette"], "bx-"
-                )
+                plt.plot(self.cluster_args["n_clusters"], self.scores["silhouette"], "bx-")
                 plt.xlabel("Number of Clusters")
                 plt.ylabel("Silhouette Score")
             elif metric == "inertia":

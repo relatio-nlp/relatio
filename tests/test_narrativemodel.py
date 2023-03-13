@@ -1,5 +1,4 @@
 # test for  NarrativeModel
-import pandas as pd
 import pytest
 import spacy
 
@@ -7,8 +6,6 @@ from relatio.datasets import load_data
 from relatio.narrative_models import NarrativeModel
 from relatio.preprocessing import Preprocessor
 from relatio.semantic_role_labeling import SRL, extract_roles
-from relatio.supported_models import LANGUAGE_MODELS
-from relatio.utils import load_roles
 
 nlp = spacy.load("en_core_web_sm")
 stop_words = list(nlp.Defaults.stop_words)
@@ -227,6 +224,6 @@ def test_num_entities(narrative_model):
 def test_narrative_outputs(narrative_model):
     narratives_output = []
     for i in range(3):
-        narratives = narrative_model.predict(postproc_roles, progress_bar = True)
+        narratives = narrative_model.predict(postproc_roles, progress_bar=True)
         narratives_output.append(narratives)
-    assert  narratives_output[0] == narratives_output[1] == narratives_output[2]
+    assert narratives_output[0] == narratives_output[1] == narratives_output[2]

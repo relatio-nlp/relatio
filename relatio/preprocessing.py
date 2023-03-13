@@ -9,9 +9,7 @@ from typing import Dict, List, Optional, Tuple  # , Any, Union
 import pandas as pd
 import spacy
 from spacy.cli import download as spacy_download
-from spacy.tokens import Doc
-from spacy.language import Language
-from spacy.tokens import Token
+from spacy.tokens import Doc, Token
 from tqdm import tqdm
 
 from relatio.dependency_parsing import (
@@ -315,9 +313,7 @@ class Preprocessor:
         return entity_counts
 
     def clean_roles(self, roles, max_length, pos_tags_to_keep, progress_bar):
-        spacy_roles = self.nlp.pipe(
-            roles, batch_size=self.batch_size, n_process=self.n_process
-        )
+        spacy_roles = self.nlp.pipe(roles, batch_size=self.batch_size, n_process=self.n_process)
 
         length = len(roles)
 

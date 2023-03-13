@@ -1,13 +1,6 @@
 # test for SRL, extract_roles, process_roles + coreference resolution
 
-from typing import List
-
-import pandas as pd
-import pytest
-import spacy
-
-from relatio.preprocessing import Preprocessor
-from relatio.semantic_role_labeling import SRL, extract_roles
+from relatio.semantic_role_labeling import extract_roles
 
 
 def test_srl_result_size(df_split, SRL_model):
