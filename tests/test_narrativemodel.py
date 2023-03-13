@@ -128,21 +128,21 @@ model_kmeans_m_BERT = NarrativeModel(
 )
 model_kmeans_m_BERT.fit(postproc_roles, progress_bar=False, pca_args={"n_components": 15, "svd_solver": "full"})
 
-# NarrativeModel(kmeans+globe)
-model_kmeans_gensim = NarrativeModel(
-    clustering="kmeans",
-    PCA=True,
-    UMAP=True,
-    roles_considered=["ARG0", "B-V", "B-ARGM-NEG", "ARG1", "ARG2"],
-    roles_with_known_entities=["ARG0", "ARG1", "ARG2"],
-    known_entities=top_known_entities,
-    assignment_to_known_entities="character_matching",
-    roles_with_unknown_entities=["ARG0", "ARG1", "ARG2"],
-    threshold=0.3,
-    embeddings_type="Gensim_pretrained",
-    embeddings_model="glove-twitter-25",
-)
-model_kmeans_gensim.fit(postproc_roles, progress_bar=False, pca_args={"n_components": 15, "svd_solver": "full"})
+# # NarrativeModel(kmeans+globe)
+# model_kmeans_gensim = NarrativeModel(
+#     clustering="kmeans",
+#     PCA=True,
+#     UMAP=True,
+#     roles_considered=["ARG0", "B-V", "B-ARGM-NEG", "ARG1", "ARG2"],
+#     roles_with_known_entities=["ARG0", "ARG1", "ARG2"],
+#     known_entities=top_known_entities,
+#     assignment_to_known_entities="character_matching",
+#     roles_with_unknown_entities=["ARG0", "ARG1", "ARG2"],
+#     threshold=0.3,
+#     embeddings_type="Gensim_pretrained",
+#     embeddings_model="glove-twitter-25",
+# )
+# model_kmeans_gensim.fit(postproc_roles, progress_bar=False, pca_args={"n_components": 15, "svd_solver": "full"})
 
 # NarrativeModel(kmeans+spacy)
 model_kmeans_spacy = NarrativeModel(
@@ -196,7 +196,7 @@ model_hdbscan_USE.fit(postproc_roles, progress_bar=False, pca_args={"n_component
 models = [
     model_kmeans_USE,
     model_kmeans_m_BERT,
-    model_kmeans_gensim,
+    # model_kmeans_gensim,
     model_kmeans_p_BERT,
     model_hdbscan_USE,
 ]
