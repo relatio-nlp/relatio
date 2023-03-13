@@ -19,7 +19,6 @@ from tqdm import tqdm
 
 
 def find_synonyms(verb: str) -> List[str]:
-
     """
 
     Find synonyms of a given word based on wordnet.
@@ -46,7 +45,6 @@ def find_synonyms(verb: str) -> List[str]:
 
 
 def find_antonyms(verb: str) -> List[str]:
-
     """
 
     Find antonyms of a given word based on wordnet.
@@ -74,7 +72,6 @@ def find_antonyms(verb: str) -> List[str]:
 
 
 def get_most_frequent(tokens: List[str], token_counts: Counter) -> Optional[str]:
-
     """
 
     Find most frequent token in a list of tokens.
@@ -106,7 +103,6 @@ def clean_verbs(
     progress_bar: bool = False,
     suffix: str = "_lowdim",
 ) -> List[dict]:
-
     """
 
     Replace verbs by their most frequent synonym or antonym.

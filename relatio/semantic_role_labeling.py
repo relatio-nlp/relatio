@@ -24,7 +24,12 @@ from allennlp_models.structured_prediction.predictors import (
 )
 from tqdm import tqdm
 
-from .utils import group_sentences_in_batches, replace_sentences, save_roles
+from .utils import (
+    group_sentences_in_batches,
+    is_subsequence,
+    replace_sentences,
+    save_roles,
+)
 
 
 class SRL:
@@ -131,9 +136,10 @@ class SRL:
 
 
 def _extract_role_per_sentence(
-    sentence_dict: dict, used_roles: List[str]
+    sentence_dict: dict,
+    used_roles: List[str],
+    only_triplets: bool = True,
 ) -> List[Dict[str, Union[str, bool]]]:
-
     """
 
     Extract the semantic roles for a given sentence.
@@ -154,7 +160,7 @@ def _extract_role_per_sentence(
         tag_list = statement_dict["tags"]
 
         statement_role_dict: Dict[str, Union[str, bool]] = {}
-        for role in ["ARG0", "ARG1", "ARG2", "B-V", "B-ARGM-MOD"]:
+        for role in ["ARG0", "B-V", "B-ARGM-MOD", "ARG1", "ARG2"]:
             if role in used_roles:
                 indices_role = [i for i, tok in enumerate(tag_list) if role in tok]
                 toks_role = [
@@ -168,14 +174,20 @@ def _extract_role_per_sentence(
 
         key_to_delete = []
         for key, value in statement_role_dict.items():
-            if not value:
+            if not value or value == "":
                 key_to_delete.append(key)
         for key in key_to_delete:
             del statement_role_dict[key]
-        sentence_role_list.append(statement_role_dict)
 
-    if not sentence_role_list:
-        sentence_role_list = [{}]
+        if only_triplets:
+            if is_subsequence(
+                ["ARG0", "B-V", "ARG1"], list(statement_role_dict.keys())
+            ) or is_subsequence(
+                ["ARG0", "B-V", "ARG2"], list(statement_role_dict.keys())
+            ):
+                sentence_role_list.append(statement_role_dict)
+        else:
+            sentence_role_list.append(statement_role_dict)
 
     return sentence_role_list
 
@@ -183,9 +195,9 @@ def _extract_role_per_sentence(
 def extract_roles(
     srl: List[Dict[str, Any]],
     used_roles: List[str],
+    only_triplets: bool = False,
     progress_bar: bool = False,
 ) -> Tuple[List[Dict[str, Union[str, bool]]], List[int]]:
-
     """
 
     Extract semantic roles from the SRL output.
@@ -209,8 +221,11 @@ def extract_roles(
         srl = tqdm(srl)
 
     for i, sentence_dict in enumerate(srl):
-        role_per_sentence = _extract_role_per_sentence(sentence_dict, used_roles)
-        sentence_index.extend([i] * len(role_per_sentence))
-        statements_role_list.extend(role_per_sentence)
+        role_per_sentence = _extract_role_per_sentence(
+            sentence_dict, used_roles, only_triplets
+        )
+        if role_per_sentence:
+            sentence_index.extend([i] * len(role_per_sentence))
+            statements_role_list.extend(role_per_sentence)
 
     return statements_role_list, np.asarray(sentence_index, dtype=np.uint32)

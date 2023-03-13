@@ -24,7 +24,6 @@ def replace_sentences(
     max_sentence_length: Optional[int] = None,
     max_number_words: Optional[int] = None,
 ) -> List[str]:
-
     """
 
     Replace long sentences in list of sentences by empty strings.
@@ -83,7 +82,6 @@ def group_sentences_in_batches(
     max_batch_char_length: Optional[int] = None,
     batch_size: Optional[int] = None,
 ) -> List[List[str]]:
-
     """
 
     Group sentences in batches of given total character length or size (number of sentences).
@@ -125,7 +123,6 @@ def group_sentences_in_batches(
     if max_batch_char_length is not None and batch_size is not None:
         raise ValueError("max_batch_char_length and batch_size are mutually exclusive.")
     elif max_batch_char_length is not None:
-
         # longer sentences are replaced with an empty string
         sentences = replace_sentences(
             sentences, max_sentence_length=max_batch_char_length
@@ -157,7 +154,6 @@ def group_sentences_in_batches(
 
 
 def is_subsequence(v1: list, v2: list) -> bool:
-
     """
 
     Check whether v1 is a subset of v2.
@@ -183,7 +179,6 @@ def is_subsequence(v1: list, v2: list) -> bool:
 def count_values(
     dicts: List[Dict], keys: Optional[list] = None, progress_bar: bool = False
 ) -> Counter:
-
     """
 
     Get a counter with the values of a list of dictionaries, with the conssidered keys given as argument.
@@ -226,7 +221,6 @@ def count_values(
 
 
 def count_words(sentences: List[str]) -> Counter:
-
     """
 
     A function that computes word frequencies in a list of sentences.
@@ -257,7 +251,6 @@ def count_words(sentences: List[str]) -> Counter:
 
 
 def make_list_from_key(key, list_of_dicts):
-
     """
 
     Extract the content of a specific key in a list of dictionaries.
@@ -282,7 +275,6 @@ def get_element(narrative, role):
 
 
 def prettify(narrative) -> str:
-
     ARG0 = get_element(narrative, "ARG0")
     V = get_element(narrative, "B-V")
 
@@ -304,13 +296,11 @@ def prettify(narrative) -> str:
 
 
 def save_entities(entity_counts, output_path: str):
-
     with open(output_path, "wb") as f:
         pk.dump(entity_counts, f)
 
 
 def load_entities(input_path: str):
-
     with open(input_path, "rb") as f:
         entity_counts = pk.load(f)
 
@@ -318,134 +308,12 @@ def load_entities(input_path: str):
 
 
 def save_roles(roles, output_path):
-
     with open(output_path, "w") as f:
         json.dump(roles, f)
 
 
 def load_roles(input_path):
-
     with open(input_path, "r") as f:
         roles = json.load(f)
 
     return roles
-
-
-def is_negation(tok, negs=["pas", "ne", "n'"], neg_deps=["advmod"]):
-    """
-    Identify if the verb is negated in the sentence.
-    """
-    flag_negation = False
-    l1 = [right for right in tok.rights if right.dep_ in neg_deps]
-    l2 = [left for left in tok.lefts if left.dep_ in neg_deps]
-    adv_mods = l1 + l2
-    adv_mods = get_text(adv_mods)
-    for neg in negs:
-        if neg in adv_mods:
-            flag_negation = True
-    return flag_negation
-
-
-def filter_pos(sent, pos):
-    """
-    Returns all tokens with specific part of speech tags.
-    """
-    l = [tok for tok in sent if tok.pos_ in pos]
-    return l
-
-
-def get_deps(verb, deps=None):
-    """
-    Returns all dependencies of a verb.
-    """
-    l = []
-    if deps is not None:
-        l.extend([tok for tok in verb.lefts if tok.dep_ in deps])
-        l.extend([tok for tok in verb.rights if tok.dep_ in deps])
-    else:
-        l.extend([tok for tok in verb.lefts])
-        l.extend([tok for tok in verb.rights])
-    return l
-
-
-def get_text(tokens):
-    """
-    Returns text from list of spacy tokens.
-    """
-    return [tok.text for tok in tokens]
-
-
-def extract_svos_fr(sent):
-    """
-    Get SVOs from a spacy sentence (for french).
-    """
-    svos = []
-
-    all_verbs = filter_pos(sent, pos=["VERB"])
-
-    for i, verb in enumerate(all_verbs):
-
-        negation = is_negation(verb)
-
-        # subjects
-        subjs = []
-        subjs.extend(get_deps(verb, deps=["nsubj"]))  # active forms
-        subjs.extend(get_deps(verb, deps=["obl:agent"]))  # passive forms
-
-        for k, subj in enumerate(subjs):
-            if subj.text in ["qui", "qu'"]:
-                for tok in sent:
-                    for t in tok.rights:
-                        if t == verb:
-                            subjs[k] = tok
-                    for t in tok.lefts:
-                        if t == verb:
-                            subjs[k] = tok
-
-        if len(subjs) != 0:
-            subjs = [" ".join([t.text for t in subj.subtree]) for subj in subjs]
-        elif i > 0 and len(svos) > 0:
-            subjs = [svos[i - 1][0]]
-
-        # objects
-        objs = []
-        objs.extend(get_deps(verb, deps=["obj"]))  # active forms
-        objs.extend(get_deps(verb, deps=["nsubj:pass"]))  # passive forms
-
-        for k, obj in enumerate(objs):
-            if obj.text in ["que", "qu'"]:
-                for tok in sent:
-                    for t in tok.rights:
-                        if t == verb:
-                            objs[k] = tok
-                    for t in tok.lefts:
-                        if t == verb:
-                            objs[k] = tok
-
-        if len(objs) != 0:
-            objs = [" ".join([t.text for t in obj.subtree]) for obj in objs]
-
-        # packaging
-        subjs = " ".join(subjs)
-        objs = " ".join(objs)
-        verb = verb.text
-        svo = (subjs, negation, verb, objs)
-
-        svos.append(svo)
-
-    return svos
-
-
-def from_svos_to_srl_res(svos):
-    """
-    Mapping between SVO triples obtained by dependency parsing and AVP triples obtained by SRL.
-    """
-    avps = []
-    for svo in svos:
-        avp = {}
-        avp["ARG0"] = svo[0]
-        avp["B-ARGM-NEG"] = svo[1]
-        avp["B-V"] = svo[2]
-        avp["ARG1"] = svo[3]
-        avps.append(avp)
-    return avps
