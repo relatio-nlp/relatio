@@ -512,11 +512,10 @@ class NarrativeModel:
                     f"Multiple labels for cluster {clu}- 2 shown: {token_most_common}. First one is picked.",
                     RuntimeWarning,
                 )
-
-            self.labels_unknown_entities[index_clustering_model][clu] = token_most_common[0][0]
-            if self.labels_unknown_entities[clu] == "":
-                if len(token_most_common) > 1:
-                    self.labels_unknown_entities[clu] = token_most_common[1][0]
+            if token_most_common[0][0] != "":
+                self.labels_unknown_entities[index_clustering_model][clu] = token_most_common[0][0]
+            else:
+                self.labels_unknown_entities[index_clustering_model][clu] = token_most_common[1][0]
 
         print(self.vocab_unknown_entities)
 
