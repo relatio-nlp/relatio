@@ -39,9 +39,6 @@ class Embeddings(EmbeddingsBase):
         >>> model = Embeddings("TensorFlow_USE","https://tfhub.dev/google/universal-sentence-encoder/4")
         >>> model.get_vector("hello world").shape
         (512,)
-        >>> model = Embeddings("MultilingualBERTEmbeddings","https://tfhub.dev/google/universal-sentence-encoder-multilingual/3")
-        >>> model.get_vector("hello world").shape
-        (512,)
         >>> model = Embeddings("spaCy", "en_core_web_md")
         >>> np.isnan(model.get_vector("")).any()
         True
@@ -130,7 +127,10 @@ class Embeddings(EmbeddingsBase):
                         RuntimeWarning,
                     )
             res = np.sum(
-                [self._sif_dict[token] * self._get_default_vector(token) for token in tokens],
+                [
+                    self._sif_dict[token] * self._get_default_vector(token)
+                    for token in tokens
+                ],
                 axis=0,
             )
         else:
@@ -138,7 +138,9 @@ class Embeddings(EmbeddingsBase):
 
         # In case the result is fishy it will return a vector of np.nans and raise a warning
         if np.isnan(res).any() or np.count_nonzero(res) == 0:
-            warnings.warn(f"Unable to compute an embedding for phrase: {phrase}.", RuntimeWarning)
+            warnings.warn(
+                f"Unable to compute an embedding for phrase: {phrase}.", RuntimeWarning
+            )
             a = np.empty((self.size_vectors,))
             a[:] = np.nan
 
@@ -191,14 +193,18 @@ class spaCyEmbeddings(EmbeddingsBase):
     def __init__(self, model: str) -> None:
         if not spacy.util.is_package(model):
             spacy_download(model)
-        self._nlp = spacy.load(model, disable=["tagger", "parser", "attribute_ruler", "lemmatizer", "ner"])
+        self._nlp = spacy.load(
+            model, disable=["tagger", "parser", "attribute_ruler", "lemmatizer", "ner"]
+        )
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
         return np.array(self._nlp(phrase).vector)
 
 
 class TensorFlowUSEEmbeddings(EmbeddingsBase):
-    def __init__(self, path: str = "https://tfhub.dev/google/universal-sentence-encoder/4") -> None:
+    def __init__(
+        self, path: str = "https://tfhub.dev/google/universal-sentence-encoder/4"
+    ) -> None:
         try:
             import tensorflow_hub as hub
         except ModuleNotFoundError:
@@ -219,7 +225,9 @@ class MultilingualBERTEmbeddings(EmbeddingsBase):
     model = Embeddings("multilingual_BERT", path)
     """
 
-    def __init__(self, path: str = "sentence-transformers/distiluse-base-multilingual-cased-v2") -> None:
+    def __init__(
+        self, path: str = "sentence-transformers/distiluse-base-multilingual-cased-v2"
+    ) -> None:
         try:
             from sentence_transformers import SentenceTransformer
         except ModuleNotFoundError:

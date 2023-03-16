@@ -236,11 +236,17 @@ class Preprocessor:
         def resolve_references(doc: Doc) -> str:
             token_mention_dict = {}
             output_string = ""
-            clusters = [val for key, val in doc.spans.items() if key.startswith("coref_clusters")]
+            clusters = [
+                val
+                for key, val in doc.spans.items()
+                if key.startswith("coref_clusters")
+            ]
             for cluster in clusters:
                 first_span = cluster[0]
                 for mention_span in list(cluster)[1:]:
-                    token_mention_dict[mention_span[0].idx] = first_span.text + mention_span[0].whitespace_
+                    token_mention_dict[mention_span[0].idx] = (
+                        first_span.text + mention_span[0].whitespace_
+                    )
                     for token in mention_span[1:]:
                         token_mention_dict[token.idx] = ""
             for token in doc:
@@ -287,7 +293,9 @@ class Preprocessor:
 
         entities_all = []
 
-        spacy_sentences = self.nlp.pipe(sentences, batch_size=self.batch_size, n_process=self.n_process)
+        spacy_sentences = self.nlp.pipe(
+            sentences, batch_size=self.batch_size, n_process=self.n_process
+        )
 
         length = len(sentences)
 
@@ -313,7 +321,9 @@ class Preprocessor:
         return entity_counts
 
     def clean_roles(self, roles, max_length, pos_tags_to_keep, progress_bar):
-        spacy_roles = self.nlp.pipe(roles, batch_size=self.batch_size, n_process=self.n_process)
+        spacy_roles = self.nlp.pipe(
+            roles, batch_size=self.batch_size, n_process=self.n_process
+        )
 
         length = len(roles)
 

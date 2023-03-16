@@ -62,10 +62,14 @@ def replace_sentences(
     """
 
     if max_sentence_length is not None:
-        sentences = ["" if (len(sent) > max_sentence_length) else sent for sent in sentences]
+        sentences = [
+            "" if (len(sent) > max_sentence_length) else sent for sent in sentences
+        ]
 
     if max_number_words is not None:
-        sentences = ["" if (len(sent.split()) > max_number_words) else sent for sent in sentences]
+        sentences = [
+            "" if (len(sent.split()) > max_number_words) else sent for sent in sentences
+        ]
 
     return sentences
 
@@ -117,7 +121,9 @@ def group_sentences_in_batches(
         raise ValueError("max_batch_char_length and batch_size are mutually exclusive.")
     elif max_batch_char_length is not None:
         # longer sentences are replaced with an empty string
-        sentences = replace_sentences(sentences, max_sentence_length=max_batch_char_length)
+        sentences = replace_sentences(
+            sentences, max_sentence_length=max_batch_char_length
+        )
         batch_char_length = 0
         batch: List[str] = []
 
@@ -135,7 +141,9 @@ def group_sentences_in_batches(
             batches.append(batch)
 
     elif batch_size is not None:
-        batches = [sentences[i : i + batch_size] for i in range(0, len(sentences), batch_size)]
+        batches = [
+            sentences[i : i + batch_size] for i in range(0, len(sentences), batch_size)
+        ]
     else:
         batches = [sentences]
 
@@ -165,7 +173,9 @@ def is_subsequence(v1: list, v2: list) -> bool:
     return set(v1).issubset(set(v2))
 
 
-def count_values(dicts: List[Dict], keys: Optional[list] = None, progress_bar: bool = False) -> Counter:
+def count_values(
+    dicts: List[Dict], keys: Optional[list] = None, progress_bar: bool = False
+) -> Counter:
     """
 
     Get a counter with the values of a list of dictionaries, with the conssidered keys given as argument.

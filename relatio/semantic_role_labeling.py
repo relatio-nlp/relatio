@@ -71,16 +71,26 @@ class SRL:
         progress_bar: bool = False,
     ):
         max_batch_char_length = (
-            max_batch_char_length if max_batch_char_length is not None else self._max_batch_char_length
+            max_batch_char_length
+            if max_batch_char_length is not None
+            else self._max_batch_char_length
         )
 
         batch_size = batch_size if batch_size is not None else self._batch_size
 
-        max_sentence_length = max_sentence_length if max_sentence_length is not None else self._max_sentence_length
+        max_sentence_length = (
+            max_sentence_length
+            if max_sentence_length is not None
+            else self._max_sentence_length
+        )
 
-        max_number_words = max_number_words if max_number_words is not None else self._max_number_words
+        max_number_words = (
+            max_number_words if max_number_words is not None else self._max_number_words
+        )
 
-        cuda_empty_cache = cuda_empty_cache if cuda_empty_cache is not None else self._cuda_empty_cache
+        cuda_empty_cache = (
+            cuda_empty_cache if cuda_empty_cache is not None else self._cuda_empty_cache
+        )
 
         cuda_sleep = cuda_sleep if cuda_sleep is not None else self._cuda_sleep
 
@@ -152,7 +162,9 @@ def _extract_role_per_sentence(
         for role in ["ARG0", "B-V", "B-ARGM-MOD", "ARG1", "ARG2"]:
             if role in used_roles:
                 indices_role = [i for i, tok in enumerate(tag_list) if role in tok]
-                toks_role = [tok for i, tok in enumerate(word_list) if i in indices_role]
+                toks_role = [
+                    tok for i, tok in enumerate(word_list) if i in indices_role
+                ]
                 statement_role_dict[role] = " ".join(toks_role)
 
         if "B-ARGM-NEG" in used_roles:
@@ -167,7 +179,9 @@ def _extract_role_per_sentence(
             del statement_role_dict[key]
 
         if only_triplets:
-            if is_subsequence(["ARG0", "B-V", "ARG1"], list(statement_role_dict.keys())) or is_subsequence(
+            if is_subsequence(
+                ["ARG0", "B-V", "ARG1"], list(statement_role_dict.keys())
+            ) or is_subsequence(
                 ["ARG0", "B-V", "ARG2"], list(statement_role_dict.keys())
             ):
                 sentence_role_list.append(statement_role_dict)
@@ -206,7 +220,9 @@ def extract_roles(
         srl = tqdm(srl)
 
     for i, sentence_dict in enumerate(srl):
-        role_per_sentence = _extract_role_per_sentence(sentence_dict, used_roles, only_triplets)
+        role_per_sentence = _extract_role_per_sentence(
+            sentence_dict, used_roles, only_triplets
+        )
         if role_per_sentence:
             sentence_index.extend([i] * len(role_per_sentence))
             statements_role_list.extend(role_per_sentence)

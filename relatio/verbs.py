@@ -143,17 +143,25 @@ def clean_verbs(
             new_roles["B-V"] = verb
             if "B-ARGM-NEG" in roles:
                 verbs = find_antonyms(verb)
-                most_freq_verb = get_most_frequent(tokens=verbs, token_counts=verb_counts)
+                most_freq_verb = get_most_frequent(
+                    tokens=verbs, token_counts=verb_counts
+                )
                 if most_freq_verb is not None:
                     new_roles["B-V"] = most_freq_verb
                     del new_roles["B-ARGM-NEG"]
             else:
                 verbs = find_synonyms(verb) + [verb]
-                most_freq_verb = get_most_frequent(tokens=verbs, token_counts=verb_counts)
+                most_freq_verb = get_most_frequent(
+                    tokens=verbs, token_counts=verb_counts
+                )
                 if most_freq_verb is not None:
                     new_roles["B-V"] = most_freq_verb
 
-        new_roles = {str(k + suffix): v for k, v in new_roles.items() if k in ["B-V", "B-ARGM-NEG"]}
+        new_roles = {
+            str(k + suffix): v
+            for k, v in new_roles.items()
+            if k in ["B-V", "B-ARGM-NEG"]
+        }
 
         new_roles_all.append(new_roles)
 
