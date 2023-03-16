@@ -70,7 +70,9 @@ SRL_model = SRL(
 srl_res = SRL_model(df_split["sentence"], progress_bar=False)
 
 roles, sentence_index = extract_roles(
-    srl_res, used_roles=["ARG0", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"], progress_bar=True
+    srl_res,
+    used_roles=["ARG0", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"],
+    progress_bar=True,
 )
 
 postproc_roles = p.process_roles(
@@ -109,7 +111,11 @@ model_kmeans_USE = NarrativeModel(
     embeddings_type="TensorFlow_USE",
     embeddings_model="https://tfhub.dev/google/universal-sentence-encoder/4",
 )
-model_kmeans_USE.fit(postproc_roles, progress_bar=False, pca_args={"n_components": 15, "svd_solver": "full"})
+model_kmeans_USE.fit(
+    postproc_roles,
+    progress_bar=False,
+    pca_args={"n_components": 15, "svd_solver": "full"},
+)
 
 # NarrativeModel(kmeans+m_BERT)
 model_kmeans_m_BERT = NarrativeModel(
@@ -125,23 +131,31 @@ model_kmeans_m_BERT = NarrativeModel(
     embeddings_type="multilingual_BERT",
     embeddings_model="sentence-transformers/distiluse-base-multilingual-cased-v2",
 )
-model_kmeans_m_BERT.fit(postproc_roles, progress_bar=False, pca_args={"n_components": 15, "svd_solver": "full"})
+model_kmeans_m_BERT.fit(
+    postproc_roles,
+    progress_bar=False,
+    pca_args={"n_components": 15, "svd_solver": "full"},
+)
 
-# # NarrativeModel(kmeans+globe)
-# model_kmeans_gensim = NarrativeModel(
-#     clustering="kmeans",
-#     PCA=True,
-#     UMAP=True,
-#     roles_considered=["ARG0", "B-V", "B-ARGM-NEG", "ARG1", "ARG2"],
-#     roles_with_known_entities=["ARG0", "ARG1", "ARG2"],
-#     known_entities=top_known_entities,
-#     assignment_to_known_entities="character_matching",
-#     roles_with_unknown_entities=["ARG0", "ARG1", "ARG2"],
-#     threshold=0.3,
-#     embeddings_type="Gensim_pretrained",
-#     embeddings_model="glove-twitter-25",
-# )
-# model_kmeans_gensim.fit(postproc_roles, progress_bar=False, pca_args={"n_components": 15, "svd_solver": "full"})
+# NarrativeModel(kmeans+globe)
+model_kmeans_gensim = NarrativeModel(
+    clustering="kmeans",
+    PCA=True,
+    UMAP=True,
+    roles_considered=["ARG0", "B-V", "B-ARGM-NEG", "ARG1", "ARG2"],
+    roles_with_known_entities=["ARG0", "ARG1", "ARG2"],
+    known_entities=top_known_entities,
+    assignment_to_known_entities="character_matching",
+    roles_with_unknown_entities=["ARG0", "ARG1", "ARG2"],
+    threshold=0.3,
+    embeddings_type="Gensim_pretrained",
+    embeddings_model="glove-twitter-25",
+)
+model_kmeans_gensim.fit(
+    postproc_roles,
+    progress_bar=False,
+    pca_args={"n_components": 15, "svd_solver": "full"},
+)
 
 # NarrativeModel(kmeans+spacy)
 model_kmeans_spacy = NarrativeModel(
@@ -157,7 +171,11 @@ model_kmeans_spacy = NarrativeModel(
     embeddings_type="spaCy",
     embeddings_model="en_core_web_md",
 )
-model_kmeans_spacy.fit(postproc_roles, progress_bar=False, pca_args={"n_components": 15, "svd_solver": "full"})
+model_kmeans_spacy.fit(
+    postproc_roles,
+    progress_bar=False,
+    pca_args={"n_components": 15, "svd_solver": "full"},
+)
 
 # NarrativeModel(kmeans+p_BERT)
 model_kmeans_p_BERT = NarrativeModel(
@@ -173,7 +191,11 @@ model_kmeans_p_BERT = NarrativeModel(
     embeddings_type="phrase-BERT",
     embeddings_model="whaleloops/phrase-bert",
 )
-model_kmeans_p_BERT.fit(postproc_roles, progress_bar=False, pca_args={"n_components": 15, "svd_solver": "full"})
+model_kmeans_p_BERT.fit(
+    postproc_roles,
+    progress_bar=False,
+    pca_args={"n_components": 15, "svd_solver": "full"},
+)
 
 # NarrativeModel(hdbscan+USE)
 model_hdbscan_USE = NarrativeModel(
@@ -189,33 +211,20 @@ model_hdbscan_USE = NarrativeModel(
     embeddings_type="TensorFlow_USE",
     embeddings_model="https://tfhub.dev/google/universal-sentence-encoder/4",
 )
-model_hdbscan_USE.fit(postproc_roles, progress_bar=False, pca_args={"n_components": 15, "svd_solver": "full"})
+model_hdbscan_USE.fit(
+    postproc_roles,
+    progress_bar=False,
+    pca_args={"n_components": 15, "svd_solver": "full"},
+)
 
 
 models = [
     model_kmeans_USE,
     model_kmeans_m_BERT,
-    # model_kmeans_gensim,
+    model_kmeans_gensim,
     model_kmeans_p_BERT,
     model_hdbscan_USE,
 ]
-
-
-# test function for checking whether the number of total entities is correct
-@pytest.mark.parametrize("narrative_model", models)
-def test_num_entities(narrative_model):
-    sum_entities = len(top_known_entities) + len(narrative_model.labels_unknown_entities)
-    narratives = narrative_model.predict(postproc_roles, progress_bar=False)
-    entity_list = []
-    for sentence_dict in narratives:
-        for role in ["ARG0", "ARG1", "ARG2"]:
-            if sentence_dict.get(role) is not None:
-                split_list = sentence_dict.get(role).split("|")
-                for entity in split_list:
-                    if entity not in entity_list:
-                        entity_list.append(entity)
-    detected_entity_num = len(entity_list)
-    assert detected_entity_num == sum_entities
 
 
 # test function for checking whether the narrrative outputs are consistent

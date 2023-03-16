@@ -19,7 +19,8 @@ def test_get_vector_for_sif_out_of_dict():
     res = spacy_model_sif.get_vector("no world")
     expected = (
         spacy_model_sif._get_default_vector("no")
-        + spacy_model_sif._get_default_vector("world") * spacy_model_sif._sif_dict["world"]
+        + spacy_model_sif._get_default_vector("world")
+        * spacy_model_sif._sif_dict["world"]
     )
 
     np.testing.assert_array_equal(res, expected / norm(expected))
