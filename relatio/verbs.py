@@ -31,8 +31,7 @@ def find_synonyms(verb: str) -> List[str]:
 
     Example:
         >>> find_synonyms('fight')
-        ['contend', 'fight', 'struggle', 'fight', 'oppose', 'fight_back', 'fight_down', 'defend', 'fight', 'struggle',
-         'crusade', 'fight', 'press', 'campaign', 'push', 'agitate']
+        ['contend', 'fight', 'struggle', 'fight', 'oppose', 'fight_back', 'fight_down', 'defend', 'fight', 'struggle', 'crusade', 'fight', 'press', 'campaign', 'push', 'agitate']
 
     """
 
