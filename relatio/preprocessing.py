@@ -1,11 +1,8 @@
 import csv
 import time
 from collections import Counter
+from typing import Dict, List, Optional, Tuple
 
-# from copy import deepcopy
-from typing import Dict, List, Optional, Tuple  # , Any, Union
-
-# import numpy as np
 import pandas as pd
 import spacy
 from spacy.cli import download as spacy_download

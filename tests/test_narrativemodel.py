@@ -11,7 +11,7 @@ nlp = spacy.load("en_core_web_sm")
 stop_words = list(nlp.Defaults.stop_words)
 
 
-# prepare data for test, 1000 documents for test
+# prepare data for test, 3000 documents for test
 df_test = load_data(dataset="trump_tweet_archive", content="raw")[:3000]
 
 p = Preprocessor(

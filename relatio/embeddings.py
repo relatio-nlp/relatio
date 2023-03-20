@@ -15,6 +15,7 @@ import numpy as np
 import spacy
 from numpy.linalg import norm
 from scipy.spatial.distance import cdist
+from sentence_transformers import SentenceTransformer
 from spacy.cli import download as spacy_download
 from tqdm import tqdm
 
@@ -228,12 +229,6 @@ class MultilingualBERTEmbeddings(EmbeddingsBase):
     def __init__(
         self, path: str = "sentence-transformers/distiluse-base-multilingual-cased-v2"
     ) -> None:
-        try:
-            from sentence_transformers import SentenceTransformer
-        except ModuleNotFoundError:
-            print("Please install sentence_transformers package")
-            raise
-
         self._model = SentenceTransformer(path)
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
@@ -302,13 +297,6 @@ class PhraseBERTEmbeddings(EmbeddingsBase):
     """
 
     def __init__(self, path: str) -> None:
-        try:
-            from sentence_transformers import SentenceTransformer
-
-        except ModuleNotFoundError:
-            print("Please install sentence_transformers package")
-            raise
-
         self._model = SentenceTransformer(path)
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:

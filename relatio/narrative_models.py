@@ -3,7 +3,7 @@ import warnings
 from collections import Counter
 from copy import deepcopy
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import hdbscan
 import matplotlib.pyplot as plt
@@ -130,7 +130,6 @@ class NarrativeModel:
         pca_args=None,
         umap_args=None,
         cluster_args=None,
-        max_num_clusters=None,
         weight_by_frequency=False,
         progress_bar=True,
     ):
@@ -252,9 +251,9 @@ class NarrativeModel:
 
                 models.append(kmeans)
 
-            scores = []
+            silhouette_scores = []
             for model in models:
-                scores.append(
+                silhouette_scores.append(
                     silhouette_score(
                         self.training_vectors,
                         model.labels_,
@@ -262,7 +261,7 @@ class NarrativeModel:
                     )
                 )
 
-            self.scores["silhouette"] = scores
+            self.scores["silhouette"] = silhouette_scores
 
             l = np.argmax(self.scores["silhouette"])
             k = cluster_args["n_clusters"][l]
@@ -273,11 +272,11 @@ class NarrativeModel:
                 )
             )
 
-            scores = []
+            inertia_scores = []
             for model in models:
-                scores.append(model.inertia_)
+                inertia_scores.append(model.inertia_)
 
-            self.scores["inertia"] = scores
+            self.scores["inertia"] = inertia_scores
 
             kneedle = KneeLocator(
                 cluster_args["n_clusters"],
@@ -315,6 +314,20 @@ class NarrativeModel:
                     "approx_min_span_tree": False,
                     "prediction_data": True,
                 }
+            else:
+                if ["min_cluster_size", "min_samples"] not in cluster_args.keys():
+                    raise Warning(
+                        "Please at least set min_cluster_size and min_samples"
+                    )
+                qual_hdbscan_args_template = {
+                    "cluster_selection_method": ["eom"],
+                    "gen_min_span_tree": True,
+                    "approx_min_span_tree": False,
+                    "prediction_data": True,
+                }
+                for k in qual_hdbscan_args_template.keys():
+                    if k not in cluster_args.keys():
+                        cluster_args[k] = qual_hdbscan_args_template[k]
 
             if progress_bar:
                 print("Clustering parameters chosen in this range:")
@@ -322,13 +335,7 @@ class NarrativeModel:
 
             # Grid search
             models = []
-            scores = []
-            plot_args = {}
-            (
-                plot_args["min_cluster_size"],
-                plot_args["min_samples"],
-                plot_args["score"],
-            ) = ([], [], [])
+            dbcv_scores = []
             for i in cluster_args["min_cluster_size"]:
                 for j in cluster_args["min_samples"]:
                     for h in cluster_args["cluster_selection_method"]:
@@ -350,22 +357,9 @@ class NarrativeModel:
                         score = hdbscan.validity.validity_index(
                             self.training_vectors.astype(np.float64), hdb.labels_
                         )
-                        scores.append(score)
-                        plot_args["min_cluster_size"].append(i)
-                        plot_args["min_samples"].append(j)
-                        plot_args["score"].append(score)
+                        dbcv_scores.append(score)
 
-            best_score_args = {}
-            max_index = np.argmax(scores)
-            best_score_args["min_cluster_size"] = plot_args["min_cluster_size"][
-                max_index
-            ]
-            best_score_args["min_samples"] = plot_args["min_samples"][max_index]
-            best_score_args["score"] = plot_args["score"][max_index]
-
-            self.plot_args = plot_args
-            self.best_score_args = best_score_args
-            self.scores["DBCV"] = scores
+            self.scores["DBCV"] = dbcv_scores
             l = np.argmax(self.scores["DBCV"])
             print(
                 "The DBCV score suggests the index of the optimal clustering model is {0}.".format(
@@ -373,10 +367,6 @@ class NarrativeModel:
                 )
             )
 
-        self.clustering_model = models[np.argmax(scores)]
-        self.cluster_args = cluster_args
-        self.scores = scores
-        self.args = args
         self.index_optimal_model = l
         self.clustering_models = models
         self.cluster_args = cluster_args
@@ -585,14 +575,9 @@ class NarrativeModel:
                     f"Multiple labels for cluster {clu}- 2 shown: {token_most_common}. First one is picked.",
                     RuntimeWarning,
                 )
-            if token_most_common[0][0] != "":
-                self.labels_unknown_entities[index_clustering_model][
-                    clu
-                ] = token_most_common[0][0]
-            else:
-                self.labels_unknown_entities[index_clustering_model][
-                    clu
-                ] = token_most_common[1][0]
+            self.labels_unknown_entities[index_clustering_model][
+                clu
+            ] = token_most_common[0][0]
 
         print(self.vocab_unknown_entities)
 
@@ -700,42 +685,66 @@ class NarrativeModel:
         else:
             plt.savefig(path)
 
-    def plot_selection_metric(self, metric: str, path=None, figsize=(14, 8)):
+    def plot_selection_metric(
+        self, metric: Optional[str] = None, path=None, figsize=(14, 8)
+    ):
         if self.clustering == "hdbscan":
             if metric == "DBCV":
+                plot_args: Dict[str, list] = {}
+                plot_args["min_cluster_size"], plot_args["min_samples"] = [], []
+                best_score_args: Dict[str, int] = {}
+                for i in self.cluster_args["min_cluster_size"]:
+                    for j in self.cluster_args["min_samples"]:
+                        plot_args["min_cluster_size"].append(i)
+                        plot_args["min_samples"].append(j)
+
+                max_index = np.argmax(self.scores["DBCV"])
+                best_score_args["min_cluster_size"] = plot_args["min_cluster_size"][
+                    max_index
+                ]
+                best_score_args["min_samples"] = plot_args["min_samples"][max_index]
+                best_score_args["DBCV"] = self.scores["DBCV"][max_index]
+
                 textstr = "\n".join(
                     (
                         "cluster_selection_method:{}".format(
-                            self.args["cluster_selection_method"]
+                            self.cluster_args["cluster_selection_method"]
                         ),
-                        "gen_min_span_tree:{}".format(self.args["gen_min_span_tree"]),
+                        "gen_min_span_tree:{}".format(
+                            self.cluster_args["gen_min_span_tree"]
+                        ),
                         "approx_min_span_tree:{}".format(
-                            self.args["approx_min_span_tree"]
+                            self.cluster_args["approx_min_span_tree"]
                         ),
-                        "prediction_data:{}".format(self.args["prediction_data"]),
+                        "prediction_data:{}".format(
+                            self.cluster_args["prediction_data"]
+                        ),
                     )
                 )
-                fig = plt.figure()
+                fig = plt.figure(figsize=(8, 6))
                 ax = Axes3D(fig)
+                ax.set_title("DBCV score plot", fontsize="x-large")
                 ax.set_xlabel("Minimum cluster size")
                 ax.set_ylabel("Minimum samples")
                 ax.set_zlabel("DBCV Score")
                 ax.scatter(
-                    self.plot_args["min_cluster_size"],
-                    self.plot_args["min_samples"],
-                    self.plot_args["score"],
+                    plot_args["min_cluster_size"],
+                    plot_args["min_samples"],
+                    self.scores["DBCV"],
                     "o",
-                    s=[(i + 1) * 100 for i in self.plot_args["score"]],
+                    s=[(i + 1) * 100 for i in self.scores["DBCV"]],
                     c="#808080",
                 )
                 ax.scatter(
-                    self.best_score_args["min_cluster_size"],
-                    self.best_score_args["min_samples"],
-                    self.best_score_args["score"],
+                    best_score_args["min_cluster_size"],
+                    best_score_args["min_samples"],
+                    best_score_args["DBCV"],
                     "o",
-                    s=[(self.best_score_args["score"] + 1) * 100],
+                    s=[(best_score_args["DBCV"] + 1) * 100],
                     c="#2ca02c",
                 )
+                ax.set_xticks(list(set(plot_args["min_cluster_size"])))
+                ax.set_yticks(list(set(plot_args["min_samples"])))
                 ax.text2D(
                     -0.05,
                     -0.1,
@@ -743,6 +752,7 @@ class NarrativeModel:
                     horizontalalignment="center",
                     fontsize=8,
                     verticalalignment="top",
+                    transform=ax.transAxes,
                 )
             else:
                 raise ValueError("This metric is not available for HDBSCAN.")
