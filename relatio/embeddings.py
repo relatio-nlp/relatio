@@ -11,8 +11,11 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Type, Union
 
+import gensim.downloader as api
 import numpy as np
 import spacy
+import tensorflow_hub as hub
+from gensim.models import Word2Vec
 from numpy.linalg import norm
 from scipy.spatial.distance import cdist
 from sentence_transformers import SentenceTransformer
@@ -206,11 +209,6 @@ class TensorFlowUSEEmbeddings(EmbeddingsBase):
     def __init__(
         self, path: str = "https://tfhub.dev/google/universal-sentence-encoder/4"
     ) -> None:
-        try:
-            import tensorflow_hub as hub
-        except ModuleNotFoundError:
-            print("Please install tensorflow_hub package")
-            raise
         self._embed = hub.load(path)
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
@@ -242,13 +240,6 @@ class GensimWord2VecEmbeddings(EmbeddingsBase):
         self.size_vectors = self._model[list(self._vocab)[0]].shape[0]
 
     def _load_keyed_vectors(self, path):
-        try:
-            from gensim.models import Word2Vec
-
-        except ModuleNotFoundError:
-            print("Please install gensim package")
-            raise
-
         return Word2Vec.load(path).wv
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
@@ -280,13 +271,6 @@ class GensimPreTrainedEmbeddings(GensimWord2VecEmbeddings, EmbeddingsBase):
         self._vocab = self._model.vocab
 
     def _load_keyed_vectors(self, model):
-        try:
-            import gensim.downloader as api
-
-        except ModuleNotFoundError:
-            print("Please install gensim package")
-            raise
-
         return api.load(model)
 
 

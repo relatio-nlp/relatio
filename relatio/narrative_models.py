@@ -319,15 +319,6 @@ class NarrativeModel:
                     raise Warning(
                         "Please at least set min_cluster_size and min_samples"
                     )
-                qual_hdbscan_args_template = {
-                    "cluster_selection_method": ["eom"],
-                    "gen_min_span_tree": True,
-                    "approx_min_span_tree": False,
-                    "prediction_data": True,
-                }
-                for k in qual_hdbscan_args_template.keys():
-                    if k not in cluster_args.keys():
-                        cluster_args[k] = qual_hdbscan_args_template[k]
 
             if progress_bar:
                 print("Clustering parameters chosen in this range:")
@@ -688,6 +679,12 @@ class NarrativeModel:
     def plot_selection_metric(
         self, metric: Optional[str] = None, path=None, figsize=(14, 8)
     ):
+        if not metric:
+            if self.clustering == "hdbscan":
+                metric = "DBCV"
+            elif self.clustering == "kmeans":
+                metric = "inertia"
+
         if self.clustering == "hdbscan":
             if metric == "DBCV":
                 plot_args: Dict[str, list] = {}
@@ -705,23 +702,7 @@ class NarrativeModel:
                 best_score_args["min_samples"] = plot_args["min_samples"][max_index]
                 best_score_args["DBCV"] = self.scores["DBCV"][max_index]
 
-                textstr = "\n".join(
-                    (
-                        "cluster_selection_method:{}".format(
-                            self.cluster_args["cluster_selection_method"]
-                        ),
-                        "gen_min_span_tree:{}".format(
-                            self.cluster_args["gen_min_span_tree"]
-                        ),
-                        "approx_min_span_tree:{}".format(
-                            self.cluster_args["approx_min_span_tree"]
-                        ),
-                        "prediction_data:{}".format(
-                            self.cluster_args["prediction_data"]
-                        ),
-                    )
-                )
-                fig = plt.figure(figsize=(8, 6))
+                fig = plt.figure(figsize=figsize)
                 ax = Axes3D(fig)
                 ax.set_title("DBCV score plot", fontsize="x-large")
                 ax.set_xlabel("Minimum cluster size")
@@ -745,15 +726,6 @@ class NarrativeModel:
                 )
                 ax.set_xticks(list(set(plot_args["min_cluster_size"])))
                 ax.set_yticks(list(set(plot_args["min_samples"])))
-                ax.text2D(
-                    -0.05,
-                    -0.1,
-                    textstr,
-                    horizontalalignment="center",
-                    fontsize=8,
-                    verticalalignment="top",
-                    transform=ax.transAxes,
-                )
             else:
                 raise ValueError("This metric is not available for HDBSCAN.")
 
