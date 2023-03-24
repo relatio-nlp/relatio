@@ -1,15 +1,12 @@
 import csv
 import time
 from collections import Counter
-from copy import deepcopy
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
-import numpy as np
 import pandas as pd
 import spacy
 from spacy.cli import download as spacy_download
-from spacy.language import Language
-from spacy.tokens import Token
+from spacy.tokens import Doc, Token
 from tqdm import tqdm
 
 from relatio.dependency_parsing import (
@@ -183,10 +180,10 @@ class Preprocessor:
         """
 
         if self.remove_punctuation:
-            s = [t for t in s if t.is_punct == False]
+            s = [t for t in s if t.is_punct is False]
 
         if self.remove_digits:
-            s = [t for t in s if t.is_digit == False]
+            s = [t for t in s if t.is_digit is False]
 
         if pos_tags_to_keep:
             s = [t for t in s if t.pos_ in pos_tags_to_keep]
@@ -217,49 +214,56 @@ class Preprocessor:
     def coreference_resolution(
         self,
         sentences: List[str],
-        model_url: str = "https://storage.googleapis.com/allennlp-public-models/coref-spanbert-large-2020.02.27.tar.gz",
+        spacy_model: str = "en_coreference_web_trf",
         progress_bar: bool = False,
     ) -> List[str]:
         """
-
-        coreference resolution using AllenNLP
-        spaCy is not compatible with ver3.0 (10th May, 2022)
+        coreference resolution using spaCy (v0.6.1)
         Args:
                 sentences: list of sentences
                 progress_bar: print a progress bar (default is False)
-                model_url: set the url model
-
-            Returns:
-                List of processed statements
-
+        Returns:
+            List of sentences with cereference resolution
         """
-        try:
-            from allennlp.predictors.predictor import Predictor
+        if not spacy.util.is_package(spacy_model):
+            spacy_download(spacy_model)
 
-        except ModuleNotFoundError:
-            print("Please install allennlp package")
-            raise
+        nlp = spacy.load(spacy_model)
 
-        predictor = Predictor.from_path(model_url)
-        cr_list = []
+        def resolve_references(doc: Doc) -> str:
+            token_mention_dict = {}
+            output_string = ""
+            clusters = [
+                val
+                for key, val in doc.spans.items()
+                if key.startswith("coref_clusters")
+            ]
+            for cluster in clusters:
+                first_span = cluster[0]
+                for mention_span in list(cluster)[1:]:
+                    token_mention_dict[mention_span[0].idx] = (
+                        first_span.text + mention_span[0].whitespace_
+                    )
+                    for token in mention_span[1:]:
+                        token_mention_dict[token.idx] = ""
+            for token in doc:
+                if token.idx in token_mention_dict:
+                    output_string += token_mention_dict[token.idx]
+                else:
+                    output_string += token.text + token.whitespace_
+            return output_string
 
         if progress_bar:
             disable = False
         else:
             disable = True
-
-        print("implementing coreference resolution ...")
+        print("resolving reference with coref output ...")
+        coreference_output_list = []
         for sentence in tqdm(sentences, disable=disable):
-            try:
-                cr_list.append(predictor.coref_resolved(sentence))
-            except ValueError:  # if sentence == word
-                cr_list.append(sentence)
-            except IndexError:  # if sentence doesn't contain '.'
-                cr_list.append(sentence)
-            except RuntimeError:  # if sentence is null
-                cr_list.append(sentence)
+            doc = nlp(sentence)
+            coreference_output_list.append(resolve_references(doc))
 
-        return cr_list
+        return coreference_output_list
 
     def mine_entities(
         self,
@@ -300,9 +304,10 @@ class Preprocessor:
         for sentence in spacy_sentences:
             for ent in sentence.ents:
                 if ent.label_ in ent_labels:
-                    entity = ent.text
                     if clean_entities:
                         entity = self.clean_text(ent)
+                    else:
+                        entity = ent.text
                     entities_all.append(entity)
 
         entity_counts = Counter(entities_all)
@@ -367,7 +372,7 @@ class Preprocessor:
                 pos_tags_to_keep[role] = dict_of_pos_tags_to_keep[role]
 
         length = len(statements)
-        clean_statements = [{} for i in range(length)]
+        clean_statements: List[dict] = [{} for i in range(length)]
 
         for role in ["ARG0", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"]:
             indices, roles = make_list_from_key(role, statements)

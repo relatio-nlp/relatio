@@ -14,7 +14,6 @@
 
 import time
 import warnings
-from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np

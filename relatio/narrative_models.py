@@ -1,31 +1,23 @@
 import math
 import warnings
-from abc import ABC, abstractmethod
 from collections import Counter
 from copy import deepcopy
-from typing import List, Optional, Type
+from pathlib import Path
+from typing import Dict, List, Optional, Union
 
 import hdbscan
 import matplotlib.pyplot as plt
 import numpy as np
-import spacy
 import umap
 from kneed import KneeLocator
+from mpl_toolkits.mplot3d import Axes3D
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.metrics import make_scorer, silhouette_score
-from sklearn.model_selection import RandomizedSearchCV
-from spacy.cli import download as spacy_download
+from sklearn.metrics import silhouette_score
 from tqdm import tqdm
 
-from relatio.embeddings import (
-    Embeddings,
-    _compute_distances,
-    _embeddings_similarity,
-    _get_index_min_distances,
-    _get_min_distances,
-)
-from relatio.utils import count_values, is_subsequence, make_list_from_key, prettify
+from relatio.embeddings import Embeddings, _embeddings_similarity
+from relatio.utils import count_values, is_subsequence, make_list_from_key
 
 
 class NarrativeModel:
@@ -46,12 +38,13 @@ class NarrativeModel:
             "ARG1",
             "ARG2",
         ],
-        roles_with_known_entities: str = ["ARG0", "ARG1", "ARG2"],
+        roles_with_known_entities: List[str] = ["ARG0", "ARG1", "ARG2"],
         known_entities: Optional[List[str]] = None,
         assignment_to_known_entities: str = "character_matching",
         roles_with_unknown_entities: List[str] = ["ARG0", "ARG1", "ARG2"],
-        embeddings_model: Optional[Type[Embeddings]] = None,
-        threshold: int = 0.1,
+        embeddings_type: str = None,
+        embeddings_model: Union[Path, str] = None,
+        threshold: float = 0.1,
     ):
         if clustering is not None:
             if clustering not in ["kmeans", "hdbscan"]:
@@ -102,13 +95,15 @@ class NarrativeModel:
         self.assignment_to_known_entities = assignment_to_known_entities
         self.threshold = threshold
 
-        if embeddings_model is None:
+        if embeddings_type is None:
             self.embeddings_model = Embeddings(
                 "TensorFlow_USE",
                 "https://tfhub.dev/google/universal-sentence-encoder/4",
             )
         else:
-            self.embeddings_model = embeddings_model
+            self.embeddings_model = Embeddings(
+                embeddings_type=embeddings_type, embeddings_model=embeddings_model
+            )
 
         if (
             self.known_entities is not None
@@ -220,7 +215,7 @@ class NarrativeModel:
                 print(umap_args)
 
             self.umap_args = umap_args
-            self.umap_model = umap.UMAP(**umap_args).fit(self.training_vectors)
+            self.umap_model = umap.umap_.UMAP(**umap_args).fit(self.training_vectors)
             self.training_vectors = self.umap_model.transform(self.training_vectors)
 
         # Clustering
@@ -256,9 +251,9 @@ class NarrativeModel:
 
                 models.append(kmeans)
 
-            scores = []
+            silhouette_scores = []
             for model in models:
-                scores.append(
+                silhouette_scores.append(
                     silhouette_score(
                         self.training_vectors,
                         model.labels_,
@@ -266,7 +261,7 @@ class NarrativeModel:
                     )
                 )
 
-            self.scores["silhouette"] = scores
+            self.scores["silhouette"] = silhouette_scores
 
             l = np.argmax(self.scores["silhouette"])
             k = cluster_args["n_clusters"][l]
@@ -277,11 +272,11 @@ class NarrativeModel:
                 )
             )
 
-            scores = []
+            inertia_scores = []
             for model in models:
-                scores.append(model.inertia_)
+                inertia_scores.append(model.inertia_)
 
-            self.scores["inertia"] = scores
+            self.scores["inertia"] = inertia_scores
 
             kneedle = KneeLocator(
                 cluster_args["n_clusters"],
@@ -319,6 +314,11 @@ class NarrativeModel:
                     "approx_min_span_tree": False,
                     "prediction_data": True,
                 }
+            else:
+                if ["min_cluster_size", "min_samples"] not in cluster_args.keys():
+                    raise Warning(
+                        "Please at least set min_cluster_size and min_samples"
+                    )
 
             if progress_bar:
                 print("Clustering parameters chosen in this range:")
@@ -326,7 +326,7 @@ class NarrativeModel:
 
             # Grid search
             models = []
-            scores = []
+            dbcv_scores = []
             for i in cluster_args["min_cluster_size"]:
                 for j in cluster_args["min_samples"]:
                     for h in cluster_args["cluster_selection_method"]:
@@ -344,16 +344,13 @@ class NarrativeModel:
                                 args[k] = v
 
                         hdb = hdbscan.HDBSCAN(**args).fit(self.training_vectors)
-
                         models.append(hdb)
-
                         score = hdbscan.validity.validity_index(
                             self.training_vectors.astype(np.float64), hdb.labels_
                         )
-                        scores.append(score)
+                        dbcv_scores.append(score)
 
-            self.scores["DBCV"] = scores
-
+            self.scores["DBCV"] = dbcv_scores
             l = np.argmax(self.scores["DBCV"])
             print(
                 "The DBCV score suggests the index of the optimal clustering model is {0}.".format(
@@ -493,7 +490,6 @@ class NarrativeModel:
                     cluster_index = hdbscan.approximate_predict(
                         clustering_model, vectors
                     )[0]
-
                     idx = list(range(len(cluster_index)))
 
                 else:
@@ -680,10 +676,56 @@ class NarrativeModel:
         else:
             plt.savefig(path)
 
-    def plot_selection_metric(self, metric: str, path=None, figsize=(14, 8)):
+    def plot_selection_metric(
+        self, metric: Optional[str] = None, path=None, figsize=(14, 8)
+    ):
+        if not metric:
+            if self.clustering == "hdbscan":
+                metric = "DBCV"
+            elif self.clustering == "kmeans":
+                metric = "inertia"
+
         if self.clustering == "hdbscan":
             if metric == "DBCV":
-                pass  # shimpei's code here
+                plot_args: Dict[str, list] = {}
+                plot_args["min_cluster_size"], plot_args["min_samples"] = [], []
+                best_score_args: Dict[str, int] = {}
+                for i in self.cluster_args["min_cluster_size"]:
+                    for j in self.cluster_args["min_samples"]:
+                        plot_args["min_cluster_size"].append(i)
+                        plot_args["min_samples"].append(j)
+
+                max_index = np.argmax(self.scores["DBCV"])
+                best_score_args["min_cluster_size"] = plot_args["min_cluster_size"][
+                    max_index
+                ]
+                best_score_args["min_samples"] = plot_args["min_samples"][max_index]
+                best_score_args["DBCV"] = self.scores["DBCV"][max_index]
+
+                fig = plt.figure(figsize=figsize)
+                ax = Axes3D(fig)
+                ax.set_title("DBCV score plot", fontsize="x-large")
+                ax.set_xlabel("Minimum cluster size")
+                ax.set_ylabel("Minimum samples")
+                ax.set_zlabel("DBCV Score")
+                ax.scatter(
+                    plot_args["min_cluster_size"],
+                    plot_args["min_samples"],
+                    self.scores["DBCV"],
+                    "o",
+                    s=[(i + 1) * 100 for i in self.scores["DBCV"]],
+                    c="#808080",
+                )
+                ax.scatter(
+                    best_score_args["min_cluster_size"],
+                    best_score_args["min_samples"],
+                    best_score_args["DBCV"],
+                    "o",
+                    s=[(best_score_args["DBCV"] + 1) * 100],
+                    c="#2ca02c",
+                )
+                ax.set_xticks(list(set(plot_args["min_cluster_size"])))
+                ax.set_yticks(list(set(plot_args["min_samples"])))
             else:
                 raise ValueError("This metric is not available for HDBSCAN.")
 

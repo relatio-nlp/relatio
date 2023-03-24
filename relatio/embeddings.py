@@ -11,10 +11,14 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Type, Union
 
+import gensim.downloader as api
 import numpy as np
 import spacy
+import tensorflow_hub as hub
+from gensim.models import Word2Vec
 from numpy.linalg import norm
 from scipy.spatial.distance import cdist
+from sentence_transformers import SentenceTransformer
 from spacy.cli import download as spacy_download
 from tqdm import tqdm
 
@@ -26,9 +30,6 @@ class EmbeddingsBase(ABC):
     @abstractmethod
     def _get_default_vector(self, phrase: str) -> np.ndarray:
         pass
-
-
-# TODO: add size_vectors as a class property (now it is in Embeddings as an instance attribute)
 
 
 class Embeddings(EmbeddingsBase):
@@ -71,13 +72,16 @@ class Embeddings(EmbeddingsBase):
     ) -> None:
         EmbeddingsClass: Union[
             Type[TensorFlowUSEEmbeddings],
+            Type[MultilingualBERTEmbeddings],
             Type[GensimWord2VecEmbeddings],
             Type[GensimPreTrainedEmbeddings],
             Type[spaCyEmbeddings],
-            Type[phraseBERTEmbeddings],
+            Type[PhraseBERTEmbeddings],
         ]
         if embeddings_type == "TensorFlow_USE":
             EmbeddingsClass = TensorFlowUSEEmbeddings
+        elif embeddings_type == "multilingual_BERT":
+            EmbeddingsClass = MultilingualBERTEmbeddings
         elif embeddings_type == "Gensim_Word2Vec":
             EmbeddingsClass = GensimWord2VecEmbeddings
         elif embeddings_type == "Gensim_pretrained":
@@ -85,7 +89,7 @@ class Embeddings(EmbeddingsBase):
         elif embeddings_type == "spaCy":
             EmbeddingsClass = spaCyEmbeddings
         elif embeddings_type == "phrase-BERT":
-            EmbeddingsClass = phraseBERTEmbeddings
+            EmbeddingsClass = PhraseBERTEmbeddings
         else:
             raise ValueError(f"Unknown embeddings_type={embeddings_type}")
 
@@ -99,9 +103,9 @@ class Embeddings(EmbeddingsBase):
             self._use_sif = False
 
         if embeddings_type != "Gensim_Word2Vec":
-            self.size_vectors = LANGUAGE_MODELS[embeddings_model]["size_vectors"]
+            self._size_vectors = LANGUAGE_MODELS[embeddings_model]["size_vectors"]
         else:
-            self.size_vectors = self._embeddings_model.size_vectors
+            self._size_vectors = self._embeddings_model.size_vectors
 
     @property
     def normalize(self) -> bool:
@@ -110,6 +114,10 @@ class Embeddings(EmbeddingsBase):
     @property
     def use_sif(self) -> bool:
         return self._use_sif
+
+    @property
+    def size_vectors(self) -> int:
+        return self._size_vectors
 
     # One cannot add a setter since it is added next to the child classes
     def get_vector(self, phrase: str) -> Optional[np.ndarray]:
@@ -156,11 +164,11 @@ class Embeddings(EmbeddingsBase):
             print("Computing phrase embeddings...")
             phrases = tqdm(phrases)
 
-        vectors = []
+        vectors_list = []
         for i, phrase in enumerate(phrases):
             vector = self.get_vector(phrase)
-            vectors.append(np.array([vector]))
-        vectors = np.concatenate(vectors)
+            vectors_list.append(np.array([vector]))
+        vectors = np.concatenate(vectors_list)
         return vectors
 
     @staticmethod
@@ -198,12 +206,9 @@ class spaCyEmbeddings(EmbeddingsBase):
 
 
 class TensorFlowUSEEmbeddings(EmbeddingsBase):
-    def __init__(self, path: str) -> None:
-        try:
-            import tensorflow_hub as hub
-        except ModuleNotFoundError:
-            print("Please install tensorflow_hub package")
-            raise
+    def __init__(
+        self, path: str = "https://tfhub.dev/google/universal-sentence-encoder/4"
+    ) -> None:
         self._embed = hub.load(path)
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
@@ -213,6 +218,21 @@ class TensorFlowUSEEmbeddings(EmbeddingsBase):
         return self._get_default_vector(phrase)
 
 
+class MultilingualBERTEmbeddings(EmbeddingsBase):
+    """
+    path = sentence-transformers/distiluse-base-multilingual-cased-v2
+    model = Embeddings("multilingual_BERT", path)
+    """
+
+    def __init__(
+        self, path: str = "sentence-transformers/distiluse-base-multilingual-cased-v2"
+    ) -> None:
+        self._model = SentenceTransformer(path)
+
+    def _get_default_vector(self, phrase: str) -> np.ndarray:
+        return self._model.encode(phrase)
+
+
 class GensimWord2VecEmbeddings(EmbeddingsBase):
     def __init__(self, path: str):
         self._model = self._load_keyed_vectors(path)
@@ -220,13 +240,6 @@ class GensimWord2VecEmbeddings(EmbeddingsBase):
         self.size_vectors = self._model[list(self._vocab)[0]].shape[0]
 
     def _load_keyed_vectors(self, path):
-        try:
-            from gensim.models import Word2Vec
-
-        except ModuleNotFoundError:
-            print("Please install gensim package")
-            raise
-
         return Word2Vec.load(path).wv
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
@@ -258,30 +271,16 @@ class GensimPreTrainedEmbeddings(GensimWord2VecEmbeddings, EmbeddingsBase):
         self._vocab = self._model.vocab
 
     def _load_keyed_vectors(self, model):
-        try:
-            import gensim.downloader as api
-
-        except ModuleNotFoundError:
-            print("Please install gensim package")
-            raise
-
         return api.load(model)
 
 
-class phraseBERTEmbeddings(EmbeddingsBase):
+class PhraseBERTEmbeddings(EmbeddingsBase):
     """
     path = "whaleloops/phrase-bert"
     model = Embeddings("phrase-BERT", path)
     """
 
     def __init__(self, path: str) -> None:
-        try:
-            from sentence_transformers import SentenceTransformer
-
-        except ModuleNotFoundError:
-            print("Please install sentence_transformers package")
-            raise
-
         self._model = SentenceTransformer(path)
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:

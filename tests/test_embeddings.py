@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.linalg import norm
 
-from relatio import Embeddings
+from relatio.embeddings import Embeddings
 
 spacy_model_sif = Embeddings(
     "spaCy",
