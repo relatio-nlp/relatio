@@ -21,10 +21,6 @@ from relatio.utils import count_values, is_subsequence, make_list_from_key
 
 
 class NarrativeModel:
-    """
-    A general class to build a model that extracts latent narratives from a list of SRL statements.
-    """
-
     def __init__(
         self,
         clustering: Optional[str] = "kmeans",
@@ -42,10 +38,29 @@ class NarrativeModel:
         known_entities: Optional[List[str]] = None,
         assignment_to_known_entities: str = "character_matching",
         roles_with_unknown_entities: List[str] = ["ARG0", "ARG1", "ARG2"],
-        embeddings_type: str = None,
-        embeddings_model: Union[Path, str] = None,
+        embeddings_type: str = "TensorFlow_USE",
+        embeddings_model: Union[
+            Path, str
+        ] = "https://tfhub.dev/google/universal-sentence-encoder/4",
         threshold: float = 0.1,
     ):
+        """
+        A general class to build a model that extracts latent narratives from a list of SRL statements.
+
+        Args:
+            clustering (Optional[str], optional): The clustering algorithm to use. Defaults to "kmeans".
+            PCA (bool, optional): Whether to perform PCA on the embeddings. Defaults to True.
+            UMAP (bool, optional): Whether to perform UMAP on the embeddings. Defaults to True.
+            roles_considered (List[str], optional): The semantic roles to consider. Defaults to ["ARG0", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"].
+            roles_with_known_entities (List[str], optional): The semantic roles that have known entities. Defaults to ["ARG0", "ARG1", "ARG2"].
+            known_entities (Optional[List[str]], optional): The known entities (can be obtained via named entity recognition, for instance). Defaults to None.
+            assignment_to_known_entities (str, optional): The method to assign the known entities to the roles. The methods are either "character_matching" or "embeddings". "character_matching" matches the exact phrase. "embeddings" assigns to the entity any phrase with a high cosine similarity (see threshold). Defaults to "character_matching".
+            roles_with_unknown_entities (List[str], optional): The semantic roles that have unknown entities. Defaults to ["ARG0", "ARG1", "ARG2"].
+            embeddings_type (str, optional): The type of embeddings to use. Defaults to "TensorFlow_USE" (corresponds to Universal Sentence Encoder).
+            embeddings_model (Union[Path, str], optional): The path to the embeddings model. Defaults to "https://tfhub.dev/google/universal-sentence-encoder/4".
+            threshold (float, optional): The threshold for the cosine similarity between the embeddings of the known entities and the embeddings of the phrases. Defaults to 0.1.
+        """
+
         if clustering is not None:
             if clustering not in ["kmeans", "hdbscan"]:
                 raise ValueError(
@@ -95,15 +110,9 @@ class NarrativeModel:
         self.assignment_to_known_entities = assignment_to_known_entities
         self.threshold = threshold
 
-        if embeddings_type is None:
-            self.embeddings_model = Embeddings(
-                "TensorFlow_USE",
-                "https://tfhub.dev/google/universal-sentence-encoder/4",
-            )
-        else:
-            self.embeddings_model = Embeddings(
-                embeddings_type=embeddings_type, embeddings_model=embeddings_model
-            )
+        self.embeddings_model = Embeddings(
+            embeddings_type=embeddings_type, embeddings_model=embeddings_model
+        )
 
         if (
             self.known_entities is not None
@@ -127,12 +136,24 @@ class NarrativeModel:
     def fit(
         self,
         srl_res,
-        pca_args=None,
-        umap_args=None,
+        pca_args={"n_components": 50, "svd_solver": "full"},
+        umap_args={"n_neighbors": 15, "n_components": 2, "random_state": 0},
         cluster_args=None,
         weight_by_frequency=False,
         progress_bar=True,
     ):
+        """
+        Fits the model to the SRL statements.
+
+        Args:
+            srl_res (List[Dict]): The SRL statements.
+            pca_args (Dict, optional): The arguments for the PCA. Defaults to {"n_components": 50, "svd_solver": "full"}.
+            umap_args (Dict, optional): The arguments for the UMAP. Defaults to {"n_neighbors": 15, "n_components": 2, "random_state": 0}.
+            cluster_args (Dict, optional): The arguments for the clustering algorithm: cluster_args = {"n_clusters": [k1, k2, k3, ...], "random_state": 0}. "n_clusters" is a list for the number of clusters to select from. "random_state" is the seed. Defaults to None. In this case, sensible cluster_args are chosen automatically.
+            weight_by_frequency (bool, optional): Whether to weight the phrases by their frequency for the clustering algorithm. Defaults to False.
+            progress_bar (bool, optional): Whether to show a progress bar. Defaults to True.
+        """
+
         if self.clustering is None:
             print("No fitting required, this model is deterministic!")
         if self.clustering in ["hdbscan", "kmeans"]:
@@ -156,6 +177,10 @@ class NarrativeModel:
         weight_by_frequency,
         progress_bar,
     ):
+        """
+        Fits the model with K-means or HDBSCAN.
+        """
+
         phrases_to_embed = []
         counter_for_phrases = Counter()
 
@@ -164,7 +189,7 @@ class NarrativeModel:
             counter_for_phrases = counter_for_phrases + temp_counter
             phrases = list(temp_counter)
 
-            # Rremove known entities for the training of unknown entities
+            # Remove known entities for the training of unknown entities
             if role in self.roles_with_known_entities:
                 if self.assignment_to_known_entities == "character_matching":
                     idx = self.character_matching(phrases, progress_bar)[0]
@@ -192,28 +217,20 @@ class NarrativeModel:
 
         # Dimension reduction via PCA
         if self.PCA:
-            if pca_args is None:
-                pca_args = {"n_components": 50, "svd_solver": "full"}
-
             if progress_bar:
                 print("Dimension reduction via PCA...")
                 print("PCA parameters:")
                 print(pca_args)
-
             self.pca_args = pca_args
             self.pca_model = PCA(**pca_args).fit(self.training_vectors)
             self.training_vectors = self.pca_model.transform(self.training_vectors)
 
         # Dimension reduction via UMAP
         if self.UMAP:
-            if umap_args is None:
-                umap_args = {"n_neighbors": 15, "n_components": 2, "random_state": 0}
-
             if progress_bar:
                 print("Dimension reduction via UMAP...")
                 print("UMAP parameters:")
                 print(umap_args)
-
             self.umap_args = umap_args
             self.umap_model = umap.umap_.UMAP(**umap_args).fit(self.training_vectors)
             self.training_vectors = self.umap_model.transform(self.training_vectors)
@@ -287,8 +304,9 @@ class NarrativeModel:
 
             k = kneedle.knee
             if k is None:
-                raise Warning(
-                    "Not enough clustering scenarios to find the elbow. Defaulting to silhouette score."
+                warnings.warn(
+                    f"Not enough clustering scenarios to find the elbow. Defaulting to silhouette score.",
+                    RuntimeWarning,
                 )
             else:
                 l = [i for i, n in enumerate(cluster_args["n_clusters"]) if n == k][0]
@@ -316,8 +334,8 @@ class NarrativeModel:
                 }
             else:
                 if ["min_cluster_size", "min_samples"] not in cluster_args.keys():
-                    raise Warning(
-                        "Please at least set min_cluster_size and min_samples"
+                    raise ValueError(
+                        "Please provide at least min_cluster_size and min_samples in cluster_args"
                     )
 
             if progress_bar:
@@ -384,7 +402,7 @@ class NarrativeModel:
         progress_bar: bool = False,
     ):
         """
-        Predict the narratives underlying statements.
+        Predicts the narratives underlying SVO/AVP statements.
         """
 
         if index_clustering_model is None:
@@ -514,6 +532,14 @@ class NarrativeModel:
         return narratives
 
     def character_matching(self, phrases, progress_bar: bool = False):
+        """
+        Character matching between a list of phrases and the list of known entitites.
+
+        Args:
+            phrases (list): list of phrases to match with known entities.
+            progress_bar (bool): whether to show a progress bar.
+        """
+
         if progress_bar:
             print("Matching known entities (with character matching)...")
             phrases = tqdm(phrases)
@@ -539,21 +565,25 @@ class NarrativeModel:
         index_clustering_model: int,
         progress_bar: bool = False,
     ):
-        labels = list(set(self.clustering_models[index_clustering_model].labels_))
+        """
+        Method to label clusters with the most frequent phrase.
 
-        print(labels)
+        Args:
+            counter_for_phrases (Counter): Counter of phrases.
+            phrases_to_embed (list): list of phrases to embed.
+            index_clustering_model (int): index of the clustering model to be used.
+            progress_bar (bool): whether to show a progress bar.
+        """
+
+        labels = list(set(self.clustering_models[index_clustering_model].labels_))
 
         for clu in labels:
             self.vocab_unknown_entities[index_clustering_model][clu] = Counter()
-
-        print(self.vocab_unknown_entities)
 
         for j, clu in enumerate(self.clustering_models[index_clustering_model].labels_):
             self.vocab_unknown_entities[index_clustering_model][clu][
                 phrases_to_embed[j]
             ] = counter_for_phrases[phrases_to_embed[j]]
-
-        print(self.vocab_unknown_entities)
 
         for clu in labels:
             token_most_common = self.vocab_unknown_entities[index_clustering_model][
@@ -569,8 +599,6 @@ class NarrativeModel:
             self.labels_unknown_entities[index_clustering_model][
                 clu
             ] = token_most_common[0][0]
-
-        print(self.vocab_unknown_entities)
 
         if self.clustering == "hdbscan":
             self.labels_unknown_entities[index_clustering_model][-1] = ""
@@ -589,6 +617,15 @@ class NarrativeModel:
     def inspect_cluster(
         self, label, index_clustering_model: Optional[int] = None, topn=10
     ):
+        """
+        Show the most frequent phrases in a cluster.
+
+        Args:
+            label (str): label of the cluster.
+            index_clustering_model (int): index of the clustering model to be used.
+            topn (int): number of most frequent phrases to show.
+        """
+
         if index_clustering_model is None:
             index_clustering_model = self.index_optimal_model
 
@@ -608,6 +645,16 @@ class NarrativeModel:
         topn=10,
         add_frequency_info=True,
     ):
+        """
+        Prints the most frequent phrases in each cluster to a txt file.
+
+        Args:
+            index_clustering_model (int): index of the clustering model to be used.
+            path (str): path to the txt file.
+            topn (int): number of most frequent phrases to show.
+            add_frequency_info (bool): whether to add the frequency of the phrases.
+        """
+
         if index_clustering_model is None:
             index_clustering_model = self.index_optimal_model
 
@@ -630,6 +677,16 @@ class NarrativeModel:
         figsize=(14, 8),
         s=0.1,
     ):
+        """
+        Plots the clusters in 2D using UMAP for dimension reduction.
+
+        Args:
+            index_clustering_model (int): index of the clustering model to be used. If None, the optimal model is used.
+            path (str): path to the image file. If None, the figure is shown.
+            figsize (width, height): size of the figure.
+            s (float): size of the points on the figure.
+        """
+
         if index_clustering_model is None:
             index_clustering_model = self.index_optimal_model
 
@@ -679,6 +736,15 @@ class NarrativeModel:
     def plot_selection_metric(
         self, metric: Optional[str] = None, path=None, figsize=(14, 8)
     ):
+        """
+        Plots the selection metric for the clustering models.
+
+        Args:
+            metric (str): metric to be plotted. If None, defaults to inertia for KMeans and DBCV for HDBSCAN.
+            path (str): path to the image file. If None, the figure is shown.
+            figsize (width, height): size of the figure.
+        """
+
         if not metric:
             if self.clustering == "hdbscan":
                 metric = "DBCV"

@@ -1,36 +1,93 @@
 Cluster 0
-people (245), anything (90), much (87), something (82), one (77), a lot (73), other (71), a clue (64), money (59), many (56), 
+the president (72), the federal government (30), the lamestream media (15), the stock market (14), the whistleblower (13), the government (12), the kurds (11), the russians (11), the terrorist (10), the muslim brotherhood (9), 
 
 Cluster 1
-the people (96), the medium (52), the fact (36), the law (32), the (31), the federal government (30), the man (27), the wall (27), the economy (23), the money (23), 
+people (245), much (87), something (82), a lot (73), money (59), many (56), some (39), many people (21), lot (20), enough (19), 
 
 Cluster 2
-place (107), god (79), job (66), entrepreneur (55), crime (45), woman (38), let (35), advantage (34), tariff (33), time (31), 
+place (107), office (30), security (23), control (21), country (20), company (18), energy (15), drug (13), mail (13), stock (12), 
 
 Cluster 3
-we (2861), our country (237), our military (48), our vet (21), our nation (20), our economy (15), our government (15), your second amendment (15), our job (14), our president (14), 
+they (1991), it (1104), that (414), my complete and total endorsement (392), this (269), those (57), my full and total endorsement (26), my total endorsement (15), my full and complete endorsement (14), my strong endorsement (12), 
 
 Cluster 4
-their job (20), their life (14), their family (9), their (8), their country (7), their game (6), their partner (6), their back (5), their fake reporting (5), their leader (5), 
+we (2861), our country (237), our military (48), our vet (21), our nation (20), our economy (15), our government (15), your second amendment (15), our job (14), our president (14), 
 
 Cluster 5
-amp (821), billion (69), a fortune (35), a president (35), a deal (28), a wall (23), a man (21), a country (20), trillion (17), billion dollar (15), 
+crazy (16), loser (13), bad (12), a mistake (11), a news conference (11), problem (11), a big mistake (10), lie (9), a record (8), a lawsuit (7), 
 
 Cluster 6
-they (1991), he (1896), it (1104), that (414), my complete and total endorsement (392), she (346), this (269), all (156), everyone (96), everything (92), 
+mike (24), john (22), jim (21), tom (21), steve (17), scott (16), nancy (15), chris (13), kim jong un (10), michelle (10), 
 
 Cluster 7
-foxnew (35), seanhannity (15), alexsalmond (14), oreillyfactor (12), trumpdoral (12), foxandfriend (11), jebbush (10), congrat (9), mariabartiromo (9), trumppanama (9), 
+the radical left (31), open borders (25), the economy (23), law (19), no collusion (19), a bill (13), illegal immigration (12), legislation (12), the only collusion (12), impeachment (11), 
 
 Cluster 8
-a great job (148), a fantastic job (47), great (28), taxis (22), your taxis (21), an outstanding job (20), a great time (19), my complete (18), a great deal (17), a terrible job (17), 
+i (3676), million (117), billion (69), m (38), thousand (23), ill (18), hundred (13), ten of thousand (13), hundred of thousand (9), w (9), 
 
 Cluster 9
-the president (72), the radical left (31), vet (28), open borders (25), military (23), country (20), twitter (18), europe (16), the establishment and special interest (16), law enforcement (14), 
+foxnew (35), seanhannity (15), alexsalmond (14), oreillyfactor (12), trumpdoral (12), foxandfriend (11), jebbush (10), congrat (9), mariabartiromo (9), trumppanama (9), 
 
 Cluster 10
-melania (36), nancy pelosi (33), schiff (25), mike (24), john (22), jeb bush (21), jim (21), tom (21), the supreme court (20), pelosi (19), 
+their job (20), their life (14), their family (9), their (8), their country (7), their game (6), their partner (6), their back (5), their fake reporting (5), their leader (5), 
 
 Cluster 11
-i (3676), you (1558), what (635), which (345), nothing (290), more (141), who (122), million (117), nobody (61), m (38), 
+you (1558), taxis (22), your taxis (21), my complete (18), my friend (14), my son (14), your (14), my campaign (12), my office (9), friend (8), 
+
+Cluster 12
+the people (96), the medium (52), the fact (36), the (31), the man (27), the wall (27), the money (23), the country (22), the word (22), the price (19), 
+
+Cluster 13
+job (66), entrepreneur (55), business (24), stock market (20), safety (18), action (16), medium (16), rate (13), witness (12), farmer (10), 
+
+Cluster 14
+success (28), a great deal (17), deal (12), high (12), a big price (11), a great meeting (11), great progress (11), big (10), massive amount (10), a speech (8), 
+
+Cluster 15
+nancy pelosi (33), schiff (25), pelosi (19), golf (17), governor (15), bill (13), mueller (13), governor cuomo (11), the governor (11), rubio (10), 
+
+Cluster 16
+a great job (148), a fantastic job (47), great (28), an outstanding job (20), a great time (19), a terrible job (17), fun (17), a tremendous job (13), an incredible job (13), great job (12), 
+
+Cluster 17
+the election (62), a president (35), election (21), an election (12), leadership (10), leader (9), no president (8), the leader (8), the voter (8), the presidency (7), 
+
+Cluster 18
+twitter (18), europe (16), puerto rico (14), nyc (12), chrysler (8), egypt (8), prayer (8), apple (7), baltimore (7), city (7), 
+
+Cluster 19
+what (635), god (79), woman (38), be (36), let (35), advantage (34), time (31), yourself (30), order (29), little (25), 
+
+Cluster 20
+more (141), one (77), other (71), well (28), other country (25), more time (14), more people (12), more case (9), more testing (9), overtime (9), 
+
+Cluster 21
+he (1896), she (346), her (91), its (14), his wife (10), this election (10), her husband (7), his son (7), his campaign (6), his family (6), 
+
+Cluster 22
+the law (32), the rule (18), the job (16), the court (13), the great people (11), the story (10), the brave man (9), the courage (9), the number (9), the doj (7), 
+
+Cluster 23
+the supreme court (20), trillion (17), billion dollar (15), judge (13), justice (12), a judge (7), justice roberts (7), judge jackson (6), a budget (5), federal judge (5), 
+
+Cluster 24
+nothing (290), nobody (61), the truth (35), no idea (27), no (24), no one (22), the right thing (15), no choice (14), the hell (14), no doubt (13), 
+
+Cluster 25
+amp (821), crime (45), tariff (33), record (27), the establishment and special interest (16), politic (12), criminal (9), the reporter (8), a crime (7), policy (7), 
+
+Cluster 26
+a clue (64), someone (45), a fortune (35), somebody (31), a deal (28), a wall (23), a man (21), life (20), a (14), confidence (14), 
+
+Cluster 27
+vet (28), military (23), opec (21), law enforcement (14), libya (14), ebola (10), keystone (10), saudi arabia (10), nafta (9), anarchist (8), 
+
+Cluster 28
+which (345), all (156), who (122), everyone (96), everything (92), anything (90), anyone (51), everybody (48), the world (36), a chance (23), 
+
+Cluster 29
+the fail nytime (21), politician (11), crook (8), a big rally (5), a corrupt politician (5), a fraud (5), day (5), rumor (5), the dishonest medium (5), a phony story (4), 
+
+Cluster 30
+melania (36), jeb bush (21), jeb (17), mitt romney (15), putin (15), snowden (15), president (11), mitt (10), omarosa (10), thank (10), 
 

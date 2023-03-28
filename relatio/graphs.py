@@ -1,14 +1,3 @@
-# MIT License
-
-# Copyright (c) 2020-2021 ETH Zurich, Andrei V. Plamada
-# Copyright (c) 2020-2021 ETH Zurich, Elliott Ash
-# Copyright (c) 2020-2021 University of St.Gallen, Philine Widmer
-# Copyright (c) 2020-2021 Ecole Polytechnique, Germain Gauthier
-
-# GRAPHS
-# ..................................................................................................................
-# ..................................................................................................................
-
 import networkx as nx
 import pandas as pd
 from pyvis import network as net
@@ -19,11 +8,23 @@ def build_graph(
     top_n,
     prune_network=True,
 ):
+    """
+    A function that builds a networkx graph from a list of narratives.
+
+    Args:
+        narratives: a list of narratives
+        top_n: number of most frequent narratives to include in the graph
+        prune_network: whether to prune the network to its largest component
+
+    Returns:
+        a networkx graph of the most frequent narratives
+    """
+
     G = nx.MultiDiGraph()
 
     df = pd.DataFrame(narratives)
     df = df.replace(False, "")
-    df = df.replace(True, "!")
+    df = df.replace(True, "not ")
     df = df.replace(pd.NA, "")
     df = df.value_counts().reset_index(name="counts")
     df = df[df["ARG0"] != ""]
@@ -38,7 +39,7 @@ def build_graph(
             l["ARG0"],
             l["ARG1"],
             value=l["counts"],
-            label=l["B-ARGM-NEG"] + l["B-V"],
+            label=l.get("B-ARGM-NEG", "") + l["B-V"],
             hidden=False,
         )
 

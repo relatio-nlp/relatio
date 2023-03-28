@@ -1,14 +1,4 @@
-# MIT License
-
-# Copyright (c) 2020-2021 ETH Zurich, Andrei V. Plamada
-# Copyright (c) 2020-2021 ETH Zurich, Elliott Ash
-# Copyright (c) 2020-2021 University of St.Gallen, Philine Widmer
-# Copyright (c) 2020-2021 Ecole Polytechnique, Germain Gauthier
-
 # Semantic Role Labeling
-# ..................................................................................................................
-# ..................................................................................................................
-
 # link to choose the SRL model
 # https://storage.googleapis.com/allennlp-public-models/YOUR-PREFERRED-MODEL
 
@@ -43,6 +33,20 @@ class SRL:
         cuda_empty_cache: bool = True,
         cuda_sleep: float = 0.0,
     ):
+        """
+        A class to perform semantic role labeling on a list of sentences.
+
+        Args:
+            path: Path to the SRL model (i.e., https://storage.googleapis.com/allennlp-public-models/YOUR-PREFERRED-MODEL)
+            cuda_device: The cuda device to use. If -1, the CPU is used.
+            max_batch_char_length: Maximum number of characters in a batch. If None, the maximum number of characters is set to Inf.
+            batch_size: Maximum number of sentences in a batch. If None, the maximum number of sentences is set to Inf.
+            max_sentence_length: Maximum number of characters in a sentence. If None, the maximum number of characters is set to Inf.
+            max_number_words: Maximum number of words in a sentence. If None, the maximum number of words is set to Inf.
+            cuda_empty_cache: If True, the cache is emptied after each batch.
+            cuda_sleep: Time to wait after emptying the cache.
+        """
+
         self._predictor = Predictor.from_path(path, cuda_device=cuda_device)
         self._max_batch_char_length = max_batch_char_length
         self._batch_size = batch_size
@@ -70,6 +74,15 @@ class SRL:
         output_path: Optional[str] = None,
         progress_bar: bool = False,
     ):
+        """
+        Run the SRL model on a list of sentences.
+
+        Args:
+            sentences: List of sentences.
+            output_path: Path to save the output (saved as a json file).
+            progress_bar: If True, a progress bar is displayed.
+        """
+
         max_batch_char_length = (
             max_batch_char_length
             if max_batch_char_length is not None

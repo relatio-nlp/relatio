@@ -1,14 +1,3 @@
-# MIT License
-
-# Copyright (c) 2020-2021 ETH Zurich, Andrei V. Plamada
-# Copyright (c) 2020-2021 ETH Zurich, Elliott Ash
-# Copyright (c) 2020-2021 University of St.Gallen, Philine Widmer
-# Copyright (c) 2020-2021 Ecole Polytechnique, Germain Gauthier
-
-# Utils
-# ..................................................................................................................
-# ..................................................................................................................
-
 import json
 import pickle as pk
 import time
@@ -272,6 +261,16 @@ def get_element(narrative, role):
 
 
 def prettify(narrative) -> str:
+    """
+    Takes a narrative statement dictionary and returns a pretty string.
+
+    Args:
+        narrative: a dictionary with the following keys: "ARG0", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"
+
+    Returns:
+        a concatenated string of text
+    """
+
     ARG0 = get_element(narrative, "ARG0")
     V = get_element(narrative, "B-V")
 
@@ -293,11 +292,17 @@ def prettify(narrative) -> str:
 
 
 def save_entities(entity_counts, output_path: str):
+    """
+    Save the entity counts to a pickle file.
+    """
     with open(output_path, "wb") as f:
         pk.dump(entity_counts, f)
 
 
 def load_entities(input_path: str):
+    """
+    Load the entity counts from a pickle file.
+    """
     with open(input_path, "rb") as f:
         entity_counts = pk.load(f)
 
@@ -305,11 +310,17 @@ def load_entities(input_path: str):
 
 
 def save_roles(roles, output_path):
+    """
+    Save the roles to a json file.
+    """
     with open(output_path, "w") as f:
         json.dump(roles, f)
 
 
 def load_roles(input_path):
+    """
+    Load the roles from a json file.
+    """
     with open(input_path, "r") as f:
         roles = json.load(f)
 

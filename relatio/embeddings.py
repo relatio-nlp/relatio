@@ -1,10 +1,3 @@
-# MIT License
-
-# Copyright (c) 2020-2021 ETH Zurich, Andrei V. Plamada
-# Copyright (c) 2020-2021 ETH Zurich, Elliott Ash
-# Copyright (c) 2020-2021 University of St.Gallen, Philine Widmer
-# Copyright (c) 2020-2021 Ecole Polytechnique, Germain Gauthier
-
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -36,7 +29,6 @@ class Embeddings(EmbeddingsBase):
     """
     If sentences is used in the constructor the embeddings are weighted by the smoothed inverse frequency of each token.
     For further details, see: https://github.com/PrincetonML/SIF
-    The input is expected in lowe case.
     Examples:
         >>> import tensorflow as tf
         >>> tf.config.experimental.enable_tensor_float_32_execution(False)

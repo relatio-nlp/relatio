@@ -1,10 +1,26 @@
 # relatio
 
-A Python package to extract narrative statements from text. 
+A Python package to extract underlying narrative statements from text. 
 
 * "relatio" is Latin for "storytelling".
 * Motivated, described, and applied in "[Text Semantics Capture Political and Economic Narratives" (2021)](https://arxiv.org/abs/2108.01720).
 * See [here](https://sites.google.com/view/trump-narratives/trump-tweet-archive) for graphical demo of system outputs.
+
+## What can this package do?
+
+1. Identify Agent-Verb-Patient (AVP) or Subject-Verb-Object (SVO) triplets in the text (e.g., (Taxes, kill, jobs)).
+
+    - AVPs are obtained via Semantic Role Labeling.
+    - SVOs are obtained via Dependency Parsing.
+
+2. Group resulting agents and patients into interpretable entities.
+
+    - Supervised classification of entities (if you know you are looking for). Simply provide a list of entities and `relatio` will filter the triplets for you (e.g., 'Barack Obama', 'government').
+    - Unsupervised classification via clustering of entities (if you don't know what you're looking for). `relatio` will represent agents and patients as text embeddings and cluster them via KMeans or HDBSCAN. The optimal number of topics can be data-driven.
+
+3. Visualize clustering and results.
+
+We currently support French and English out-of-the-box. You can also provide `relatio` a custom SVO-extraction function for any language supported by SpaCy.
 
 ## Installation
 
@@ -21,7 +37,11 @@ python -m pip install -U relatio
 
 In case you want to use Jupyter make sure that you have it installed in the current environment.
 
-If you are interested in contributing to the project please read the [Development Guide](./doc/Development.md).
+## Quickstart 
+
+Please see our hands-on tutorials:
+* [Trump Tweet Archive](./tutorial/tutorial_english.ipynb)
+* [Tweets of French Politicians](./tutorial/tutorial_french.ipynb)
 
 ## Team
 
@@ -33,3 +53,5 @@ If you are interested in contributing to the project please read the [Developmen
 * [Philine Widmer](https://philinew.github.io/), University of St.Gallen
 
 with a special thanks for support of [ETH Scientific IT Services](https://sis.id.ethz.ch/).
+
+If you are interested in contributing to the project please read the [Development Guide](./doc/Development.md).

@@ -1,17 +1,21 @@
-# Dependency Parsing
-# ..................................................................................................................
-# ..................................................................................................................
-
 from copy import deepcopy
 
 
-def is_negation(tok, negs=["pas", "ne", "n'"], neg_deps=["advmod"]):
+def is_negation(verb, negs=["pas", "ne", "n'"], neg_deps=["advmod"]):
     """
     Identify if the verb is negated in the sentence.
+
+    Args:
+        verb: a verb
+        negs: list of negation words
+        neg_deps: list of dependency labels for negation words
+
+    Returns:
+        True if the verb is negated, False otherwise
     """
     flag_negation = False
-    l1 = [right for right in tok.rights if right.dep_ in neg_deps]
-    l2 = [left for left in tok.lefts if left.dep_ in neg_deps]
+    l1 = [right for right in verb.rights if right.dep_ in neg_deps]
+    l2 = [left for left in verb.lefts if left.dep_ in neg_deps]
     adv_mods = l1 + l2
     adv_mods = get_text(adv_mods)
     for neg in negs:
@@ -22,7 +26,14 @@ def is_negation(tok, negs=["pas", "ne", "n'"], neg_deps=["advmod"]):
 
 def filter_pos(sent, pos):
     """
-    Returns all tokens with specific part of speech tags.
+    A function that retrieves all tokens with specific part of speech tags.
+
+    Args:
+        sent: a spacy sentence
+        pos: list of part of speech tags
+
+    Returns:
+        a list of tokens with specific part of speech tags
     """
     l = [tok for tok in sent if tok.pos_ in pos]
     return l
@@ -30,7 +41,14 @@ def filter_pos(sent, pos):
 
 def get_deps(verb, deps=None):
     """
-    Returns all dependencies of a verb.
+    A function that retrieves all dependencies of a verb.
+
+    Args:
+        verb: a verb
+        deps: list of dependency labels
+
+    Returns:
+        a list of tokens that are dependencies of the verb
     """
     l = []
     if deps is not None:
@@ -45,13 +63,28 @@ def get_deps(verb, deps=None):
 def get_text(tokens):
     """
     Returns text from list of spacy tokens.
+
+    Args:
+        tokens: list of spacy tokens
+
+    Returns:
+        list of text
+
     """
     return [tok.text for tok in tokens]
 
 
 def extract_svos_fr(sent, expand_nouns: bool = True, only_triplets: bool = True):
     """
-    Get SVOs from a spacy sentence (for french).
+    Get SVOs (Subject-Verb-Object triplets) from a spacy sentence (for french).
+
+    Args:
+        sent: a spacy sentence
+        expand_nouns: get phrase nouns
+        only_triplets: only return complete triplets SVO (where the three elements are present)
+
+    Returns:
+        a list of SVOs
     """
     svos = []
 
@@ -140,7 +173,15 @@ def extract_svos_fr(sent, expand_nouns: bool = True, only_triplets: bool = True)
 
 def extract_svos_en(sent, expand_nouns: bool = True, only_triplets: bool = True):
     """
-    Get SVOs from a spacy sentence (for english).
+    Get SVOs (Subject-Verb-Object triplets) from a spacy sentence (for english).
+
+    Args:
+        sent: a spacy sentence
+        expand_nouns: get phrase nouns
+        only_triplets: only return complete triplets SVO (where the three elements are present)
+
+    Returns:
+        a list of SVOs
     """
     svos = []
 
@@ -222,6 +263,12 @@ def extract_svos_en(sent, expand_nouns: bool = True, only_triplets: bool = True)
 def from_svos_to_srl_res(svos):
     """
     Mapping between SVO triples obtained by dependency parsing and AVP triples obtained by SRL.
+
+    Args:
+        svos: a list of SVOs
+
+    Returns:
+        a list of AVPs
     """
     avps = []
     for svo in svos:
