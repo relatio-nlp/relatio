@@ -38,10 +38,8 @@ class NarrativeModel:
         known_entities: Optional[List[str]] = None,
         assignment_to_known_entities: str = "character_matching",
         roles_with_unknown_entities: List[str] = ["ARG0", "ARG1", "ARG2"],
-        embeddings_type: str = "TensorFlow_USE",
-        embeddings_model: Union[
-            Path, str
-        ] = "https://tfhub.dev/google/universal-sentence-encoder/4",
+        embeddings_type: str = "SentenceTransformer",
+        embeddings_model: Union[Path, str] = "all-MiniLM-L6-v2",
         threshold: float = 0.1,
     ):
         """
@@ -56,8 +54,8 @@ class NarrativeModel:
             known_entities (Optional[List[str]], optional): The known entities (can be obtained via named entity recognition, for instance). Defaults to None.
             assignment_to_known_entities (str, optional): The method to assign the known entities to the roles. The methods are either "character_matching" or "embeddings". "character_matching" matches the exact phrase. "embeddings" assigns to the entity any phrase with a high cosine similarity (see threshold). Defaults to "character_matching".
             roles_with_unknown_entities (List[str], optional): The semantic roles that have unknown entities. Defaults to ["ARG0", "ARG1", "ARG2"].
-            embeddings_type (str, optional): The type of embeddings to use. Defaults to "TensorFlow_USE" (corresponds to Universal Sentence Encoder).
-            embeddings_model (Union[Path, str], optional): The path to the embeddings model. Defaults to "https://tfhub.dev/google/universal-sentence-encoder/4".
+            embeddings_type (str, optional): The type of embeddings to use. Defaults to "SentenceTransformer" (corresponds to Universal Sentence Encoder).
+            embeddings_model (Union[Path, str], optional): The path to the embeddings model. Defaults to "all-MiniLM-L6-v2".
             threshold (float, optional): The threshold for the cosine similarity between the embeddings of the known entities and the embeddings of the phrases. Defaults to 0.1.
         """
 

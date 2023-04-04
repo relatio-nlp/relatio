@@ -29,12 +29,15 @@ class Embeddings(EmbeddingsBase):
     """
     If sentences is used in the constructor the embeddings are weighted by the smoothed inverse frequency of each token.
     For further details, see: https://github.com/PrincetonML/SIF
+
+    Args:
+        embeddings_type: The type of embeddings to use. Supported types are: "SentenceTransformer", "GensimWord2Vec", "GensimPretrained", "spaCy"
+        embeddings_model: The model to use. Supported models are: "all-MiniLM-L6-v2", "distiluse-base-multilingual-cased-v2", "whaleloops/phrase-bert", "fasttext-wiki-news-subwords-300", "word2vec-google-news-300", "glove-wiki-gigaword-50", "glove-wiki-gigaword-100", "glove-wiki-gigaword-200", "glove-wiki-gigaword-300", "glove-twitter-25", "glove-twitter-50", "glove-twitter-100", "glove-twitter-200", "en_core_web_sm", "en_core_web_md", "en_core_web_lg", "fr_core_news_sm", "fr_core_news_md", "fr_core_news_lg"
+        normalize: Whether to normalize the vectors to unit length
+        sentences: A list of sentences to use for weighting the embeddings by the smoothed inverse frequency of each token
+        alpha: The smoothing parameter for the smoothed inverse frequency of each token
+
     Examples:
-        >>> import tensorflow as tf
-        >>> tf.config.experimental.enable_tensor_float_32_execution(False)
-        >>> model = Embeddings("TensorFlow_USE","https://tfhub.dev/google/universal-sentence-encoder/4")
-        >>> model.get_vector("hello world").shape
-        (512,)
         >>> model = Embeddings("spaCy", "en_core_web_md")
         >>> np.isnan(model.get_vector("")).any()
         True
@@ -63,25 +66,19 @@ class Embeddings(EmbeddingsBase):
         **kwargs,
     ) -> None:
         EmbeddingsClass: Union[
-            Type[TensorFlowUSEEmbeddings],
-            Type[MultilingualBERTEmbeddings],
             Type[GensimWord2VecEmbeddings],
             Type[GensimPreTrainedEmbeddings],
             Type[spaCyEmbeddings],
-            Type[PhraseBERTEmbeddings],
+            Type[SentenceTransformerEmbeddings],
         ]
-        if embeddings_type == "TensorFlow_USE":
-            EmbeddingsClass = TensorFlowUSEEmbeddings
-        elif embeddings_type == "multilingual_BERT":
-            EmbeddingsClass = MultilingualBERTEmbeddings
-        elif embeddings_type == "Gensim_Word2Vec":
+        if embeddings_type == "SentenceTransformer":
+            EmbeddingsClass = SentenceTransformerEmbeddings
+        elif embeddings_type == "GensimWord2Vec":
             EmbeddingsClass = GensimWord2VecEmbeddings
-        elif embeddings_type == "Gensim_pretrained":
+        elif embeddings_type == "GensimPretrained":
             EmbeddingsClass = GensimPreTrainedEmbeddings
         elif embeddings_type == "spaCy":
             EmbeddingsClass = spaCyEmbeddings
-        elif embeddings_type == "phrase-BERT":
-            EmbeddingsClass = PhraseBERTEmbeddings
         else:
             raise ValueError(f"Unknown embeddings_type={embeddings_type}")
 
@@ -197,28 +194,15 @@ class spaCyEmbeddings(EmbeddingsBase):
         return np.array(self._nlp(phrase).vector)
 
 
-class TensorFlowUSEEmbeddings(EmbeddingsBase):
-    def __init__(
-        self, path: str = "https://tfhub.dev/google/universal-sentence-encoder/4"
-    ) -> None:
-        self._embed = hub.load(path)
-
-    def _get_default_vector(self, phrase: str) -> np.ndarray:
-        return self._embed([phrase]).numpy()[0]
-
-    def get_vector(self, phrase: str) -> np.ndarray:
-        return self._get_default_vector(phrase)
-
-
-class MultilingualBERTEmbeddings(EmbeddingsBase):
+class SentenceTransformerEmbeddings(EmbeddingsBase):
     """
-    path = sentence-transformers/distiluse-base-multilingual-cased-v2
-    model = Embeddings("multilingual_BERT", path)
+    Choose your favorite model from https://www.sbert.net/docs/pretrained_models.html
+
+    Args:
+        path: path to the model
     """
 
-    def __init__(
-        self, path: str = "sentence-transformers/distiluse-base-multilingual-cased-v2"
-    ) -> None:
+    def __init__(self, path: str = "all-MiniLM-L6-v2") -> None:
         self._model = SentenceTransformer(path)
 
     def _get_default_vector(self, phrase: str) -> np.ndarray:
@@ -264,19 +248,6 @@ class GensimPreTrainedEmbeddings(GensimWord2VecEmbeddings, EmbeddingsBase):
 
     def _load_keyed_vectors(self, model):
         return api.load(model)
-
-
-class PhraseBERTEmbeddings(EmbeddingsBase):
-    """
-    path = "whaleloops/phrase-bert"
-    model = Embeddings("phrase-BERT", path)
-    """
-
-    def __init__(self, path: str) -> None:
-        self._model = SentenceTransformer(path)
-
-    def _get_default_vector(self, phrase: str) -> np.ndarray:
-        return self._model.encode(phrase)
 
 
 def _compute_distances(vectors1, vectors2):
