@@ -4,6 +4,21 @@ Changes in relatio
 
 ----
 
+## 0.3
+
+- Upload to PyPI
+- New API with Preprocessor() and NarrativeModel() classes
+- Support for SentenceTransformers and spaCy models
+- Dimension reduction via PCA/UMAP
+- Automatic selection of the "optimal" number of clusters based on well-known metrics for HDBSCAN / KMeans.
+- Visualization functions for the cluster selection metrics (i.e., elbow method, silhouette score, and DBCV).
+- Easy cluster visualization and inspection.
+- Multi-lingual support via spaCy language models.
+- Dependency parsing to extract SVOs (1000 times faster than SRL and pretty decent output).
+- Co-reference resolution with spaCy
+ 
+----
+
 ## 0.2.1
 - Upload to PyPI 
 - Update documentation

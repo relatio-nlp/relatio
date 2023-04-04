@@ -239,12 +239,12 @@ class NarrativeModel:
 
         if self.clustering == "kmeans":
             if cluster_args is None:
-                l = max(int(len(phrases_to_embed) / 100), 1)
+                l = max(int(len(phrases_to_embed) / 100), 2)
                 l = min(l, 1000)
-                q0 = max(int(np.quantile(list(range(l)), 0.1)), 1)
-                q1 = max(int(np.quantile(list(range(l)), 0.25)), 1)
-                q2 = max(int(np.quantile(list(range(l)), 0.5)), 1)
-                q3 = max(int(np.quantile(list(range(l)), 0.75)), 1)
+                q0 = max(int(np.quantile(list(range(l)), 0.1)), 2)
+                q1 = max(int(np.quantile(list(range(l)), 0.25)), 2)
+                q2 = max(int(np.quantile(list(range(l)), 0.5)), 2)
+                q3 = max(int(np.quantile(list(range(l)), 0.75)), 2)
 
                 cluster_args = {"n_clusters": [q0, q1, q2, q3, l], "random_state": 0}
 
