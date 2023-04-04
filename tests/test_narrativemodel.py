@@ -11,8 +11,8 @@ nlp = spacy.load("en_core_web_sm")
 stop_words = list(nlp.Defaults.stop_words)
 
 
-# prepare data for test, 3000 documents for test
-df_test = load_data(dataset="trump_tweet_archive", content="raw")[:3000]
+# prepare data for test, 500 documents for test
+df_test = load_data(dataset="trump_tweet_archive", content="raw")[:500]
 
 p = Preprocessor(
     spacy_model="en_core_web_sm",
@@ -97,8 +97,8 @@ known_entities = p.mine_entities(
 top_known_entities = [e[0] for e in list(known_entities.most_common(20)) if e[0] != ""]
 
 
-# NarrativeModel(kmeans+USE)
-model_kmeans_USE = NarrativeModel(
+# NarrativeModel(kmeans+MiniLM)
+model_kmeans_MiniLM = NarrativeModel(
     clustering="kmeans",
     PCA=True,
     UMAP=True,
@@ -108,10 +108,10 @@ model_kmeans_USE = NarrativeModel(
     assignment_to_known_entities="character_matching",
     roles_with_unknown_entities=["ARG0", "ARG1", "ARG2"],
     threshold=0.3,
-    embeddings_type="TensorFlow_USE",
-    embeddings_model="https://tfhub.dev/google/universal-sentence-encoder/4",
+    embeddings_type="SentenceTransformer",
+    embeddings_model="all-MiniLM-L6-v2",
 )
-model_kmeans_USE.fit(
+model_kmeans_MiniLM.fit(
     postproc_roles,
     progress_bar=False,
     pca_args={"n_components": 15, "svd_solver": "full"},
@@ -128,8 +128,8 @@ model_kmeans_m_BERT = NarrativeModel(
     assignment_to_known_entities="character_matching",
     roles_with_unknown_entities=["ARG0", "ARG1", "ARG2"],
     threshold=0.3,
-    embeddings_type="multilingual_BERT",
-    embeddings_model="sentence-transformers/distiluse-base-multilingual-cased-v2",
+    embeddings_type="SentenceTransformer",
+    embeddings_model="distiluse-base-multilingual-cased-v2",
 )
 model_kmeans_m_BERT.fit(
     postproc_roles,
@@ -148,7 +148,7 @@ model_kmeans_gensim = NarrativeModel(
     assignment_to_known_entities="character_matching",
     roles_with_unknown_entities=["ARG0", "ARG1", "ARG2"],
     threshold=0.3,
-    embeddings_type="Gensim_pretrained",
+    embeddings_type="GensimPretrained",
     embeddings_model="glove-twitter-25",
 )
 model_kmeans_gensim.fit(
@@ -188,7 +188,7 @@ model_kmeans_p_BERT = NarrativeModel(
     assignment_to_known_entities="character_matching",
     roles_with_unknown_entities=["ARG0", "ARG1", "ARG2"],
     threshold=0.3,
-    embeddings_type="phrase-BERT",
+    embeddings_type="SentenceTransformer",
     embeddings_model="whaleloops/phrase-bert",
 )
 model_kmeans_p_BERT.fit(
@@ -198,7 +198,7 @@ model_kmeans_p_BERT.fit(
 )
 
 # NarrativeModel(hdbscan+USE)
-model_hdbscan_USE = NarrativeModel(
+model_hdbscan_MiniLM = NarrativeModel(
     clustering="hdbscan",
     PCA=True,
     UMAP=True,
@@ -208,10 +208,10 @@ model_hdbscan_USE = NarrativeModel(
     assignment_to_known_entities="character_matching",
     roles_with_unknown_entities=["ARG0", "ARG1", "ARG2"],
     threshold=0.3,
-    embeddings_type="TensorFlow_USE",
-    embeddings_model="https://tfhub.dev/google/universal-sentence-encoder/4",
+    embeddings_type="SentenceTransformer",
+    embeddings_model="all-MiniLM-L6-v2",
 )
-model_hdbscan_USE.fit(
+model_hdbscan_MiniLM.fit(
     postproc_roles,
     progress_bar=False,
     pca_args={"n_components": 15, "svd_solver": "full"},
@@ -219,11 +219,11 @@ model_hdbscan_USE.fit(
 
 
 models = [
-    model_kmeans_USE,
+    model_kmeans_MiniLM,
     model_kmeans_m_BERT,
     model_kmeans_gensim,
     model_kmeans_p_BERT,
-    model_hdbscan_USE,
+    model_hdbscan_MiniLM,
 ]
 
 
