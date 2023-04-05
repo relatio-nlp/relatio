@@ -48,10 +48,10 @@ class Embeddings(EmbeddingsBase):
         >>> model = Embeddings("spaCy", "en_core_web_md", normalize=False)
         >>> norm(model.get_vector("hello world")) < 1.001
         False
-        >>> model = Embeddings("Gensim_pretrained", "glove-twitter-25")
+        >>> model = Embeddings("GensimPretrained", "glove-twitter-25")
         >>> model.get_vector("world").shape
         (25,)
-        >>> model = Embeddings("Gensim_pretrained", "glove-twitter-25", sentences = ["this is a nice world","hello world","hello everybody"])
+        >>> model = Embeddings("GensimPretrained", "glove-twitter-25", sentences = ["this is a nice world","hello world","hello everybody"])
         >>> model.get_vector("hello world").shape
         (25,)
     """
