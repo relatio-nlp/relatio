@@ -41,3 +41,5 @@ tutorial/postproc_roles.json
 tutorial/relatio.log
 
 tutorial/output/*
+
+dist/*
