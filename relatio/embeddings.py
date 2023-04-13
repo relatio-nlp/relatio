@@ -7,7 +7,6 @@ from typing import Dict, List, Optional, Type, Union
 import gensim.downloader as api
 import numpy as np
 import spacy
-import tensorflow_hub as hub
 from gensim.models import Word2Vec
 from numpy.linalg import norm
 from scipy.spatial.distance import cdist
