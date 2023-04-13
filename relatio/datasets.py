@@ -1,59 +1,59 @@
-# MIT License
-
-# Copyright (c) 2020-2021 ETH Zurich, Andrei V. Plamada
-# Copyright (c) 2020-2021 ETH Zurich, Elliott Ash
-# Copyright (c) 2020-2021 University of St.Gallen, Philine Widmer
-# Copyright (c) 2020-2021 Ecole Polytechnique, Germain Gauthier
-
+import json
 from ast import literal_eval
 from io import StringIO
 
 import pandas as pd
 import requests
 
+datasets = """
+{
+    "trump_tweet_archive": 
+    {
+        "description": "Tweets from the Trump Tweet Archives (https://www.thetrumparchive.com/)",
+        "language": "english",
+        "srl_model": "allennlp v0.9 -- srl-model-2018.05.25.tar.gz",
+        "links": 
+        {
+            "raw": "https://www.dropbox.com/s/lxqz454n29iqktn/trump_archive.csv?dl=1",
+            "sentences": "https://www.dropbox.com/s/coh4ergyrjeolen/split_sentences.json?dl=1",
+            "srl_res": "https://www.dropbox.com/s/54lloy84ka8mycp/srl_res.json?dl=1"
+        }
+    },
+    "tweets_candidates_french_elections": 
+    {
+        "description": "Tweets of candidates at the French presidential elections (2022)",
+        "language": "french",
+        "srl_model": "",
+        "links": 
+        {
+            "raw": "https://www.dropbox.com/s/qqlq8xn9x645f79/tweets_candidates_french_elections.csv?dl=1"
+        }
+    }
+}
+"""
 
-def list_datasets():
-    s = """
-    List of available datasets:
 
-    Trump Tweet Archive
-    - function call: load_trump_data()
-    - format: 'raw', 'split_sentences', 'srl_res'
-    - allennlp version: 0.9
-    - srl model: srl-model-2018.05.25.tar.gz
+def list_data():
+    print(datasets)
+
+
+def load_data(dataset: str, content: str):
     """
-
-    return s
-
-
-def load_trump_data(format: str):
-    """
-
-    Load processed tweets from the Trump Tweet Archives (https://www.thetrumparchive.com/).
+    Load a dataset from the list of available datasets.
 
     Args:
-        file: either 'raw' (i.e. dataframe with raw text), 'split_sentences' (i.e. result from split_sentences()) or 'srl_res' (i.e. result from run_srl())
-
-    Returns:
-        The desired object.
+        - dataset: one of the available datasets
+        - content: either 'raw', 'sentences' or 'srl_res'
     """
 
-    if format == "raw":
-        r = requests.get(
-            "https://www.dropbox.com/s/lxqz454n29iqktn/trump_archive.csv?dl=1"
-        )
+    json_of_datasets = json.loads(datasets)
+
+    if content == "raw":
+        r = requests.get(json_of_datasets[dataset]["links"]["raw"])
+        r.encoding = "utf8"
         r = pd.read_csv(StringIO(r.text))
-    elif format == "split_sentences":
-        r = requests.get(
-            "https://www.dropbox.com/s/coh4ergyrjeolen/split_sentences.json?dl=1"
-        )
-        r = literal_eval(r.text)
-    elif format == "srl_res":
-        r = requests.get("https://www.dropbox.com/s/54lloy84ka8mycp/srl_res.json?dl=1")
-        r = literal_eval(r.text)
     else:
-        raise ValueError(
-            "file argument should either be raw, split_sentences or srl_res"
-        )
+        r = requests.get(json_of_datasets[dataset]["links"][content])
+        r = literal_eval(r.text)
 
     return r

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - relatio-v0.3
   pull_request:
   schedule:
     # run every Monday at 1:15 AM UTC - to test against the external reasons

@@ -1,70 +1,8 @@
-# MIT License
-
-# Copyright (c) 2020-2021 ETH Zurich, Andrei V. Plamada
-# Copyright (c) 2020-2021 ETH Zurich, Elliott Ash
-# Copyright (c) 2020-2021 University of St.Gallen, Philine Widmer
-# Copyright (c) 2020-2021 Ecole Polytechnique, Germain Gauthier
-
-# Utils
-# ..................................................................................................................
-# ..................................................................................................................
-
 import json
-import re
-import string
+import pickle as pk
 import time
 from collections import Counter
-from typing import Dict, List, Optional, Tuple
-
-import pandas as pd
-import spacy
-from nltk import pos_tag
-from nltk.corpus import wordnet
-from nltk.stem import SnowballStemmer, WordNetLemmatizer
-from tqdm import tqdm
-
-nlp = spacy.load("en_core_web_sm", disable=["tagger", "ner", "lemmatizer"])
-
-
-def split_into_sentences(
-    dataframe: pd.DataFrame,
-    output_path: Optional[str] = None,
-    progress_bar: bool = False,
-) -> Tuple[List[str], List[str]]:
-    """
-
-    A function that splits a list of documents into sentences (using the SpaCy sentence splitter).
-
-    Args:
-        dataframe: a pandas dataframe with one column "id" and one column "doc"
-        output_path: path to save the output
-        progress_bar: print a progress bar (default is False)
-
-    Returns:
-        Tuple with the list of document indices and list of sentences
-
-    """
-
-    docs = dataframe.to_dict(orient="records")
-
-    sentences: List[str] = []
-    doc_indices: List[str] = []
-
-    if progress_bar:
-        print("Splitting into sentences...")
-        time.sleep(1)
-        docs = tqdm(docs)
-
-    for doc in docs:
-        for sent in nlp(doc["doc"], disable=["tagger", "ner"]).sents:
-            sentences.append(str(sent))
-            doc_indices = doc_indices + [doc["id"]]
-
-    if output_path is not None:
-        with open(output_path, "w") as f:
-            json.dump((doc_indices, sentences), f)
-
-    return (doc_indices, sentences)
+from typing import Dict, List, Optional
 
 
 def replace_sentences(
@@ -201,161 +139,6 @@ def group_sentences_in_batches(
     return batches
 
 
-def _get_wordnet_pos(word):
-    """Get POS tag"""
-    tag = pos_tag([word])[0][1][0].upper()
-
-    return tag
-
-
-wnl = WordNetLemmatizer()
-f_lemmatize = wnl.lemmatize
-
-
-def clean_text(
-    sentences: List[str],
-    remove_punctuation: bool = True,
-    remove_digits: bool = True,
-    remove_chars: str = "",
-    stop_words: Optional[List[str]] = None,
-    lowercase: bool = True,
-    strip: bool = True,
-    remove_whitespaces: bool = True,
-    lemmatize: bool = False,
-    stem: bool = False,
-    tags_to_keep: Optional[List[str]] = None,
-    remove_n_letter_words: Optional[int] = None,
-) -> List[str]:
-    """
-
-    Clean a list of sentences.
-
-    Args:
-        sentences: list of sentences
-        remove_punctuation: whether to remove string.punctuation
-        remove_digits: whether to remove string.digits
-        remove_chars: remove the given characters
-        stop_words: list of stopwords to remove
-        lowercase: whether to lower the case
-        strip: whether to strip
-        remove_whitespaces: whether to remove superfluous whitespaceing by " ".join(str.split(())
-        lemmatize: whether to lemmatize using nltk.WordNetLemmatizer
-        stem: whether to stem using nltk.SnowballStemmer("english")
-        tags_to_keep: list of grammatical tags to keep (common tags: ['V', 'N', 'J'])
-        remove_n_letter_words: drop words lesser or equal to n letters (default is None)
-
-    Returns:
-        Processed list of sentences
-
-    Examples:
-        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'])
-        ['return the factorial of n an exact integer']
-        >>> clean_text(['Learning is usefull.'])
-        ['learning is usefull']
-        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], stop_words=['factorial'])
-        ['return the of n an exact integer']
-        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], lemmatize=True)
-        ['return the factorial of n an exact integer']
-        >>> clean_text(['Learning is usefull.'],lemmatize=True)
-        ['learn be usefull']
-        >>> clean_text([' Return the factorial of n, an  exact integer >= 0.'], stem=True)
-        ['return the factori of n an exact integ']
-        >>> clean_text(['Learning is usefull.'],stem=True)
-        ['learn is useful']
-        >>> clean_text(['A1b c\\n\\nde \\t fg\\rkl\\r\\n m+n'])
-        ['ab c de fg kl mn']
-        >>> clean_text(['This is a sentence with verbs and nice adjectives.'], tags_to_keep = ['V', 'J'])
-        ['is nice']
-        >>> clean_text(['This is a sentence with one and two letter words.'], remove_n_letter_words = 2)
-        ['this sentence with one and two letter words']
-
-    """
-
-    if lemmatize is True and stem is True:
-        raise ValueError("lemmatize and stemming cannot be both True")
-    if stop_words is not None and lowercase is False:
-        raise ValueError("remove stop words make sense only for lowercase")
-
-    # remove chars
-    if remove_punctuation:
-        remove_chars += string.punctuation
-    if remove_digits:
-        remove_chars += string.digits
-    if remove_chars:
-        sentences = [re.sub(f"[{remove_chars}]", "", str(sent)) for sent in sentences]
-
-    # lowercase, strip and remove superfluous white spaces
-    if lowercase:
-        sentences = [sent.lower() for sent in sentences]
-    if strip:
-        sentences = [sent.strip() for sent in sentences]
-    if remove_whitespaces:
-        sentences = [" ".join(sent.split()) for sent in sentences]
-
-    # lemmatize
-    if lemmatize:
-        tag_dict = {
-            "J": wordnet.ADJ,
-            "N": wordnet.NOUN,
-            "V": wordnet.VERB,
-            "R": wordnet.ADV,
-        }
-
-        sentences = [
-            " ".join(
-                [
-                    f_lemmatize(
-                        word, tag_dict.get(_get_wordnet_pos(word), wordnet.NOUN)
-                    )
-                    for word in sent.split()
-                ]
-            )
-            for sent in sentences
-        ]
-
-    # keep specific nltk tags
-    # this step should be performed before stemming, but may be performed after lemmatization
-    if tags_to_keep is not None:
-        sentences = [
-            " ".join(
-                [
-                    word
-                    for word in sent.split()
-                    if _get_wordnet_pos(word) in tags_to_keep
-                ]
-            )
-            for sent in sentences
-        ]
-
-    # stem
-    if stem:
-        stemmer = SnowballStemmer("english")
-        f_stem = stemmer.stem
-
-        sentences = [
-            " ".join([f_stem(word) for word in sent.split()]) for sent in sentences
-        ]
-
-    # drop stopwords
-    # stopwords are dropped after the bulk of preprocessing steps, so they should also be preprocessed with the same standards
-    if stop_words is not None:
-        sentences = [
-            " ".join([word for word in sent.split() if word not in stop_words])
-            for sent in sentences
-        ]
-
-    # remove short words < n
-    if remove_n_letter_words is not None:
-        sentences = [
-            " ".join(
-                [word for word in sent.split() if len(word) > remove_n_letter_words]
-            )
-            for sent in sentences
-        ]
-
-    return sentences
-
-
 def is_subsequence(v1: list, v2: list) -> bool:
     """
 
@@ -407,7 +190,7 @@ def count_values(
     if progress_bar:
         print("Computing role frequencies...")
         time.sleep(1)
-        dicts = tqdm(dicts)
+        dicts = dicts
 
     if keys is None:
         return Counter()
@@ -451,3 +234,94 @@ def count_words(sentences: List[str]) -> Counter:
     words_counter = Counter(words)
 
     return words_counter
+
+
+def make_list_from_key(key, list_of_dicts):
+    """
+
+    Extract the content of a specific key in a list of dictionaries.
+    Returns a list and the corresponding indices.
+
+    """
+
+    list_from_key = []
+    indices = []
+
+    for i, statement in enumerate(list_of_dicts):
+        content = statement.get(key)
+        if content is not None:
+            list_from_key.append(content)
+            indices.append(i)
+
+    return indices, list_from_key
+
+
+def get_element(narrative, role):
+    return narrative[role] if role in narrative else ""
+
+
+def prettify(narrative) -> str:
+    """
+    Takes a narrative statement dictionary and returns a pretty string.
+
+    Args:
+        narrative: a dictionary with the following keys: "ARG0", "B-V", "B-ARGM-NEG", "B-ARGM-MOD", "ARG1", "ARG2"
+
+    Returns:
+        a concatenated string of text
+    """
+
+    ARG0 = get_element(narrative, "ARG0")
+    V = get_element(narrative, "B-V")
+
+    NEG = get_element(narrative, "B-ARGM-NEG")
+    if NEG is True:
+        NEG = "!"
+    elif NEG is False:
+        NEG = ""
+
+    MOD = get_element(narrative, "B-ARGM-MOD")
+    ARG1 = get_element(narrative, "ARG1")
+    ARG2 = get_element(narrative, "ARG2")
+
+    pretty_narrative = (ARG0, MOD, NEG, V, ARG1, ARG2)
+
+    pretty_narrative = " ".join([t for t in pretty_narrative if t != ""])
+
+    return pretty_narrative
+
+
+def save_entities(entity_counts, output_path: str):
+    """
+    Save the entity counts to a pickle file.
+    """
+    with open(output_path, "wb") as f:
+        pk.dump(entity_counts, f)
+
+
+def load_entities(input_path: str):
+    """
+    Load the entity counts from a pickle file.
+    """
+    with open(input_path, "rb") as f:
+        entity_counts = pk.load(f)
+
+    return entity_counts
+
+
+def save_roles(roles, output_path):
+    """
+    Save the roles to a json file.
+    """
+    with open(output_path, "w") as f:
+        json.dump(roles, f)
+
+
+def load_roles(input_path):
+    """
+    Load the roles from a json file.
+    """
+    with open(input_path, "r") as f:
+        roles = json.load(f)
+
+    return roles
