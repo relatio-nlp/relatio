@@ -53,7 +53,7 @@ class Preprocessor:
 
         self.spacy_model = spacy_model
         self.nlp = spacy.load(spacy_model)
-        self.language = LANGUAGE_MODELS[spacy_model]["language"]
+        self.language = LANGUAGE_MODELS[spacy_model].get("language", "unknown")
         self.nlp.add_pipe("sentencizer")
         self.n_process = n_process
         self.batch_size = batch_size
@@ -210,60 +210,6 @@ class Preprocessor:
         s = s.strip()
 
         return s
-
-    def coreference_resolution(
-        self,
-        sentences: List[str],
-        spacy_model: str = "en_coreference_web_trf",
-        progress_bar: bool = False,
-    ) -> List[str]:
-        """
-        coreference resolution using spaCy (v0.6.1)
-        Args:
-                sentences: list of sentences
-                progress_bar: print a progress bar (default is False)
-        Returns:
-            List of sentences with cereference resolution
-        """
-        if not spacy.util.is_package(spacy_model):
-            spacy_download(spacy_model)
-
-        nlp = spacy.load(spacy_model)
-
-        def resolve_references(doc: Doc) -> str:
-            token_mention_dict = {}
-            output_string = ""
-            clusters = [
-                val
-                for key, val in doc.spans.items()
-                if key.startswith("coref_clusters")
-            ]
-            for cluster in clusters:
-                first_span = cluster[0]
-                for mention_span in list(cluster)[1:]:
-                    token_mention_dict[mention_span[0].idx] = (
-                        first_span.text + mention_span[0].whitespace_
-                    )
-                    for token in mention_span[1:]:
-                        token_mention_dict[token.idx] = ""
-            for token in doc:
-                if token.idx in token_mention_dict:
-                    output_string += token_mention_dict[token.idx]
-                else:
-                    output_string += token.text + token.whitespace_
-            return output_string
-
-        if progress_bar:
-            disable = False
-        else:
-            disable = True
-        print("resolving reference with coref output ...")
-        coreference_output_list = []
-        for sentence in tqdm(sentences, disable=disable):
-            doc = nlp(sentence)
-            coreference_output_list.append(resolve_references(doc))
-
-        return coreference_output_list
 
     def mine_entities(
         self,

@@ -387,10 +387,7 @@ class NarrativeModel:
             self.clustering_models
         ):
             self.label_clusters(
-                counter_for_phrases,
-                phrases_to_embed,
-                index_clustering_model,
-                progress_bar,
+                counter_for_phrases, phrases_to_embed, index_clustering_model
             )
 
     def predict(
@@ -557,11 +554,7 @@ class NarrativeModel:
         return index, labels_known_entities
 
     def label_clusters(
-        self,
-        counter_for_phrases,
-        phrases_to_embed,
-        index_clustering_model: int,
-        progress_bar: bool = False,
+        self, counter_for_phrases, phrases_to_embed, index_clustering_model: int
     ):
         """
         Method to label clusters with the most frequent phrase.
@@ -570,7 +563,6 @@ class NarrativeModel:
             counter_for_phrases (Counter): Counter of phrases.
             phrases_to_embed (list): list of phrases to embed.
             index_clustering_model (int): index of the clustering model to be used.
-            progress_bar (bool): whether to show a progress bar.
         """
 
         labels = list(set(self.clustering_models[index_clustering_model].labels_))

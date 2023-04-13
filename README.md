@@ -1,4 +1,4 @@
-# relatio
+# `relatio`
 
 A Python package to extract underlying narrative statements from text. 
 
@@ -8,19 +8,21 @@ A Python package to extract underlying narrative statements from text.
 
 ## What can this package do?
 
-1. Identify Agent-Verb-Patient (AVP) or Subject-Verb-Object (SVO) triplets in the text (e.g., (Taxes, kill, jobs)).
+1. Identify Agent-Verb-Patient (AVP) / Subject-Verb-Object (SVO) triplets in the text.
+
+For example: "Taxes kill jobs and hinder innovation." ==> [('taxes', 'kill', 'jobs'), ('taxes','hinder','innovation')]
 
     - AVPs are obtained via Semantic Role Labeling.
     - SVOs are obtained via Dependency Parsing.
 
-2. Group resulting agents and patients into interpretable entities.
+2. Group resulting agents and patients into interpretable entities in two ways:
 
-    - Supervised classification of entities (if you know you are looking for). Simply provide a list of entities and `relatio` will filter the triplets for you (e.g., 'Barack Obama', 'government').
-    - Unsupervised classification via clustering of entities (if you don't know what you're looking for). `relatio` will represent agents and patients as text embeddings and cluster them via KMeans or HDBSCAN. The optimal number of topics can be data-driven.
+    - Supervised classification of entities. Simply provide a list of entities and we will filter the triplets for you (e.g., ['Barack Obama', 'government', ...]).
+    - Unsupervised classification via clustering of entities. We represent agents and patients as text embeddings and cluster them via KMeans or HDBSCAN. The optimal number of topics is data-driven.
 
-3. Visualize clustering and results.
+3. Visualize clusters and resulting narratives.
 
-We currently support French and English out-of-the-box. You can also provide `relatio` a custom SVO-extraction function for any language supported by SpaCy.
+We currently support French and English out-of-the-box. You can also provide us with a custom SVO-extraction function for any language supported by spaCy.
 
 ## Installation
 
