@@ -14,8 +14,7 @@ Changes in relatio
 - Visualization functions for the cluster selection metrics (i.e., elbow method, silhouette score, and DBCV).
 - Easy cluster visualization and inspection.
 - Multi-lingual support via spaCy language models.
-- Dependency parsing to extract SVOs (1000 times faster than SRL and pretty decent output).
-- Co-reference resolution with spaCy
+- Dependency parsing to extract SVOs (much much times faster than SRL and pretty decent output).
  
 ----
 

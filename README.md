@@ -8,17 +8,24 @@ A Python package to extract underlying narrative statements from text.
 
 ## What can this package do?
 
-1. Identify Agent-Verb-Patient (AVP) / Subject-Verb-Object (SVO) triplets in the text.
-
-For example: "Taxes kill jobs and hinder innovation." ==> [('taxes', 'kill', 'jobs'), ('taxes','hinder','innovation')]
+1. Identify Agent-Verb-Patient (AVP) / Subject-Verb-Object (SVO) triplets in the text
 
     - AVPs are obtained via Semantic Role Labeling.
     - SVOs are obtained via Dependency Parsing.
+    - A concrete example of AVP/SVO extraction: 
+    
+    Original sentence: "Taxes kill jobs and hinder innovation."
 
-2. Group resulting agents and patients into interpretable entities in two ways:
+    Triplets: [('taxes', 'kill', 'jobs'), ('taxes','hinder','innovation')]
+
+2. Group agents and patients into interpretable entities in two ways:
 
     - Supervised classification of entities. Simply provide a list of entities and we will filter the triplets for you (e.g., ['Barack Obama', 'government', ...]).
     - Unsupervised classification via clustering of entities. We represent agents and patients as text embeddings and cluster them via KMeans or HDBSCAN. The optimal number of topics is data-driven.
+    - A concrete example of a cluster:
+
+    Interpretable entity: "tax"  
+    Related phrases: ['income tax', 'the tax rates', 'taxation in this country', etc.]
 
 3. Visualize clusters and resulting narratives.
 
