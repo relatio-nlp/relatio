@@ -20,6 +20,7 @@ def build_graph(
         a networkx graph of the most frequent narratives
     """
 
+    # Network specifics
     G = nx.MultiDiGraph()
 
     df = pd.DataFrame(narratives)
