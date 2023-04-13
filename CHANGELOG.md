@@ -4,7 +4,7 @@ Changes in relatio
 
 ----
 
-## 0.3
+## 0.3.0
 
 - Upload to PyPI
 - New API with Preprocessor() and NarrativeModel() classes
