@@ -90,7 +90,7 @@ class Embeddings(EmbeddingsBase):
             self._sif_dict = {}
             self._use_sif = False
 
-        if embeddings_type != "Gensim_Word2Vec":
+        if embeddings_type != "GensimWord2Vec":
             self._size_vectors = LANGUAGE_MODELS[embeddings_model]["size_vectors"]
         else:
             self._size_vectors = self._embeddings_model.size_vectors
@@ -211,7 +211,7 @@ class SentenceTransformerEmbeddings(EmbeddingsBase):
 class GensimWord2VecEmbeddings(EmbeddingsBase):
     def __init__(self, path: str):
         self._model = self._load_keyed_vectors(path)
-        self._vocab = self._model.vocab
+        self._vocab = self._model.key_to_index
         self.size_vectors = self._model[list(self._vocab)[0]].shape[0]
 
     def _load_keyed_vectors(self, path):
@@ -243,7 +243,7 @@ class GensimPreTrainedEmbeddings(GensimWord2VecEmbeddings, EmbeddingsBase):
 
     def __init__(self, model: str):
         self._model = self._load_keyed_vectors(model)
-        self._vocab = self._model.vocab
+        self._vocab = self._model.key_to_index
 
     def _load_keyed_vectors(self, model):
         return api.load(model)

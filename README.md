@@ -65,3 +65,7 @@ Please see our hands-on tutorials:
 with a special thanks for support of [ETH Scientific IT Services](https://sis.id.ethz.ch/).
 
 If you are interested in contributing to the project please read the [Development Guide](./doc/Development.md).
+
+## Disclaimer
+
+Remember that this is a research tool :)
