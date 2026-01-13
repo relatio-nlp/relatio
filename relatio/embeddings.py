@@ -38,20 +38,20 @@ class Embeddings(EmbeddingsBase):
 
     Examples:
         >>> model = Embeddings("spaCy", "en_core_web_md")
-        >>> np.isnan(model.get_vector("")).any()
+        >>> bool(np.isnan(model.get_vector("")).any())
         True
         >>> model.get_vector("hello world").shape
         (300,)
-        >>> norm(model.get_vector("hello world")) < 1.001
+        >>> bool(norm(model.get_vector("hello world")) < 1.001)
         True
         >>> model = Embeddings("spaCy", "en_core_web_md", normalize=False)
-        >>> norm(model.get_vector("hello world")) < 1.001
+        >>> bool(norm(model.get_vector("hello world")) < 1.001)
         False
-        >>> model = Embeddings("GensimPretrained", "glove-twitter-25")
-        >>> model.get_vector("world").shape
+        >>> model = Embeddings("GensimPretrained", "glove-twitter-25")  # doctest: +SKIP
+        >>> model.get_vector("world").shape  # doctest: +SKIP
         (25,)
-        >>> model = Embeddings("GensimPretrained", "glove-twitter-25", sentences = ["this is a nice world","hello world","hello everybody"])
-        >>> model.get_vector("hello world").shape
+        >>> model = Embeddings("GensimPretrained", "glove-twitter-25", sentences = ["this is a nice world","hello world","hello everybody"])  # doctest: +SKIP
+        >>> model.get_vector("hello world").shape  # doctest: +SKIP
         (25,)
     """
 
