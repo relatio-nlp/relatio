@@ -34,18 +34,53 @@ We currently support French and English out-of-the-box. You can also provide us 
 
 ## Installation
 
-Runs on Linux and macOS (x86 platform) and it requires Python 3.7 (or 3.8) and pip.  
-It is highly recommended to use a virtual environment (or conda environment) for the installation.
+**Python Requirements**: 3.9, 3.10, 3.11, or 3.12
+**Platforms**: Linux and macOS
+
+### Important: Semantic Role Labeling (SRL) Limitations
+
+The **Semantic Role Labeling** feature (AVP extraction) uses AllenNLP, which has compatibility constraints:
+- **AllenNLP only works with Python 3.9-3.10** (not 3.11+)
+- AllenNLP is now in maintenance mode and requires older PyTorch versions
+
+**Choose your installation based on your needs:**
+
+### Option 1: Full Installation (includes SRL)
+
+**Use Python 3.9 or 3.10 only**
 
 ```bash
-# upgrade pip, wheel and setuptools
-python -m pip install -U pip wheel setuptools
+# Create environment with Python 3.10
+conda create -n relatio python=3.10 -y
+conda activate relatio
 
-# install the package
+# Install relatio with AllenNLP support
+python -m pip install -U pip wheel setuptools
+python -m pip install -U 'relatio[allennlp]'
+```
+
+### Option 2: Without SRL (Dependency Parsing only)
+
+**Can use Python 3.9, 3.10, 3.11, or 3.12**
+
+```bash
+# Install relatio without AllenNLP
+python -m pip install -U pip wheel setuptools
 python -m pip install -U relatio
 ```
 
-In case you want to use Jupyter make sure that you have it installed in the current environment.
+**What you get:**
+- ✅ SVO extraction via Dependency Parsing
+- ✅ Clustering and visualization
+- ✅ All other features
+- ❌ AVP extraction via Semantic Role Labeling (requires AllenNLP)
+
+### Legacy Support
+
+For Python 3.7 or 3.8, use relatio version 0.3.0:
+```bash
+pip install relatio==0.3.0
+```
 
 ## Quickstart 
 

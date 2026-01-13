@@ -1,8 +1,8 @@
 # Development
 
 ## Prepare the development environment
-You need `python3.7`, `git` and [tox](https://tox.readthedocs.io/en/latest/).  
-A recent version of `wheel` and `pip>21.0` are desired for the python versions that you want to use.
+You need `python3.9` or later (3.9-3.12), `git` and [tox](https://tox.readthedocs.io/en/latest/).
+A recent version of `wheel` and `pip>=21.0` are desired for the python versions that you want to use.
 
 ```bash
 # clone the project
@@ -21,19 +21,18 @@ $ source .tox/dev/bin/activate
 (dev)$ pre-commit install
 
 # OPTIONAL: make your IPython kernel available to Jupyter in a different env
-(dev)$ python -m ipykernel install --user --name py37_relatio --display-name "Python 3.7 (relatio)"
+(dev)$ python -m ipykernel install --user --name py311_relatio --display-name "Python 3.11 (relatio)"
 ```
 
 ## Testing
-You can easily test using `tox` on `python3.7`, `python3.8`, and `python3.9`.
+You can easily test using `tox` on `python3.9`, `python3.10`, `python3.11`, and `python3.12`.
 
 ```bash
-$ tox -e py37 # python3.7 required
-$ tox -e py38 # python3.8 required
-$ tox -e py39 # python3.9 required
+$ tox -e py39   # python3.9 required
+$ tox -e py310  # python3.10 required
+$ tox -e py311  # python3.11 required
+$ tox -e py312  # python3.12 required
 ```
-
-So far it works only with `python3.7` and `python3.8`.
 
 
 ## Tools

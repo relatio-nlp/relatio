@@ -7,11 +7,19 @@ import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-import torch
-from allennlp_models.structured_prediction.predictors import (
-    SemanticRoleLabelerPredictor as Predictor,
-)
 from tqdm import tqdm
+
+try:
+    import torch
+    from allennlp_models.structured_prediction.predictors import (
+        SemanticRoleLabelerPredictor as Predictor,
+    )
+
+    ALLENNLP_AVAILABLE = True
+except ImportError:
+    ALLENNLP_AVAILABLE = False
+    torch = None
+    Predictor = None
 
 from .utils import (
     group_sentences_in_batches,
@@ -45,7 +53,16 @@ class SRL:
             max_number_words: Maximum number of words in a sentence. If None, the maximum number of words is set to Inf.
             cuda_empty_cache: If True, the cache is emptied after each batch.
             cuda_sleep: Time to wait after emptying the cache.
+
+        Raises:
+            ImportError: If allennlp-models is not installed. Install it with: pip install relatio[allennlp]
         """
+        if not ALLENNLP_AVAILABLE:
+            raise ImportError(
+                "AllenNLP is required for semantic role labeling but is not installed. "
+                "Install it with: pip install 'relatio[allennlp]' "
+                "Note: AllenNLP requires Python 3.9-3.10 and torch<2.0 due to compatibility constraints."
+            )
 
         self._predictor = Predictor.from_path(path, cuda_device=cuda_device)
         self._max_batch_char_length = max_batch_char_length

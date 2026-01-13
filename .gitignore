@@ -3,7 +3,7 @@
 ~*
 
 *.tar.gz
-
+./tutorial/output/*
 # Ignore .mypy_cache directory
 *.mypy_cache
 glove_2_word2vec.6B.300d.txt
@@ -43,3 +43,7 @@ tutorial/relatio.log
 tutorial/output/*
 
 dist/*
+
+CLAUDE.md
+
+.claude/*

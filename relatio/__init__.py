@@ -11,4 +11,4 @@ from relatio.semantic_role_labeling import SRL, extract_roles
 from relatio.verbs import clean_verbs
 
 __all__ = []
-__version__ = "0.3.0"
+__version__ = "0.4.0"

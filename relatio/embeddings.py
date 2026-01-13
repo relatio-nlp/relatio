@@ -233,7 +233,6 @@ class GensimWord2VecEmbeddings(EmbeddingsBase):
 
 
 class GensimPreTrainedEmbeddings(GensimWord2VecEmbeddings, EmbeddingsBase):
-
     """
     A class to call a pre-trained embeddings model from gensim's library.
     # The list of pre-trained embeddings may be browsed by typing:
